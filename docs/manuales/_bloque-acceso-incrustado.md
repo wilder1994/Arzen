@@ -1,6 +1,6 @@
 ## 1. Acceso al sistema
 
-Este capítulo describe cómo entrar a SJ Armory con su cuenta de usuario (ADMIN, RESPONSABLE o AUDITOR). Cada figura incluye una tabla **«Qué señalar en la captura»** para armar el documento en Word.
+Este capítulo describe cómo entrar a Arzen con su cuenta de usuario (ADMIN, RESPONSABLE o AUDITOR). Cada figura incluye una tabla **«Qué señalar en la captura»** para armar el documento en Word.
 
 ### 1.1 Cómo leer las figuras de este manual
 

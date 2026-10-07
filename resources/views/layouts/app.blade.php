@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        @include('partials.theme-boot')
         <meta name="csrf-token" content="{{ csrf_token() }}">
         @auth
             <meta name="user-id" content="{{ auth()->id() }}">
@@ -44,6 +45,7 @@
             <main class="sj-content">
                 {{ $slot }}
             </main>
+            @include('partials.developer-mark')
         </div>
         @stack('scripts')
     </body>

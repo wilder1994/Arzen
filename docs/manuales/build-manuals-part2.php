@@ -406,7 +406,7 @@ $rev .= proc(
 $rev .= chapter('6', 'Parte B — Colaborador temporal');
 $rev .= proc(
     '6.1 Ingreso con código',
-    ['Pantalla' => 'Ingreso Revista', 'Ruta' => '`/revista-armas/ingreso`', 'Objetivo' => 'Entrar sin cuenta SJ Armory'],
+    ['Pantalla' => 'Ingreso Revista', 'Ruta' => '`/revista-armas/ingreso`', 'Objetivo' => 'Entrar sin cuenta Arzen'],
     [
         'Abra enlace del correo o `/revista-armas/ingreso`.',
         '**Correo** registrado por el responsable.',

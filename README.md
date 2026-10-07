@@ -1,4 +1,4 @@
-# 🛡️ SJ Armory
+# 🛡️ Arzen
 
 Sistema web para **gestión de armamento**, **dotación (chalecos)**, **asignaciones operativas**, **transferencias**, **documentación**, **trazabilidad** y **auditoría**, con foco en operación diaria (dashboard, mapa, alertas) y control de acceso por rol/nivel. La UI autenticada se organiza en **módulos** (sidebar) y **vistas** (pestañas).
 
@@ -55,7 +55,7 @@ Sistema web para **gestión de armamento**, **dotación (chalecos)**, **asignaci
 | **Tailwind** | `^3` + `@tailwindcss/forms` |
 | **Alpine.js** | UI reactividad |
 | **Axios** | HTTP desde frontend |
-| **Leaflet** | Mapa + clustering |
+| **Google Maps** | Mapa híbrido y geocodificación en el navegador (`GOOGLE_MAPS_API_KEY`) |
 | **Echo** | `laravel-echo` + `pusher-js` (cliente) apuntando a Reverb |
 
 ### 🧰 Entorno local recomendado
@@ -73,7 +73,7 @@ Sistema web para **gestión de armamento**, **dotación (chalecos)**, **asignaci
 
 ```bash
 git clone <repo-url>
-cd SJ_Armory
+cd Arzen
 composer install
 ```
 
@@ -280,7 +280,7 @@ composer reverb
 
 | Variable | Ejemplo | Descripción |
 |---|---|---|
-| `APP_NAME` | `Laravel` | Nombre de la app |
+| `APP_NAME` | `Arzen` | Nombre de la app |
 | `APP_ENV` | `local` | Entorno |
 | `APP_KEY` | `base64:...` | Clave app |
 | `APP_DEBUG` | `true` | Debug |
@@ -293,7 +293,7 @@ composer reverb
 | `DB_CONNECTION` | `mysql` | Driver |
 | `DB_HOST` | `127.0.0.1` | Host |
 | `DB_PORT` | `3306` | Puerto |
-| `DB_DATABASE` | `laravel` | BD |
+| `DB_DATABASE` | `arzen` | BD |
 | `DB_USERNAME` | `root` | Usuario |
 | `DB_PASSWORD` | `` | Password |
 
@@ -303,9 +303,9 @@ composer reverb
 |---|---|---|
 | `BROADCAST_CONNECTION` | `reverb` | Conexión de broadcasting por defecto (`reverb`, `log`, `null`, …) |
 | `BROADCAST_ENABLED` | `true` | Si es `false`, los eventos que extienden `DomainBroadcastEvent` no se publican (no llama a Reverb/Pusher) |
-| `REVERB_APP_ID` | `armory` | App ID (Reverb) |
-| `REVERB_APP_KEY` | `armory-key` | App Key |
-| `REVERB_APP_SECRET` | `armory-secret` | App Secret |
+| `REVERB_APP_ID` | `arzen` | App ID (Reverb) |
+| `REVERB_APP_KEY` | `arzen-key` | App Key |
+| `REVERB_APP_SECRET` | `arzen-secret` | App Secret |
 | `REVERB_HOST` | `127.0.0.1` | En LAN el frontend usa `window.location.hostname` si es `127.0.0.1`/`localhost` (ver `bootstrap.js`) |
 | `REVERB_PORT` | `6001` | Puerto cliente (WS); en Windows a veces `8080` no es usable |
 | `REVERB_SCHEME` | `http` | `http` / `https` |
@@ -371,7 +371,7 @@ Formato de código:
 Las rutas operativas viven bajo `auth`; imports y usuarios exigen **ADMIN** por middleware. Puntos a vigilar en evolución del proyecto:
 
 - **Broadcasting (canales):** ver bloque **Realtime** arriba; suscripción permisiva + payload de eventos.
-- **Geocodificación:** `GeocodingController` (`/geocode/search`, `/geocode/reverse`) exige sesión pero **no** restringe por rol ni rate limit; en producción puede usarse como proxy a Nominatim (abuso de ancho de banda / cuotas).
+- **Geocodificación:** la resuelve el navegador con la API de Google Maps. La clave va en `GOOGLE_MAPS_API_KEY` y debe estar restringida a los sitios desde los que se abre Arzen.
 
 No sustituye una auditoría externa ni pentest; documenta decisiones conocidas del codebase.
 
@@ -390,7 +390,8 @@ No sustituye una auditoría externa ni pentest; documenta decisiones conocidas d
   - Si el error indica **conexión rechazada a `127.0.0.1:1025`**, no hay ningún servicio SMTP escuchando: arranque [Mailpit](https://github.com/axllent/mailpit) (u otro capture SMTP en ese puerto) o cambie a SMTP real de su proveedor.
   - **Sin servidor local:** use `MAIL_MAILER=log` y revise `storage/logs/laravel.log` (el mensaje se registra, no sale a Internet).
   - Con `APP_DEBUG=true`, el aviso en pantalla puede incluir el detalle del fallo SMTP (útil en desarrollo; no dejar `APP_DEBUG=true` en producción con datos reales).
-- 🗺️ **Mapa / selector de ubicación**: comparten capas **Satélite (híbrido)** (Esri: imagen + vías + límites) y **Calles (OpenStreetMap)**. Tras tocar `map.js` o `location-picker.js`, vuelva a compilar y refresque sin caché. El popup del mapa de armas limita la altura de la tabla (~5 filas visibles) con scroll para el resto. Si el **cursor parpadea o desaparece** al mover el ratón sobre el mapa (Chrome/Edge en Windows): la vista `maps/index` evita `overflow-hidden` en el card del mapa y `app.css` unifica el cursor (`grab` solo en el contenedor Leaflet, `inherit` en paneles/teselas); despliegue el CSS compilado actualizado en `public/build`.
+- 🗺️ **Mapa / selector de ubicación**: Google Maps (híbrido y calles, con el control nativo del mapa). La clave es `GOOGLE_MAPS_API_KEY`. Tras tocar `map.js` o `location-picker.js`, vuelva a compilar y refresque sin caché. El globo del mapa de armas limita la tabla a unas 5 filas visibles.
+- 🎨 **Tema claro y oscuro**: el interruptor está en la barra superior y en el login. La preferencia queda en el navegador (`arzen-theme`). El acento es aguamarina mate en los dos modos.
 - 🎨 **Parpadeo muy breve al cambiar de vista o al usar menús:** suele ser la **hidratación de Alpine.js** después de cargar el bundle de Vite (`resources/js/app.js`); existe `[x-cloak]` global en `resources/css/app.css` y los modales lo usan. Una red lenta o recarga completa de página amplía la ventana. No suele indicar error de Blade ni fuga de código al usuario final.
 
 Tipos de arma permitidos en validacion actual:
@@ -954,24 +955,19 @@ Frontend: `resources/js/map.js`
   1. Puesto activo.
   2. Cliente del trabajador activo.
   3. Cliente activo.
-- Cluster con contador.
+- Un marcador por ubicación. Si hay varias armas en el mismo punto, el globo muestra la cantidad y la lista.
 - Buscador por serie/cliente.
 - Icono personalizado:
   - `public/images/map/Icono_Ubicacion.png`
 
 ### 5.11 Geocoding y reverse geocoding
 
-Servicio: `app/Services/GeocodingService.php`  
-Controller: `app/Http/Controllers/GeocodingController.php`
+Lo hace el navegador con Google Maps (`resources/js/location-picker.js` y `resources/js/google-maps.js`).
 
-- Geocoding directo (Nominatim search).
-- Reverse geocoding (Nominatim reverse).
-- Timeouts cortos y fallback a `null` en error.
-- Endpoint de geocoding directo para formularios:
-  - `GET /geocode/search`
-- En formularios de clientes y puestos:
-  - muestra aviso corto si la direccion no es reconocida,
-  - permite guardar sin coordenadas o elegir la ubicacion en el mapa.
+- Al escribir dirección, municipio y departamento, el formulario guarda latitud y longitud.
+- El selector del mapa busca en Colombia, marca el punto y completa dirección, barrio, municipio y departamento.
+- Si Google no reconoce la dirección, se puede guardar sin coordenadas o elegir el punto en el mapa.
+- La clave se configura en `GOOGLE_MAPS_API_KEY`.
 
 ### 5.12 Carteras de responsables
 
@@ -1677,12 +1673,12 @@ Ejemplo de `VirtualHost`:
 ```apache
 <VirtualHost *:80>
     ServerName NOMBRE-EQUIPO
-    ServerAlias sj_armory.test
-    ServerAlias *.sj_armory.test
+    ServerAlias arzen.test
+    ServerAlias *.arzen.test
 
-    DocumentRoot "C:/laragon/www/SJ_Armory/public"
+    DocumentRoot "C:/laragon/www/Arzen/public"
 
-    <Directory "C:/laragon/www/SJ_Armory/public">
+    <Directory "C:/laragon/www/Arzen/public">
         AllowOverride All
         Require all granted
     </Directory>
@@ -1694,7 +1690,7 @@ Notas:
 - Con `Listen 80` en `*:80`, **cualquier IP local** del equipo sirve el primer `VirtualHost` (no hace falta `ServerAlias` por IP).
 - Abra `http://<IP-actual-del-PC>` o `http://SJPCANAOPE1` desde otro equipo en la misma red.
 - En `.env` local use `APP_URL=http://127.0.0.1` y **no** fije la IP de la Wi‑Fi: `AppServiceProvider` ajusta URL y Sanctum al host de cada petición.
-- Si se accede por un dominio local como `sj_armory.test`, cada equipo cliente debe resolver ese nombre via `hosts` o DNS interno.
+- Si se accede por un dominio local como `arzen.test`, cada equipo cliente debe resolver ese nombre via `hosts` o DNS interno.
 - Para abrir el puerto `80` solo a la red local en Windows:
 
 ```cmd
@@ -1707,21 +1703,21 @@ netsh advfirewall firewall add rule name="Laragon Apache HTTP 80 (LocalSubnet)" 
 
 - `APP_ENV=local`
 - `APP_URL=http://127.0.0.1`
-- `SANCTUM_STATEFUL_DOMAINS=localhost,127.0.0.1,sj_armory.test,sj_armory.test:80,SJPCANAOPE1,SJPCANAOPE1:80`
+- `SANCTUM_STATEFUL_DOMAINS=localhost,127.0.0.1,arzen.test,arzen.test:80,SJPCANAOPE1,SJPCANAOPE1:80`
 - `REVERB_HOST=127.0.0.1` (WebSocket usa el mismo host que el navegador en LAN)
 - `SESSION_DOMAIN=` vacío
 
-VirtualHost Laragon (`00-aaa-sj_armory.conf`):
+VirtualHost Laragon (`00-aaa-arzen.conf`):
 
 ```apache
 <VirtualHost *:80>
     ServerName SJPCANAOPE1
-    ServerAlias sj_armory.test
-    ServerAlias *.sj_armory.test
+    ServerAlias arzen.test
+    ServerAlias *.arzen.test
 
-    DocumentRoot "C:/laragon/www/SJ_Armory/public"
+    DocumentRoot "C:/laragon/www/Arzen/public"
 
-    <Directory "C:/laragon/www/SJ_Armory/public">
+    <Directory "C:/laragon/www/Arzen/public">
         AllowOverride All
         Require all granted
     </Directory>
@@ -1732,7 +1728,7 @@ Acceso desde otros equipos en la misma red:
 
 - `http://<IP-actual-del-servidor>` (p. ej. `http://192.168.18.47`)
 - `http://SJPCANAOPE1` (si el cliente resuelve ese nombre)
-- `http://sj_armory.test` (requiere entrada en `hosts` del cliente)
+- `http://arzen.test` (requiere entrada en `hosts` del cliente)
 
 No hace falta editar `.env` ni Apache al cambiar de red Wi‑Fi; solo usar la IP nueva del PC.
 
@@ -1810,8 +1806,8 @@ Operacion:
   - si esta en `false`, no se exponen rutas publicas de registro
 - `SEED_ADMIN_PASSWORD`
   - obligatoria para ejecutar `AdminUserSeeder`
-- `NOMINATIM_USER_AGENT`
-  - identificacion usada por `GeocodingService` para Nominatim
+- `GOOGLE_MAPS_API_KEY`
+  - clave del navegador para mapas y geocodificación de Google. Debe quedar restringida a los sitios de Arzen.
 - `APP_TIMEZONE`
   - zona horaria operativa del sistema
   - configurada actualmente para `America/Bogota`

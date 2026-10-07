@@ -2,7 +2,7 @@
     <x-slot name="header">
         <section class="sj-dashboard-header">
             <div class="sj-dashboard-header__main">
-                <h1 class="sj-dashboard-header__title">SJ Seguridad Privada LTDA</h1>
+                <h1 class="sj-dashboard-header__title">Arzen</h1>
             </div>
 
             <div class="sj-dashboard-header__side">

@@ -69,8 +69,8 @@ function chapter(string $num, string $title): string
 function headerDoc(string $title, string $perfil, string $version = '3.0'): string
 {
     return "# {$title}\n\n"
-        . "**Empresa:** SJ SEGURIDAD PRIVADA LTDA  \n"
-        . "**Sistema:** SJ Armory  \n"
+        . "**Empresa:** WCodex  \n"
+        . "**Sistema:** Arzen  \n"
         . "**Perfil:** {$perfil}  \n"
         . "**Versión del manual:** {$version}  \n"
         . "**Fecha:** [Completar]\n\n---\n\n";

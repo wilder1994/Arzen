@@ -1,8 +1,8 @@
 # Informe técnico del sistema de control de armamento
 
 **Destinatario:** Gerencia  
-**Empresa:** SJ SEGURIDAD PRIVADA LTDA  
-**Sistema:** aplicación web interna de gestión de armamento (proyecto **SJ Armory**)  
+**Empresa:** WCodex  
+**Sistema:** aplicación web interna de gestión de armamento (proyecto **Arzen**)  
 **Elaboración:** documento generado a partir del análisis del sistema y la documentación del repositorio (`README.md`).  
 **Fecha del informe:** [Completar: mes / año]
 
@@ -290,7 +290,7 @@ La pantalla **Detalle de arma** dejó de usar un único bloque grande “Informa
 - **Disponibilidad del hosting:** indisponibilidad afecta el acceso; mitigar con proveedor estable y monitoreo.  
 - **Copias de seguridad:** riesgo de pérdida si no hay respaldo verificado; definir responsable y frecuencia.  
 - **Tiempo real:** si Reverb no está en ejecución, la app funciona pero sin actualizaciones instantáneas en pantalla (según configuración).  
-- **Geocodificación:** uso de servicios externos (Nominatim); en evolución conviene límites de uso y políticas de seguridad (detalle técnico en README).
+- **Geocodificación:** Google Maps en el navegador, con la clave `GOOGLE_MAPS_API_KEY`.
 
 ---
 

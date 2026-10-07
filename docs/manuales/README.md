@@ -1,4 +1,4 @@
-# Manuales de usuario — SJ Armory
+# Manuales de usuario — Arzen
 
 Manuales **paso a paso** (v3.0): cada función incluye pantalla/menú/ruta, **Qué hacer**, **Resultado esperado**, figuras con tabla «Qué señalar» y errores frecuentes cuando aplica.
 

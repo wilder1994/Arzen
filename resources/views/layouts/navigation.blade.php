@@ -152,6 +152,7 @@
         </div>
 
         <div class="sj-nav-user flex items-center gap-2 shrink-0">
+            @include('partials.theme-toggle')
             @if (($notificationBellEnabled ?? false) && ! $isAlmacenUser)
                 <button
                     type="button"

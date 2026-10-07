@@ -1,7 +1,7 @@
 # Manual de usuario — Auditoría (rol AUDITOR)
 
-**Empresa:** SJ SEGURIDAD PRIVADA LTDA  
-**Sistema:** SJ Armory  
+**Empresa:** WCodex  
+**Sistema:** Arzen  
 **Perfil:** rol **AUDITOR** (consulta, reportes y exportaciones)  
 **Versión del manual:** 3.0  
 **Fecha:** [Completar]
@@ -10,7 +10,7 @@
 
 ## 1. Acceso al sistema
 
-Este capítulo describe cómo entrar a SJ Armory con su cuenta de usuario (ADMIN, RESPONSABLE o AUDITOR). Cada figura incluye una tabla **«Qué señalar en la captura»** para armar el documento en Word.
+Este capítulo describe cómo entrar a Arzen con su cuenta de usuario (ADMIN, RESPONSABLE o AUDITOR). Cada figura incluye una tabla **«Qué señalar en la captura»** para armar el documento en Word.
 
 ### 1.1 Cómo leer las figuras de este manual
 

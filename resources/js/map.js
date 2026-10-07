@@ -1,30 +1,7 @@
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import 'leaflet.markercluster';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
-
-const customLocationIconUrl = '/images/map/Icono_Ubicacion.png';
-const customIconOptions = {
-    iconRetinaUrl: customLocationIconUrl,
-    iconUrl: customLocationIconUrl,
-    shadowUrl,
-    iconSize: [36, 52],
-    iconAnchor: [18, 52],
-    popupAnchor: [0, -44],
-    shadowSize: [41, 41],
-    shadowAnchor: [13, 41],
-};
-const customMarkerIcon = L.icon(customIconOptions);
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions(customIconOptions);
+import { locationMarkerIcon, whenGoogleMapsReady } from './google-maps';
 
 const locale = document.documentElement.lang?.startsWith('en') ? 'en' : 'es';
 const t = {
-    layerHybrid: locale === 'en' ? 'Satellite (hybrid)' : 'Satélite (híbrido)',
-    layerStreets: locale === 'en' ? 'Streets (OpenStreetMap)' : 'Calles (OpenStreetMap)',
     viewWeapon: locale === 'en' ? 'View weapon' : 'Ver arma',
     weaponCount: locale === 'en' ? 'Weapon count' : 'Cantidad de armas',
     serial: locale === 'en' ? 'Serial' : 'Serie',
@@ -32,12 +9,19 @@ const t = {
     noResults: locale === 'en' ? 'No matches found.' : 'No se encontraron coincidencias.',
     writeSerial: locale === 'en' ? 'Type at least 2 characters.' : 'Escribe al menos 2 caracteres.',
     clearSearch: locale === 'en' ? 'Clear' : 'Limpiar',
+    missingKey: locale === 'en'
+        ? 'Google Maps is not configured. Add GOOGLE_MAPS_API_KEY in the environment file.'
+        : 'Google Maps no está configurado. Agrega GOOGLE_MAPS_API_KEY en el archivo de entorno.',
+    unavailable: locale === 'en'
+        ? 'Google Maps could not be loaded.'
+        : 'No se pudo cargar Google Maps.',
 };
 
 const normalizeText = (value) => {
     if (!value) {
         return '';
     }
+
     return value
         .toString()
         .normalize('NFD')
@@ -46,7 +30,11 @@ const normalizeText = (value) => {
         .trim();
 };
 
-const initMap = () => {
+const showMapMessage = (mapElement, message) => {
+    mapElement.innerHTML = `<div class="flex h-full items-center justify-center px-6 text-center text-sm text-gray-600">${message}</div>`;
+};
+
+const initMap = async () => {
     const mapElement = document.getElementById('weapons-map');
     const searchInput = document.getElementById('weapons-map-search');
     const searchResults = document.getElementById('weapons-map-search-results');
@@ -56,38 +44,25 @@ const initMap = () => {
     }
 
     const endpoint = mapElement.dataset.endpoint;
-    const map = L.map(mapElement).setView([4.5709, -74.2973], 5);
+    let maps;
 
-    const esriAttribution =
-        'Tiles &copy; <a href="https://www.esri.com/">Esri</a> — '
-        + 'Earthstar Geographics, Maxar, OpenStreetMap & contributors';
+    try {
+        maps = await whenGoogleMapsReady();
+    } catch (error) {
+        showMapMessage(mapElement, error?.message === 'missing-google-maps-key' ? t.missingKey : t.unavailable);
+        return;
+    }
 
-    const osmStreets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    const map = new maps.Map(mapElement, {
+        center: { lat: 4.5709, lng: -74.2973 },
+        zoom: 6,
+        mapTypeId: 'hybrid',
+        mapTypeControl: true,
+        streetViewControl: false,
+        fullscreenControl: true,
     });
-
-    const esriImagery = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 19, attribution: esriAttribution },
-    );
-    const esriTransport = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 19, attribution: '&copy; Esri', opacity: 0.9 },
-    );
-    const esriPlaces = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 19, attribution: '&copy; Esri' },
-    );
-    const hybridBase = L.layerGroup([esriImagery, esriTransport, esriPlaces]);
-
-    const baseLayers = {
-        [t.layerHybrid]: hybridBase,
-        [t.layerStreets]: osmStreets,
-    };
-    hybridBase.addTo(map);
-    L.control.layers(baseLayers, {}, { position: 'topright', collapsed: false }).addTo(map);
-
+    const infoWindow = new maps.InfoWindow();
+    const icon = locationMarkerIcon();
     let searchIndex = [];
     let searchDebounce = null;
 
@@ -103,9 +78,11 @@ const initMap = () => {
         if (!item) {
             return;
         }
-        map.setView([item.lat, item.lng], 16, { animate: true });
+        map.setCenter({ lat: item.lat, lng: item.lng });
+        map.setZoom(16);
         if (item.marker) {
-            item.marker.openPopup();
+            infoWindow.setContent(item.popup);
+            infoWindow.open({ map, anchor: item.marker });
         }
     };
 
@@ -120,7 +97,7 @@ const initMap = () => {
         }
 
         const shown = items.slice(0, 8);
-        const rows = shown
+        searchResults.innerHTML = shown
             .map(
                 (item, index) => `
                     <button
@@ -134,7 +111,6 @@ const initMap = () => {
                 `
             )
             .join('');
-        searchResults.innerHTML = rows;
         searchResults.classList.remove('hidden');
 
         Array.from(searchResults.querySelectorAll('[data-weapon-result-index]')).forEach((button) => {
@@ -209,55 +185,36 @@ const initMap = () => {
         return;
     }
 
-    fetch(endpoint)
-        .then((response) => response.json())
-        .then((items) => {
-            if (!Array.isArray(items) || items.length === 0) {
-                return;
-            }
+    let items = [];
+    try {
+        const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+        items = await response.json();
+    } catch (error) {
+        return;
+    }
 
-            const grouped = new Map();
-            items.forEach((item) => {
-                const key = `${item.lat},${item.lng}`;
-                if (!grouped.has(key)) {
-                    grouped.set(key, []);
-                }
-                grouped.get(key).push(item);
-            });
+    if (!Array.isArray(items) || items.length === 0) {
+        return;
+    }
 
-            const clusterGroup = L.markerClusterGroup({
-                iconCreateFunction: (cluster) => {
-                    const count = cluster.getChildCount();
-                    return L.divIcon({
-                        html: `
-                            <div style="position:relative;width:26px;height:41px;">
-                                <img src="${customLocationIconUrl}" alt="" style="width:26px;height:41px;display:block;object-fit:contain;" />
-                                <span style="position:absolute;right:-6px;top:-6px;background:#1f6fb2;color:#fff;font-size:11px;font-weight:700;line-height:1;padding:4px 6px;border-radius:999px;border:2px solid #fff;box-shadow:0 4px 10px rgba(15,23,42,.25);">${count}</span>
-                            </div>
-                        `,
-                        className: 'sj-weapons-cluster-icon',
-                        iconSize: [36, 52],
-                        iconAnchor: [18, 52],
-                        popupAnchor: [1, -44],
-                    });
-                },
-            });
+    const grouped = new Map();
+    items.forEach((item) => {
+        const key = `${item.lat},${item.lng}`;
+        if (!grouped.has(key)) {
+            grouped.set(key, []);
+        }
+        grouped.get(key).push(item);
+    });
 
-            const popupOptions = {
-                className: 'sj-weapons-map-popup',
-                maxWidth: 360,
-                autoPan: true,
-                autoPanPadding: L.point(40, 40),
-                keepInView: false,
-            };
-            const bounds = [];
+    const bounds = new maps.LatLngBounds();
 
-            grouped.forEach((groupItems) => {
-                const { lat, lng } = groupItems[0];
-                const clientName = groupItems[0].client ?? '-';
-                const rows = groupItems
-                    .map(
-                        (item) => `
+    grouped.forEach((groupItems) => {
+        const lat = Number(groupItems[0].lat);
+        const lng = Number(groupItems[0].lng);
+        const clientName = groupItems[0].client ?? '-';
+        const rows = groupItems
+            .map(
+                (item) => `
                     <tr>
                         <td class="pr-3 py-1">${item.serial_number ?? '-'}</td>
                         <td class="py-1 text-right">
@@ -265,52 +222,54 @@ const initMap = () => {
                         </td>
                     </tr>
                 `
-                    )
-                    .join('');
-                const popup = `
-                    <div class="text-sm sj-weapons-map-popup-inner">
-                        <div class="font-semibold mb-1">${clientName}</div>
-                        <div class="mb-2 text-xs text-gray-600">${t.weaponCount}: ${groupItems.length}</div>
-                        <table class="w-full text-xs">
-                            <thead>
-                                <tr class="text-left text-gray-600">
-                                    <th class="pr-3 pb-1">${t.serial}</th>
-                                    <th class="pb-1 text-right">${t.detail}</th>
-                                </tr>
-                            </thead>
-                        </table>
-                        <div class="sj-weapons-map-popup__table-wrap">
-                            <table class="w-full text-xs">
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
+            )
+            .join('');
+        const popup = `
+            <div class="text-sm sj-weapons-map-popup">
+                <div class="font-semibold mb-1">${clientName}</div>
+                <div class="mb-2 text-xs text-gray-600">${t.weaponCount}: ${groupItems.length}</div>
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="text-left text-gray-600">
+                            <th class="pr-3 pb-1">${t.serial}</th>
+                            <th class="pb-1 text-right">${t.detail}</th>
+                        </tr>
+                    </thead>
+                </table>
+                <div class="sj-weapons-map-popup__table-wrap">
+                    <table class="w-full text-xs">
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        const marker = new maps.Marker({
+            position: { lat, lng },
+            map,
+            icon,
+            title: clientName,
+        });
+        marker.addListener('click', () => {
+            infoWindow.setContent(popup);
+            infoWindow.open({ map, anchor: marker });
+        });
+        bounds.extend({ lat, lng });
 
-                const marker = L.marker([lat, lng]);
-                marker.setIcon(customMarkerIcon);
-                marker.bindPopup(popup, popupOptions);
-                clusterGroup.addLayer(marker);
-                bounds.push([lat, lng]);
-
-                groupItems.forEach((item) => {
-                    searchIndex.push({
-                        serial: item.serial_number ?? '',
-                        client: item.client ?? '',
-                        lat,
-                        lng,
-                        marker,
-                    });
-                });
+        groupItems.forEach((item) => {
+            searchIndex.push({
+                serial: item.serial_number ?? '',
+                client: item.client ?? '',
+                lat,
+                lng,
+                marker,
+                popup,
             });
+        });
+    });
 
-            map.addLayer(clusterGroup);
-
-            if (bounds.length > 0) {
-                map.fitBounds(bounds, { padding: [30, 30] });
-            }
-        })
-        .catch(() => {});
+    if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, 30);
+    }
 };
 
 if (document.readyState === 'loading') {

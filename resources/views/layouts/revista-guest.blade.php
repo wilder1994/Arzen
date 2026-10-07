@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('partials.theme-boot')
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? __('Revista armas') }} — {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -15,6 +16,8 @@
                 <div class="text-sm font-bold text-slate-900">{{ __('Revista armas') }}</div>
                 <div class="text-xs text-slate-500">{{ __('Acceso temporal para fotografías') }}</div>
             </div>
+            <div class="flex items-center gap-2">
+                @include('partials.theme-toggle', ['themeToggleClass' => 'sj-theme-toggle sj-theme-toggle--surface'])
             @if (session('revista_grant_id'))
                 <form method="POST" action="{{ route('revista-armas.guest.logout') }}">
                     @csrf
@@ -23,6 +26,7 @@
                     </button>
                 </form>
             @endif
+            </div>
         </div>
     </header>
     <main class="mx-auto max-w-6xl px-4 py-6">
@@ -40,6 +44,7 @@
         @endif
         {{ $slot ?? '' }}
     </main>
+    @include('partials.developer-mark')
     @stack('scripts')
 </body>
 </html>

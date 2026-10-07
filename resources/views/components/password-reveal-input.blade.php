@@ -28,7 +28,7 @@
             autocomplete="{{ $autocomplete }}"
             spellcheck="false"
             @if ($required) required @endif
-            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block w-full pr-10"
+            class="sj-ui-field__control block w-full pr-10"
         />
         <button
             type="button"

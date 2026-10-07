@@ -7,7 +7,7 @@ use App\Events\MapDataChanged;
 use App\Models\Client;
 use App\Models\AuditLog;
 use App\Models\WeaponClientAssignment;
-use App\Services\GeocodingService;
+use App\Support\MapCoordinates;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -61,7 +61,7 @@ class ClientController extends Controller
         return view('clients.create');
     }
 
-    public function store(Request $request, GeocodingService $geocodingService)
+    public function store(Request $request)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -78,24 +78,7 @@ class ClientController extends Controller
             'coords_source' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $useMapCoords = ($data['coords_source'] ?? null) === 'map';
-        if ($useMapCoords && !empty($data['latitude']) && !empty($data['longitude'])) {
-            $data['latitude'] = (float) $data['latitude'];
-            $data['longitude'] = (float) $data['longitude'];
-        } elseif (!empty($data['address'])) {
-            $coords = $geocodingService->geocode(
-                $data['address'] ?? null,
-                $data['city'] ?? null,
-                $data['department'] ?? null,
-                $data['neighborhood'] ?? null,
-            );
-            if ($coords) {
-                $data['latitude'] = $coords['lat'];
-                $data['longitude'] = $coords['lng'];
-            }
-        }
-
-        unset($data['coords_source']);
+        $data = MapCoordinates::apply($data);
 
         $client = Client::create($data);
 
@@ -119,7 +102,7 @@ class ClientController extends Controller
         return view('clients.edit', compact('client'));
     }
 
-    public function update(Request $request, Client $client, GeocodingService $geocodingService)
+    public function update(Request $request, Client $client)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -136,29 +119,9 @@ class ClientController extends Controller
             'coords_source' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $addressChanged = ($data['address'] ?? null) !== $client->address
-            || ($data['neighborhood'] ?? null) !== $client->neighborhood
-            || ($data['city'] ?? null) !== $client->city
-            || ($data['department'] ?? null) !== $client->department;
-        $useMapCoords = ($data['coords_source'] ?? null) === 'map';
-        if ($useMapCoords && !empty($data['latitude']) && !empty($data['longitude'])) {
-            $data['latitude'] = (float) $data['latitude'];
-            $data['longitude'] = (float) $data['longitude'];
-        } elseif ($addressChanged && !empty($data['address'])) {
-            $coords = $geocodingService->geocode(
-                $data['address'] ?? null,
-                $data['city'] ?? null,
-                $data['department'] ?? null,
-                $data['neighborhood'] ?? null,
-            );
-            if ($coords) {
-                $data['latitude'] = $coords['lat'];
-                $data['longitude'] = $coords['lng'];
-            }
-        }
+        $data = MapCoordinates::apply($data);
 
         $before = $client->only(['name', 'nit', 'city', 'department', 'email', 'contact_name']);
-        unset($data['coords_source']);
 
         $client->update($data);
 

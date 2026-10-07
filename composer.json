@@ -1,7 +1,7 @@
 {
-    "name": "laravel/laravel",
+    "name": "arzen/arzen",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Arzen: gestión de armamento.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

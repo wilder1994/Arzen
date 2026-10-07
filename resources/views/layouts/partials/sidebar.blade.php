@@ -5,11 +5,7 @@
 <aside class="sj-sidebar" :class="{ 'is-open': mobileOpen }" aria-label="{{ __('Módulos') }}">
     <div class="sj-sidebar__brand">
         <a href="{{ $moduleNav['home_url'] }}" class="sj-sidebar__brand-link">
-            <x-application-logo class="sj-sidebar__logo" />
-            <span class="sj-sidebar__brand-text">
-                <span class="sj-sidebar__brand-name">SJ Seguridad</span>
-                <span class="sj-sidebar__brand-meta">{{ __('Control operativo') }}</span>
-            </span>
+            <x-application-logo class="sj-sidebar__logo-mark" />
         </a>
     </div>
 

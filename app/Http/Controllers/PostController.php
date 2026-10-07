@@ -10,7 +10,7 @@ use App\Models\Post;
 use App\Models\PostHistory;
 use App\Models\Weapon;
 use App\Models\WeaponPostAssignment;
-use App\Services\GeocodingService;
+use App\Support\MapCoordinates;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -146,7 +146,7 @@ class PostController extends Controller
         return view('posts.create', compact('clients'));
     }
 
-    public function store(Request $request, GeocodingService $geocodingService)
+    public function store(Request $request)
     {
         $this->authorize('create', Post::class);
 
@@ -169,24 +169,7 @@ class PostController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $client = Client::find($data['client_id']);
-        $useMapCoords = ($data['coords_source'] ?? null) === 'map';
-        if ($useMapCoords && !empty($data['latitude']) && !empty($data['longitude'])) {
-            $data['latitude'] = (float) $data['latitude'];
-            $data['longitude'] = (float) $data['longitude'];
-        } elseif (!empty($data['address'])) {
-            $coords = $geocodingService->geocode(
-                $data['address'] ?? null,
-                $data['city'] ?? ($client?->city),
-                $data['department'] ?? ($client?->department),
-            );
-            if ($coords) {
-                $data['latitude'] = $coords['lat'];
-                $data['longitude'] = $coords['lng'];
-            }
-        }
-
-        unset($data['coords_source']);
+        $data = MapCoordinates::apply($data);
         $data['archived_at'] = null;
 
         $post = Post::create($data);
@@ -239,7 +222,7 @@ class PostController extends Controller
         return view('posts.edit', compact('post', 'clients'));
     }
 
-    public function update(Request $request, Post $post, GeocodingService $geocodingService)
+    public function update(Request $request, Post $post)
     {
         $this->authorize('update', $post);
 
@@ -268,29 +251,9 @@ class PostController extends Controller
         $changeNote = trim((string) ($data['change_note'] ?? ''));
         unset($data['change_note']);
 
-        $addressChanged = ($data['address'] ?? null) !== $post->address
-            || ($data['city'] ?? null) !== $post->city
-            || ($data['department'] ?? null) !== $post->department
-            || ($data['client_id'] ?? null) !== $post->client_id;
-        $useMapCoords = ($data['coords_source'] ?? null) === 'map';
-        if ($useMapCoords && !empty($data['latitude']) && !empty($data['longitude'])) {
-            $data['latitude'] = (float) $data['latitude'];
-            $data['longitude'] = (float) $data['longitude'];
-        } elseif ($addressChanged && !empty($data['address'])) {
-            $client = Client::find($data['client_id']);
-            $coords = $geocodingService->geocode(
-                $data['address'] ?? null,
-                $data['city'] ?? ($client?->city),
-                $data['department'] ?? ($client?->department),
-            );
-            if ($coords) {
-                $data['latitude'] = $coords['lat'];
-                $data['longitude'] = $coords['lng'];
-            }
-        }
+        $data = MapCoordinates::apply($data);
 
         $before = $post->only(['client_id', 'name', 'address', 'city', 'department', 'notes']);
-        unset($data['coords_source']);
 
         $post->update($data);
 

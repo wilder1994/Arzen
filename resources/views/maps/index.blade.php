@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="py-8">
         <div class="sj-page-shell sj-page-shell--wide">
-            {{-- overflow-visible: overflow-hidden en el card recorta el repaint del cursor sobre Leaflet (tiles) en Chrome/Edge --}}
+            {{-- overflow-visible: el InfoWindow de Google Maps no debe recortarse con el card --}}
             <div class="sj-ui-card overflow-visible">
                 <div class="sj-ui-card__body p-6 text-gray-900">
                     <div class="mb-4 sj-ui-field" id="weapons-map-search-shell">
@@ -29,6 +29,7 @@
     </div>
 </x-app-layout>
 
+@include('partials.google-maps')
 @vite('resources/js/map.js')
 
 

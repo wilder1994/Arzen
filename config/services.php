@@ -31,8 +31,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'nominatim' => [
-        'user_agent' => env('NOMINATIM_USER_AGENT', env('APP_NAME', 'SJ Armory') . ' geocoder (' . env('APP_URL', 'http://localhost') . ')'),
+    'google' => [
+        'maps_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
 ];

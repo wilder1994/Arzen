@@ -1,3 +1,4 @@
+import './theme';
 import './bootstrap';
 import './dashboard';
 import './realtime-portfolio-sync';

@@ -116,6 +116,7 @@
     </div>
 </x-app-layout>
 
+@include('partials.google-maps')
 @vite('resources/js/location-picker.js')
 
 <div id="location-map-modal" class="fixed inset-0 z-[3000] hidden items-center justify-center bg-black/50 p-4">

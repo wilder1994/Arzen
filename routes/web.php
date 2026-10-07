@@ -13,7 +13,6 @@ use App\Http\Controllers\Auth\ForcedPasswordChangeController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormatController;
-use App\Http\Controllers\GeocodingController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\WeaponCustodyController;
 use App\Http\Controllers\WeaponCustodyReportController;
@@ -210,8 +209,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/mapa', [MapController::class, 'index'])->name('maps.index');
     Route::get('/mapa/armas', [MapController::class, 'weapons'])->name('maps.weapons');
-    Route::get('/geocode/search', [GeocodingController::class, 'search'])->name('geocode.search');
-    Route::get('/geocode/reverse', [GeocodingController::class, 'reverse'])->name('geocode.reverse');
 
     Route::get('/portfolios', [ResponsiblePortfolioController::class, 'index'])->name('portfolios.index');
     Route::get('/portfolios/{user}/edit', [ResponsiblePortfolioController::class, 'edit'])->name('portfolios.edit');

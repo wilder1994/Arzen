@@ -1,23 +1,5 @@
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
-import municipios from '../data/colombia_municipios.json';
-
-const customLocationIconUrl = '/images/map/Icono_Ubicacion.png';
-const customIconOptions = {
-    iconRetinaUrl: customLocationIconUrl,
-    iconUrl: customLocationIconUrl,
-    shadowUrl,
-    iconSize: [36, 52],
-    iconAnchor: [18, 52],
-    popupAnchor: [0, -44],
-    shadowSize: [41, 41],
-    shadowAnchor: [13, 41],
-};
-const customMarkerIcon = L.icon(customIconOptions);
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions(customIconOptions);
+﻿import municipios from '../data/colombia_municipios.json';
+import { addressComponent, locationMarkerIcon, whenGoogleMapsReady } from './google-maps';
 
 const locale = document.documentElement.lang?.startsWith('en') ? 'en' : 'es';
 const t = {
@@ -27,15 +9,16 @@ const t = {
     noResults: locale === 'en' ? 'No matches found.' : 'No se encontraron resultados.',
     incompleteAddress: locale === 'en'
         ? 'Address or municipality could not be completed. Adjust it manually if needed.'
-        : 'No se pudo completar la dirección o el municipio. Ajusta manualmente si es necesario.',
+        : 'No se pudo completar la direcciÃ³n o el municipio. Ajusta manualmente si es necesario.',
     geocodeFailed: locale === 'en'
         ? 'Location could not be obtained. Try again or complete the data manually.'
-        : 'No se pudo obtener la ubicación. Intenta nuevamente o completa los datos manualmente.',
+        : 'No se pudo obtener la ubicaciÃ³n. Intenta nuevamente o completa los datos manualmente.',
     manualAddressInvalid: locale === 'en'
         ? 'Address not recognized. You can save it as is or choose the location on the map.'
-        : 'Dirección no reconocida. Puedes guardarla así o seleccionar la ubicación en el mapa.',
-    layerHybrid: locale === 'en' ? 'Satellite (hybrid)' : 'Satélite (híbrido)',
-    layerStreets: locale === 'en' ? 'Streets (OpenStreetMap)' : 'Calles (OpenStreetMap)',
+        : 'DirecciÃ³n no reconocida. Puedes guardarla asÃ­ o seleccionar la ubicaciÃ³n en el mapa.',
+    missingKey: locale === 'en'
+        ? 'Google Maps is not configured. Add GOOGLE_MAPS_API_KEY in the environment file.'
+        : 'Google Maps no estÃ¡ configurado. Agrega GOOGLE_MAPS_API_KEY en el archivo de entorno.',
 };
 
 const buildOption = (value, label) => {
@@ -210,6 +193,7 @@ const initLocationSelects = () => {
     });
 };
 
+
 const initMapPicker = () => {
     const triggers = document.querySelectorAll('[data-map-trigger]');
     if (!triggers.length) {
@@ -248,12 +232,13 @@ const initMapPicker = () => {
 
     let mapInstance = null;
     let marker = null;
+    let geocoder = null;
     let selectedLatLng = null;
     let activeForm = null;
     let searchDebounce = null;
-    let searchAbortController = null;
+    let searchToken = 0;
+    let geocodeToken = 0;
     const geocodeDebounces = new WeakMap();
-    const geocodeAbortControllers = new WeakMap();
 
     const resolveInputs = (form = activeForm) => {
         if (!form) {
@@ -324,58 +309,63 @@ const initMapPicker = () => {
 
     const hasEnoughDataToGeocode = (data) => data.address.length >= 5 && data.city !== '' && data.department !== '';
 
+    const ensureGeocoder = async () => {
+        if (geocoder) {
+            return geocoder;
+        }
+        await whenGoogleMapsReady();
+        geocoder = new google.maps.Geocoder();
+        return geocoder;
+    };
+
+    const geocodeAddress = async (query) => {
+        const coder = await ensureGeocoder();
+
+        return new Promise((resolve, reject) => {
+            coder.geocode({
+                address: query,
+                componentRestrictions: { country: 'CO' },
+                region: 'co',
+            }, (results, status) => {
+                if (status !== 'OK' || !Array.isArray(results) || results.length === 0) {
+                    reject(new Error(status || 'geocode-failed'));
+                    return;
+                }
+                resolve(results);
+            });
+        });
+    };
+
     const geocodeManualLocation = async (form) => {
         const data = collectLocationData(form);
-
         if (!hasEnoughDataToGeocode(data)) {
             setNotice(form, '');
             return;
         }
 
-        const previousAbort = geocodeAbortControllers.get(form);
-        if (previousAbort) {
-            previousAbort.abort();
-        }
-
-        const controller = new AbortController();
-        geocodeAbortControllers.set(form, controller);
-
-        const url = new URL('/geocode/search', window.location.origin);
-        url.searchParams.set('address', data.address);
-        url.searchParams.set('city', data.city);
-        url.searchParams.set('department', data.department);
-        if (data.neighborhood) {
-            url.searchParams.set('neighborhood', data.neighborhood);
-        }
+        const token = ++geocodeToken;
+        const query = [data.address, data.neighborhood, data.city, data.department, 'Colombia']
+            .filter(Boolean)
+            .join(', ');
 
         try {
-            const response = await fetch(url.toString(), {
-                headers: {
-                    Accept: 'application/json',
-                },
-                signal: controller.signal,
-            });
-
-            if (!response.ok) {
+            await ensureGeocoder();
+            const results = await geocodeAddress(query);
+            if (token !== geocodeToken) {
+                return;
+            }
+            const location = results[0]?.geometry?.location;
+            if (!location) {
                 clearCoordinates(form);
                 setNotice(form, t.manualAddressInvalid);
                 return;
             }
-
-            const result = await response.json();
-            if (typeof result?.lat !== 'number' || typeof result?.lng !== 'number') {
-                clearCoordinates(form);
-                setNotice(form, t.manualAddressInvalid);
-                return;
-            }
-
-            setCoordinates(form, result.lat, result.lng, 'geocode');
+            setCoordinates(form, location.lat(), location.lng(), 'geocode');
             setNotice(form, '');
         } catch (error) {
-            if (error.name === 'AbortError') {
+            if (token !== geocodeToken) {
                 return;
             }
-
             clearCoordinates(form);
             setNotice(form, t.manualAddressInvalid);
         }
@@ -386,11 +376,9 @@ const initMapPicker = () => {
         if (previousTimer) {
             clearTimeout(previousTimer);
         }
-
         const timer = setTimeout(() => {
             geocodeManualLocation(form);
         }, 650);
-
         geocodeDebounces.set(form, timer);
     };
 
@@ -403,15 +391,19 @@ const initMapPicker = () => {
         if (!mapInstance) {
             return;
         }
+        const position = { lat, lng };
         if (marker) {
-            marker.setLatLng([lat, lng]);
-            marker.setIcon(customMarkerIcon);
+            marker.setPosition(position);
         } else {
-            marker = L.marker([lat, lng], { icon: customMarkerIcon }).addTo(mapInstance);
+            marker = new google.maps.Marker({
+                position,
+                map: mapInstance,
+                icon: locationMarkerIcon(),
+            });
         }
-        selectedLatLng = { lat, lng };
-        mapInstance.setView([lat, lng], zoom);
-
+        selectedLatLng = position;
+        mapInstance.setCenter(position);
+        mapInstance.setZoom(zoom);
         setCoordinates(activeForm, lat, lng, 'map');
         setNotice(activeForm, '');
         if (acceptButton) {
@@ -419,18 +411,12 @@ const initMapPicker = () => {
         }
     };
 
-    const guessZoomLevel = (item) => {
-        const type = normalizeText(item.type || item.addresstype || '');
-        if (type.includes('state') || type.includes('region') || type.includes('department')) {
+    const guessZoomLevel = (types) => {
+        const list = types || [];
+        if (list.includes('administrative_area_level_1')) {
             return 8;
         }
-        if (
-            type.includes('county')
-            || type.includes('municipality')
-            || type.includes('city')
-            || type.includes('town')
-            || type.includes('village')
-        ) {
+        if (list.includes('locality') || list.includes('administrative_area_level_2')) {
             return 11;
         }
         return 14;
@@ -443,94 +429,80 @@ const initMapPicker = () => {
             return;
         }
 
-        const rows = items
-            .map((item, index) => {
-                const label = item.display_name || item.name || '';
-                const type = item.type || item.addresstype || '';
-                return `
-                    <button
-                        type="button"
-                        class="block w-full border-b border-gray-100 px-3 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none"
-                        data-map-result-index="${index}"
-                    >
-                        <span class="block font-medium">${label}</span>
-                        <span class="block text-xs text-gray-500">${type}</span>
-                    </button>
-                `;
-            })
+        searchResults.innerHTML = items
+            .map((item, index) => `
+                <button
+                    type="button"
+                    class="block w-full border-b border-gray-100 px-3 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none"
+                    data-map-result-index="${index}"
+                >
+                    <span class="block font-medium">${item.formatted_address || ''}</span>
+                </button>
+            `)
             .join('');
-
-        searchResults.innerHTML = rows;
         searchResults.classList.remove('hidden');
 
         Array.from(searchResults.querySelectorAll('[data-map-result-index]')).forEach((button) => {
             button.addEventListener('click', () => {
                 const index = Number.parseInt(button.dataset.mapResultIndex || '', 10);
                 const item = items[index];
-                if (!item) {
+                const location = item?.geometry?.location;
+                if (!location) {
                     return;
                 }
-                const lat = Number.parseFloat(item.lat);
-                const lng = Number.parseFloat(item.lon);
-                if (Number.isNaN(lat) || Number.isNaN(lng)) {
-                    return;
-                }
-                setSelectedLocation(lat, lng, guessZoomLevel(item));
-                searchInput.value = item.display_name || '';
+                setSelectedLocation(location.lat(), location.lng(), guessZoomLevel(item.types));
+                searchInput.value = item.formatted_address || '';
                 hideSearchResults();
             });
         });
     };
 
-    const searchByText = async (query) => {
+    const searchByText = (query) => {
         const text = query.trim();
+        const token = ++searchToken;
         if (text.length < 2) {
             hideSearchResults();
             return;
         }
 
-        if (searchAbortController) {
-            searchAbortController.abort();
-        }
-        searchAbortController = new AbortController();
-
-        const url = new URL('https://nominatim.openstreetmap.org/search');
-        url.searchParams.set('format', 'jsonv2');
-        url.searchParams.set('q', `${text}, Colombia`);
-        url.searchParams.set('countrycodes', 'co');
-        url.searchParams.set('addressdetails', '1');
-        url.searchParams.set('limit', '8');
-
-        let items = [];
-        try {
-            const response = await fetch(url.toString(), {
-                headers: {
-                    'Accept': 'application/json',
-                    'Accept-Language': locale,
-                },
-                signal: searchAbortController.signal,
+        geocodeAddress(`${text}, Colombia`)
+            .then((results) => {
+                if (token !== searchToken) {
+                    return;
+                }
+                buildResultRows(results.slice(0, 8));
+            })
+            .catch(() => {
+                if (token !== searchToken) {
+                    return;
+                }
+                hideSearchResults();
             });
-            if (!response.ok) {
-                hideSearchResults();
-                return;
-            }
-            items = await response.json();
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                hideSearchResults();
-            }
-            return;
-        }
-
-        buildResultRows(Array.isArray(items) ? items : []);
     };
 
-    const openModal = (form) => {
+    const ensureMap = async () => {
+        if (mapInstance) {
+            return;
+        }
+        await ensureGeocoder();
+        mapInstance = new google.maps.Map(mapElement, {
+            center: { lat: 4.5709, lng: -74.2973 },
+            zoom: 6,
+            mapTypeId: 'hybrid',
+            mapTypeControl: true,
+            streetViewControl: false,
+            fullscreenControl: true,
+        });
+        mapInstance.addListener('click', (event) => {
+            setSelectedLocation(event.latLng.lat(), event.latLng.lng(), 14);
+        });
+    };
+
+    const openModal = async (form) => {
         activeForm = form;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         selectedLatLng = null;
-
         if (acceptButton) {
             acceptButton.disabled = true;
         }
@@ -540,55 +512,19 @@ const initMapPicker = () => {
         }
         searchInput.value = '';
         hideSearchResults();
-
-        const { latInput, lngInput } = resolveInputs();
         setNotice(activeForm, '');
 
-        if (!mapInstance) {
-            mapInstance = L.map(mapElement).setView([4.5709, -74.2973], 6);
-
-            const esriAttribution =
-                'Tiles &copy; <a href="https://www.esri.com/">Esri</a> — '
-                + 'Earthstar Geographics, Maxar, OpenStreetMap & contributors';
-
-            const osmStreets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            });
-
-            const esriImagery = L.tileLayer(
-                'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                { maxZoom: 19, attribution: esriAttribution },
-            );
-            const esriTransport = L.tileLayer(
-                'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
-                { maxZoom: 19, attribution: '&copy; Esri', opacity: 0.9 },
-            );
-            const esriPlaces = L.tileLayer(
-                'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-                { maxZoom: 19, attribution: '&copy; Esri' },
-            );
-            const hybridBase = L.layerGroup([esriImagery, esriTransport, esriPlaces]);
-
-            hybridBase.addTo(mapInstance);
-
-            L.control
-                .layers(
-                    {
-                        [t.layerHybrid]: hybridBase,
-                        [t.layerStreets]: osmStreets,
-                    },
-                    {},
-                    { position: 'topright', collapsed: false },
-                )
-                .addTo(mapInstance);
-
-            mapInstance.on('click', (event) => {
-                const { lat, lng } = event.latlng;
-                setSelectedLocation(lat, lng, 14);
-            });
+        try {
+            await ensureMap();
+        } catch (error) {
+            if (errorMessage) {
+                errorMessage.textContent = error?.message === 'missing-google-maps-key' ? t.missingKey : t.geocodeFailed;
+                errorMessage.classList.remove('hidden');
+            }
+            return;
         }
 
+        const { latInput, lngInput } = resolveInputs();
         if (latInput?.value && lngInput?.value) {
             const lat = Number.parseFloat(latInput.value);
             const lng = Number.parseFloat(lngInput.value);
@@ -597,8 +533,8 @@ const initMapPicker = () => {
             }
         }
 
-        setTimeout(() => {
-            mapInstance.invalidateSize();
+        window.setTimeout(() => {
+            google.maps.event.trigger(mapInstance, 'resize');
         }, 200);
     };
 
@@ -608,40 +544,19 @@ const initMapPicker = () => {
         hideSearchResults();
     };
 
-    const reverseGeocode = async (lat, lng) => {
-        const backendUrl = new URL('/geocode/reverse', window.location.origin);
-        backendUrl.searchParams.set('lat', lat);
-        backendUrl.searchParams.set('lng', lng);
-        try {
-            const response = await fetch(backendUrl.toString(), {
-                headers: {
-                    Accept: 'application/json',
-                },
-            });
-            if (response.ok) {
-                return response.json();
+    const reverseGeocode = (lat, lng) => new Promise((resolve, reject) => {
+        if (!geocoder) {
+            reject(new Error('geocoder-unavailable'));
+            return;
+        }
+        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (status !== 'OK' || !results?.[0]) {
+                reject(new Error(status || 'reverse-failed'));
+                return;
             }
-        } catch (error) {
-            // Fallback below
-        }
-
-        const publicUrl = new URL('https://nominatim.openstreetmap.org/reverse');
-        publicUrl.searchParams.set('format', 'jsonv2');
-        publicUrl.searchParams.set('lat', lat);
-        publicUrl.searchParams.set('lon', lng);
-        publicUrl.searchParams.set('addressdetails', '1');
-        publicUrl.searchParams.set('countrycodes', 'co');
-        const response = await fetch(publicUrl.toString(), {
-            headers: {
-                Accept: 'application/json',
-                'Accept-Language': locale,
-            },
+            resolve(results[0]);
         });
-        if (!response.ok) {
-            throw new Error('reverse geocode failed');
-        }
-        return response.json();
-    };
+    });
 
     triggers.forEach((trigger) => {
         trigger.addEventListener('click', (event) => {
@@ -720,36 +635,23 @@ const initMapPicker = () => {
             const originalText = acceptButton.textContent;
             acceptButton.textContent = t.searching;
             acceptButton.disabled = true;
-
             if (errorMessage) {
                 errorMessage.textContent = '';
                 errorMessage.classList.add('hidden');
             }
 
             try {
-                const data = await reverseGeocode(selectedLatLng.lat, selectedLatLng.lng);
-                const address = data?.address ?? {};
-                const road = address.road || address.pedestrian || address.path || address.cycleway || '';
-                const number = address.house_number ? ` ${address.house_number}` : '';
-                const addressValue = road ? `${road}${number}` : (data?.display_name ?? '');
-
-                const municipality =
-                    address.city
-                    || address.town
-                    || address.village
-                    || address.municipality
-                    || address.city_district
-                    || address.suburb
-                    || address.county
-                    || '';
-                const neighborhood =
-                    address.neighbourhood
-                    || address.suburb
-                    || address.city_district
-                    || address.quarter
-                    || address.borough
-                    || '';
-                const department = address.state || address.region || address.state_district || '';
+                const result = await reverseGeocode(selectedLatLng.lat, selectedLatLng.lng);
+                const components = result.address_components || [];
+                const route = addressComponent(components, 'route');
+                const number = addressComponent(components, 'street_number');
+                const addressValue = [route, number].filter(Boolean).join(' ') || result.formatted_address || '';
+                const municipality = addressComponent(components, 'locality')
+                    || addressComponent(components, 'administrative_area_level_2');
+                const neighborhood = addressComponent(components, 'neighborhood')
+                    || addressComponent(components, 'sublocality_level_1')
+                    || addressComponent(components, 'sublocality');
+                const department = addressComponent(components, 'administrative_area_level_1');
                 const normalizedDepartment = normalizeDepartmentName(department);
                 const normalizedMunicipality = normalizeMunicipalityName(municipality);
 
@@ -759,25 +661,19 @@ const initMapPicker = () => {
                 if (neighborhoodInput && neighborhood) {
                     neighborhoodInput.value = neighborhood;
                 }
-
                 if (departmentSelect && normalizedDepartment) {
                     if (!selectByNormalizedMatch(departmentSelect, normalizedDepartment)) {
-                        const option = buildOption(normalizedDepartment, normalizedDepartment);
-                        departmentSelect.appendChild(option);
+                        departmentSelect.appendChild(buildOption(normalizedDepartment, normalizedDepartment));
                         departmentSelect.value = normalizedDepartment;
                     }
-                    const departmentValue = departmentSelect.value || normalizedDepartment;
-                    populateMunicipalities(municipalitySelect, departmentValue, '');
+                    populateMunicipalities(municipalitySelect, departmentSelect.value || normalizedDepartment, '');
                 }
-
                 if (municipalitySelect && normalizedMunicipality) {
                     if (!selectByNormalizedMatch(municipalitySelect, normalizedMunicipality)) {
-                        const option = buildOption(normalizedMunicipality, normalizedMunicipality);
-                        municipalitySelect.appendChild(option);
+                        municipalitySelect.appendChild(buildOption(normalizedMunicipality, normalizedMunicipality));
                         municipalitySelect.value = normalizedMunicipality;
                     }
                 }
-
                 if (coordsSourceInput) {
                     coordsSourceInput.value = 'map';
                 }

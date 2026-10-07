@@ -1,5 +1,5 @@
-<img src="{{ asset('images/logo-largo.png') }}" alt="SJ Seguridad Privada"
-    {{ $attributes->merge(['class' => 'h-12 w-12 rounded-full object-cover bg-white']) }} />
+<img src="{{ asset('images/Logo.png') }}" alt="WCodex"
+    {{ $attributes->merge(['class' => 'h-12 w-auto object-contain']) }} />
 
 
 

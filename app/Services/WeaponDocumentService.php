@@ -125,7 +125,7 @@ class WeaponDocumentService
             throw new RuntimeException('La vista previa PDF no está disponible en este momento.');
         }
 
-        $previewDir = $this->createTempDirectory('sj-armory-preview-');
+        $previewDir = $this->createTempDirectory('arzen-preview-');
         $fileName = $this->resolveBatchFileName($downloadBaseName, 'pdf');
         $pdfPath = $previewDir . DIRECTORY_SEPARATOR . $fileName;
         $generatedAt = now();
@@ -182,7 +182,7 @@ class WeaponDocumentService
         $frontDataUri = $this->imageDataUri($frontFile);
         $reverseDataUri = $this->imageDataUri($reverseTemplate->file);
 
-        $tmpDir = $this->createTempDirectory('sj-armory-permit-');
+        $tmpDir = $this->createTempDirectory('arzen-permit-');
 
         $tipoSegment = $normalizedKind === PermitAuthenticatedTemplate::KIND_PORTE ? 'Porte' : 'Tenencia';
         $serialSegment = preg_replace('/[^\p{L}\p{N}._-]+/u', '_', (string) ($weapon->serial_number ?? ''));
