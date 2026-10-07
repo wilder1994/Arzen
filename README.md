@@ -22,12 +22,13 @@ Sistema web para **gestión de armamento**, **dotación (chalecos)**, **asignaci
 - ✅ **Mapa**: geocodificación y visualización operativa de **armas**; pestaña del módulo **Armamento**; solo inventario operativo (sin novedad bloqueante ni custodia en taller / para mantenimiento).
 - ✅ **Auditoría**: registro de cambios y acciones críticas; etiquetas legibles en español vía `resources/lang/es/audit.php`.
 - ✅ **Realtime (Broadcasting)**: Laravel Reverb + Echo (WebSockets) para sincronización en tiempo real.
-- ✅ **Notificaciones**: campana en barra superior con **solo no leídas**; menú de usuario con **Historial de notificaciones** (leídas y no leídas, mismo modal con `?history=1`); textos con actor y contexto (arma, cliente, puesto, etc.).
+- ✅ **Notificaciones**: campana en la barra superior, junto al tema claro/oscuro, con **solo no leídas** y contador; **Historial de notificaciones** en el pie del sidebar (leídas y no leídas, mismo modal con `?history=1`); textos con actor y contexto (arma, cliente, puesto, etc.).
+- ✅ **Cuenta en el sidebar**: en el pie, **Idioma** (icono y lista de idiomas, se abre hacia arriba), **Historial de notificaciones**, el **nombre** del usuario (abre el perfil) y **Cerrar sesión**.
 - ✅ **Reportes — Novedades operativas** (`/reports/weapon-incidents`): solo tipos reportables (**hurtada**, **perdida**, **incautada**, **dar de baja**); mantenimiento/armerillo históricos quedan en notas de la ficha pero no suman en gráficos ni KPIs.
 - ✅ **Reportes — Custodia y taller** (`/reports/weapon-custody`): armas en puestos de armerillo, armerillo para mantenimiento o armero por responsable.
 - ✅ **Custodia en ficha del arma**: acciones **Enviar a mi armerillo** (operativa), **Para mantenimiento** y **Enviar a armero** (no operativas, sin novedad); un armerillo y armeros por responsable, ubicación inicial del cliente. Al mover custodia se cierran novedades legadas abiertas (`en_mantenimiento`, `para_mantenimiento`, `en_armerillo`) y el listado muestra **Estado** alineado con el puesto de custodia (`WeaponListStatusResolver`).
 - ✅ **Formatos** (`/formatos`): catálogo en **tarjetas** (`sj-ui-card`, grid 1/2/4 columnas); **Revista mensual de armamento** (FO-OP-03) con descarga vacía o con relación de armas (tabla con filtros por columna, selección por checkbox y exportación solo de las marcadas); **plantilla carga masiva de chalecos** (tarjeta visible con permiso `import` en `Vest`); archivos en `resources/templates/`; revista usa `phpoffice/phpspreadsheet` (requiere `composer install` con PHP 8.2+). Pestaña **Formatos** en el módulo **Plataforma** (no es un menú desplegable).
-- ✅ **Shell de navegación**: sidebar con **Armamento**, **Dotación**, **Supervisión** y **Plataforma**; pestañas del módulo activo en la barra superior (navy, misma altura); el sidebar se oculta con el botón hamburguesa (`localStorage`). **Mapa** vive en Armamento. **Cargas masivas** abre `/subir-armas` (ADMIN) o `/subir-chalecos` (quien solo importa chalecos). **Supervisión** (`/supervision`) es placeholder de patrulla. Árbol filtrado por rol en `App\Support\Navigation\ModuleNavBuilder`.
+- ✅ **Shell de navegación**: sidebar con **Armamento**, **Dotación** y **Plataforma**; pestañas del módulo activo en la barra superior; el sidebar se oculta con el botón lateral (`localStorage`). **Mapa** vive en Armamento. **Cargas masivas** abre `/subir-armas` (ADMIN) o `/subir-chalecos` (quien solo importa chalecos). Árbol filtrado por rol en `App\Support\Navigation\ModuleNavBuilder`.
 - ✅ **Kit UI global** (`sj-ui-*` en `resources/css/app.css`): interfaz unificada en listados, formularios, reportes, cargas masivas, auth guest, dashboard y detalle de armas/chalecos — headers (`sj-section-header`), tarjetas (`sj-ui-card`), KPIs (`sj-ui-kpi` / `sj-kpi-card`), filtros (`sj-ui-filter-bar`), botones (`sj-ui-btn` vía componentes Blade y vistas), enlaces de tabla (`sj-ui-link`). Tras cambios en `app.css`: `npm run build`.
 - ✅ **Tipografía unificada** (tokens `.sj-type-*` / `--sj-type-*` en `app.css`): eyebrow, título de página, subtítulo, sección, cuerpo, meta y KPI (números con peso **600**); los encabezados `sj-section-header__*` y héroes/KPIs del dashboard consumen los mismos tamaños fijos (sin `clamp` en títulos de página).
 
@@ -1561,8 +1562,6 @@ Grupos funcionales:
   - `weapons.imprints.toggle`
 - Maestros:
   - `clients.*`, `posts.*`, `workers.*`.
-- Supervisión:
-  - `supervision.index` (`GET /supervision`, placeholder de recorrido de patrulla; ADMIN / RESPONSABLE / AUDITOR).
 - Transferencias:
   - `transfers.index`, `transfers.bulk`, `transfers.accept`, `transfers.cancel`.
 - Cartera:
@@ -1591,10 +1590,11 @@ Caracteristicas:
 - Árbol y visibilidad por rol/policy: `app/Support/Navigation/ModuleNavBuilder.php` (composer en `layouts.app`).
   - **Armamento**: Inicio, Armas, Revista, Mapa, Transferencias, Asignaciones, Reportes, Alertas.
   - **Dotación**: Chalecos.
-  - **Supervisión**: Patrulla (próximamente) vía `/supervision`.
   - **Plataforma**: Clientes, Puestos, Trabajadores, Usuarios, Cargas masivas, Formatos.
 - Sidebar ocultable (hamburguesa; estado en `localStorage` `sj-sidebar-hidden`). En móvil abre overlay.
-- Pestañas compactas sobre barra `--sj-navy`; acento activo en azul (no gold). Figtree 400–700.
+- Barra superior: pestañas del módulo, tema claro/oscuro y campana de notificaciones.
+- Pie del sidebar: Idioma, Historial de notificaciones, nombre del usuario (abre el perfil) y Cerrar sesión.
+- Pestañas compactas sobre barra `--sj-navy`; acento aguamarina mate. Figtree 400–700.
 - **Escala tipográfica** (`.sj-type-eyebrow|page|page-sub|section|body|meta|kpi` y variables `--sj-type-*`): títulos de página fijos a `1.5rem` / peso 700; KPI/números a `1.5rem` / peso **600**. Encabezados `sj-section-header__*` y KPIs del dashboard usan estos tokens.
 - Idioma con cambio de session (`es`, `en`).
 - Modales de seleccion de ubicacion con mapa, buscador textual y control de capas (hibrido / calles).

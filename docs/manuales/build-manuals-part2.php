@@ -137,7 +137,7 @@ $aud .= proc('10.2 Consultar puestos y trabajadores', ['Menú' => '**Puestos** /
     'Repita flujo de listado y filtros como en Armamento.', 'No espere botones de alta si no tiene permiso.',
 ], 'Listados de apoyo.', [['id' => '10.2', 'title' => 'Puestos/trabajadores', 'file' => 'fig-10-02-posts-workers.png', 'refs' => []]]);
 $aud .= chapter('11', 'Perfil y cierre');
-$aud .= proc('11.1 Perfil y cerrar sesión', ['Menú' => 'Nombre usuario', 'Objetivo' => 'Cuenta propia'], [
+$aud .= proc('11.1 Perfil y cerrar sesión', ['Menú' => 'Pie del sidebar (nombre de usuario / **Cerrar sesión**)', 'Objetivo' => 'Cuenta propia'], [
     'Use **§1.7** para cerrar sesión.', '**Perfil** para cambiar contraseña propia.',
 ], 'Sesión cerrada o perfil actualizado.', [['id' => '11.1', 'title' => 'Perfil', 'file' => 'fig-11-01-profile.png', 'refs' => []]]);
 $aud .= footerDoc('manual de auditoría');

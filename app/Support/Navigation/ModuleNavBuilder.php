@@ -17,7 +17,6 @@ class ModuleNavBuilder
         $modules = array_values(array_filter([
             $this->armamento($user),
             $this->dotacion($user),
-            $this->supervision($user),
             $this->plataforma($user),
         ]));
 
@@ -109,19 +108,6 @@ class ModuleNavBuilder
         ]);
     }
 
-    private function supervision(User $user): ?array
-    {
-        $canSeeOps = $user->isAdmin() || $user->isResponsible() || $user->isAuditor();
-
-        return $this->module('supervision', __('Supervisión'), [
-            $this->item('patrulla', __('Patrulla'), [
-                'disabled' => true,
-                'badge' => __('Próximamente'),
-                'visible' => $canSeeOps,
-            ]),
-        ]);
-    }
-
     private function plataforma(User $user): ?array
     {
         $canSeeCatalog = Gate::forUser($user)->allows('viewAny', Client::class);
@@ -190,20 +176,11 @@ class ModuleNavBuilder
             fn (array $item): bool => (bool) ($item['active'] ?? false)
         );
 
-        if ($key === 'supervision') {
-            $active = $active || request()->routeIs('supervision.*');
-        }
-
-        $entryUrl = $this->entryUrl($items);
-        if ($entryUrl === null && $key === 'supervision' && $items !== []) {
-            $entryUrl = route('supervision.index');
-        }
-
         return [
             'key' => $key,
             'label' => $label,
             'active' => $active,
-            'entry_url' => $entryUrl,
+            'entry_url' => $this->entryUrl($items),
             'items' => $items,
         ];
     }

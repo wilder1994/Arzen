@@ -28,18 +28,18 @@ class ModuleNavBuilderTest extends TestCase
         });
     }
 
-    public function test_admin_sees_the_four_modules_and_admin_only_items(): void
+    public function test_admin_sees_the_three_modules_and_admin_only_items(): void
     {
         $nav = $this->builder()->forUser($this->user(User::ROLE_ADMIN));
         $keys = $this->itemKeys($nav);
 
-        $this->assertSame(['armamento', 'dotacion', 'supervision', 'plataforma'], $this->moduleKeys($nav));
+        $this->assertSame(['armamento', 'dotacion', 'plataforma'], $this->moduleKeys($nav));
         $this->assertContains('usuarios', $keys);
         $this->assertContains('asignaciones', $keys);
         $this->assertContains('cargas', $keys);
         $this->assertContains('formatos', $keys);
         $this->assertContains('mapa', $keys);
-        $this->assertContains('patrulla', $keys);
+        $this->assertNotContains('patrulla', $keys);
         $this->assertNotContains('subir-armas', $keys);
     }
 

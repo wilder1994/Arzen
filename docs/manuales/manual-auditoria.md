@@ -171,11 +171,15 @@ Acceso al **Inicio** y menú según su rol.
 
 | Elemento | Función |
 |----------|---------|
-| **Logo** (izquierda) | Clic → **Inicio** |
-| **Inicio** | Dashboard |
-| Enlaces del centro | Módulos según **rol** |
-| **Campana** *(si aplica)* | Notificaciones |
-| **Nombre de usuario** | Perfil, cerrar sesión |
+| **Logo** (sidebar, arriba) | Clic → **Inicio** |
+| **Sidebar** (izquierda) | Módulos según **rol** |
+| Pestañas superiores | Secciones del módulo activo |
+| **Tema** (sol/luna, arriba a la derecha) | Modo claro u oscuro |
+| **Campana** *(si aplica, arriba a la derecha)* | Notificaciones no leídas |
+| **Idioma** (pie del sidebar) | Español / Inglés |
+| **Historial de notificaciones** (pie del sidebar) | Leídas y no leídas |
+| **Nombre de usuario** (pie del sidebar) | Abre el **Perfil** |
+| **Cerrar sesión** (pie del sidebar) | Salir del sistema |
 
 #### Figura 1.6 — Barra de navegación
 
@@ -183,7 +187,7 @@ Acceso al **Inicio** y menú según su rol.
 |------|-------------|
 | **①** | **Inicio** |
 | **②** | Un módulo de su rol (ej. **Armamento**) |
-| **③** | Menú del **nombre de usuario** |
+| **③** | Pie del sidebar (**Idioma**, **nombre de usuario**, **Cerrar sesión**) |
 
 **[Insertar imagen: fig-01-06-menu-superior.png]**
 
@@ -193,7 +197,7 @@ Acceso al **Inicio** y menú según su rol.
 
 ### 1.7 Cerrar sesión y sesión expirada
 
-**Cerrar sesión:** nombre de usuario (arriba a la derecha) → **Cerrar sesión** → bienvenida o login.
+**Cerrar sesión:** pie del sidebar → **Cerrar sesión** → bienvenida o login.
 
 **Sesión expirada:** tras inactividad puede volver a `/`; repita **Iniciar sesión** → login.
 
@@ -601,7 +605,7 @@ Listados de apoyo.
 
 | | |
 |---|---|
-| **Menú** | Nombre usuario |
+| **Menú** | Pie del sidebar (nombre de usuario / **Cerrar sesión**) |
 | **Objetivo** | Cuenta propia |
 
 #### Qué hacer

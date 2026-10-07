@@ -19,7 +19,7 @@ class ModuleNavigationTest extends TestCase
             ->assertOk()
             ->assertSee('Armamento')
             ->assertSee('Dotación')
-            ->assertSee('Supervisión')
+            ->assertDontSee('Supervisión')
             ->assertSee('Plataforma')
             ->assertSee('Mapa')
             ->assertDontSee('Cargas masivas')

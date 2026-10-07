@@ -348,9 +348,9 @@
 
     .sj-sidebar__link.is-active,
     .sj-sidebar__node.is-active > .sj-sidebar__link {
-        background: rgba(11, 111, 182, 0.28);
-        border-color: rgba(11, 111, 182, 0.75);
-        box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.12), 0 8px 18px rgba(2, 8, 28, 0.18);
+        background: color-mix(in srgb, var(--sj-accent-top) 34%, transparent);
+        border-color: color-mix(in srgb, var(--sj-accent-top) 70%, transparent);
+        box-shadow: 0 8px 18px rgba(4, 16, 19, 0.18);
         color: #ffffff !important;
     }
 
@@ -615,50 +615,159 @@
         color: #ffffff;
     }
 
-    .sj-nav-user-button {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 0.65rem;
-        min-height: 1.85rem;
-        padding-inline: 0.7rem;
-        white-space: nowrap;
+    .sj-sidebar__footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        flex: 0 0 auto;
+        flex-direction: column;
+        gap: 0.2rem;
+        padding: 0.7rem 0.7rem 0.85rem;
     }
 
-    .sj-nav-user-button:hover {
-        background: rgba(255, 255, 255, 0.16);
+    .sj-sidebar__icon {
+        flex: 0 0 auto;
+        height: 1.15rem;
+        opacity: 0.85;
+        width: 1.15rem;
     }
 
-    /* Campana: @tailwindcss/forms y color heredado de .sj-nav anulan utilidades Tailwind */
-    .sj-nav .sj-nav-notify-btn {
-        background-color: transparent !important;
-        border-width: 0 !important;
-        border-style: none !important;
-        box-shadow: none !important;
-        color: #fbbf24 !important;
-    }
-
-    .sj-nav .sj-nav-notify-btn:hover {
-        color: #fcd34d !important;
-    }
-
-    .sj-nav .sj-nav-notify-btn:focus {
-        outline: none !important;
-    }
-
-    .sj-nav .sj-nav-notify-btn svg {
-        color: inherit !important;
-        stroke: currentColor !important;
-    }
-
-    .sj-nav .sj-nav-notify-badge {
-        z-index: 2;
-    }
-
-    .sj-nav select {
-        background-color: #ffffff !important;
-        color: #111827 !important;
-        opacity: 1 !important;
+    .sj-sidebar__account-link {
+        font-size: 0.84rem;
         font-weight: 500;
+    }
+
+    .sj-sidebar__value {
+        color: rgba(231, 241, 239, 0.62);
+        font-size: 0.78rem;
+        font-weight: 500;
+        margin-left: auto;
+    }
+
+    .sj-sidebar__popover-anchor {
+        position: relative;
+    }
+
+    .sj-sidebar__popover {
+        background: var(--sj-ui-surface-bg-strong);
+        border: 1px solid var(--sj-ui-surface-border);
+        border-radius: 0.75rem;
+        bottom: calc(100% + 0.35rem);
+        box-shadow: 0 14px 28px rgba(4, 16, 19, 0.32);
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        left: 0;
+        padding: 0.35rem;
+        position: absolute;
+        right: 0;
+        z-index: 20;
+    }
+
+    .sj-sidebar__popover-option {
+        background: transparent;
+        border: 0;
+        border-radius: 0.55rem;
+        color: var(--sj-ink);
+        cursor: pointer;
+        font-size: 0.86rem;
+        font-weight: 500;
+        padding: 0.5rem 0.6rem;
+        text-align: left;
+        width: 100%;
+    }
+
+    .sj-sidebar__popover-option:hover {
+        background: color-mix(in srgb, var(--sj-accent) 12%, transparent);
+    }
+
+    .sj-sidebar__popover-option.is-active {
+        background: color-mix(in srgb, var(--sj-accent) 18%, transparent);
+        color: var(--sj-accent);
+        font-weight: 650;
+    }
+
+    .sj-nav-notify-btn {
+        align-items: center;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 0.5rem;
+        color: #e7f1ef;
+        cursor: pointer;
+        display: inline-flex;
+        height: 2.25rem;
+        justify-content: center;
+        position: relative;
+        width: 2.25rem;
+    }
+
+    .sj-nav-notify-btn:hover {
+        border-color: rgba(255, 255, 255, 0.32);
+        color: #fff;
+    }
+
+    .sj-nav-notify-badge {
+        background: var(--sj-danger);
+        border: 2px solid var(--sj-navy);
+        border-radius: 999px;
+        color: #fff;
+        font-size: 0.62rem;
+        font-weight: 700;
+        line-height: 1;
+        min-width: 1.15rem;
+        padding: 0.18rem 0.3rem;
+        position: absolute;
+        right: -0.4rem;
+        text-align: center;
+        top: -0.4rem;
+    }
+
+    .sj-sidebar__logout:hover {
+        background: color-mix(in srgb, var(--sj-danger) 22%, transparent);
+    }
+
+    .sj-sidebar__user-button {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        color: #fff !important;
+        display: flex;
+        gap: 0.6rem;
+        margin-top: 0.35rem;
+        padding: 0.45rem 0.6rem;
+        text-decoration: none;
+        transition: background 140ms ease, border-color 140ms ease;
+    }
+
+    .sj-sidebar__user-button:hover {
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    .sj-sidebar__user-button.is-active {
+        border-color: color-mix(in srgb, var(--sj-accent-top) 70%, transparent);
+    }
+
+    .sj-sidebar__avatar {
+        align-items: center;
+        background: linear-gradient(180deg, var(--sj-accent-top) 0%, var(--sj-accent) 100%);
+        border-radius: 999px;
+        display: inline-flex;
+        flex: 0 0 auto;
+        font-size: 0.82rem;
+        font-weight: 700;
+        height: 2rem;
+        justify-content: center;
+        width: 2rem;
+    }
+
+    .sj-sidebar__user-name {
+        flex: 1 1 auto;
+        font-size: 0.84rem;
+        font-weight: 600;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     @media (min-width: 1024px) {

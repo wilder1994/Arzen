@@ -681,10 +681,9 @@ $admin .= proc(
 );
 $admin .= proc(
     '15.2 Historial de notificaciones',
-    ['Menú' => 'Nombre usuario → **Historial de notificaciones**', 'Objetivo' => 'Ver leídas y no leídas'],
+    ['Menú' => 'Pie del sidebar → **Historial de notificaciones**', 'Objetivo' => 'Ver leídas y no leídas'],
     [
-        'Clic su **nombre** arriba a la derecha.',
-        'Elija **Historial de notificaciones**.',
+        'En el pie del sidebar, clic en **Historial de notificaciones**.',
         'Revise modal con `?history=1`.',
     ],
     'Historial completo visible.',
@@ -692,9 +691,9 @@ $admin .= proc(
 );
 $admin .= proc(
     '15.3 Editar perfil y contraseña',
-    ['Menú' => 'Nombre usuario → **Perfil**', 'Ruta' => '`/profile`', 'Objetivo' => 'Actualizar datos propios'],
+    ['Menú' => 'Pie del sidebar → clic en su **nombre**', 'Ruta' => '`/profile`', 'Objetivo' => 'Actualizar datos propios'],
     [
-        'Abra **Perfil**.',
+        'Clic en su **nombre** al pie del sidebar para abrir **Perfil**.',
         'Modifique nombre o correo si está permitido.',
         'Para cambiar contraseña, complete sección **Contraseña** → **Guardar**.',
     ],

@@ -50,7 +50,7 @@ La empresa contaba con el registro del armamento en **hojas de cálculo (Excel)*
 | **Revista armas** | Colaboradores de campo (12 h) suben **4 fotos** por arma desde el celular; staff filtra por **usuario temporal** y ve solo armas del acceso vigente; revisa (✓/✕, **Ver**); modales de confirmación/aviso; al aprobar actualiza inventario y **Notas** en la ficha. |
 | **Mapa** | Visualización de ubicación operativa según reglas de prioridad (puesto / cliente / trabajador). |
 | **Dashboard** | Indicadores y gráficos en tiempo casi real (actualización por eventos cuando broadcasting está activo). |
-| **Notificaciones** | Campana con no leídas; historial en menú de usuario. |
+| **Notificaciones** | Campana con no leídas en la barra superior; historial en el pie del sidebar. |
 | **Permisos (documento)** | Descarga de permiso como PDF (frente + reverso según plantillas), cuando aplica la configuración. |
 
 > **Figura 3 — [Insertar imagen]**  

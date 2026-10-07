@@ -91,12 +91,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/password/change-required', [ForcedPasswordChangeController::class, 'edit'])->name('password.force.edit');
     Route::put('/password/change-required', [ForcedPasswordChangeController::class, 'update'])->name('password.force.update');
 
-    Route::get('/supervision', function () {
-        $user = request()->user();
-        abort_unless($user && ($user->isAdmin() || $user->isResponsible() || $user->isAuditor()), 403);
-
-        return view('supervision.coming-soon');
-    })->name('supervision.index');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
