@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
+use App\Models\File;
 use App\Models\IncidentType;
 use App\Models\User;
 use App\Models\Weapon;
@@ -84,13 +85,13 @@ class WeaponRevalidationDocumentMetricsTest extends TestCase
         $this->createIncident($hurtada, 'hurtada', WeaponIncident::STATUS_OPEN, $admin);
         $this->createIncident($incautadaOpen, 'incautada', WeaponIncident::STATUS_IN_PROGRESS, $admin);
 
-        $chartMonth = now()->startOfMonth()->addMonths(2)->format('Y-m');
-        $chartYear = (int) now()->startOfMonth()->addMonths(2)->format('Y');
-        $validUntil = now()->startOfMonth()->addMonths(2)->endOfMonth()->toDateString();
+        $chartMonth = now()->startOfMonth()->addMonths(5)->format('Y-m');
+        $chartYear = (int) now()->startOfMonth()->addMonths(5)->format('Y');
+        $validUntil = now()->startOfMonth()->addMonths(5)->endOfMonth()->toDateString();
 
         $this->createRenewalDocument($vigente, $validUntil);
         $this->createRenewalDocument($hurtada, $validUntil);
-        $this->createRenewalDocument($incautadaOpen, now()->subDays(5)->toDateString());
+        $this->createRenewalDocument($incautadaOpen, $validUntil);
 
         $metrics = app(DashboardMetricsService::class)->forUser($admin, $chartYear);
         $monthItem = collect($metrics['renewal_chart']['items'])->firstWhere('key', $chartMonth);
@@ -137,6 +138,7 @@ class WeaponRevalidationDocumentMetricsTest extends TestCase
     private function createWeapon(string $serial, Client $client, User $responsible): Weapon
     {
         $weapon = Weapon::query()->create([
+            'internal_code' => 'ARM-'.$serial,
             'serial_number' => $serial,
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',
@@ -166,8 +168,17 @@ class WeaponRevalidationDocumentMetricsTest extends TestCase
 
     private function createRenewalDocument(Weapon $weapon, string $validUntil): WeaponDocument
     {
+        $file = File::query()->create([
+            'disk' => 'local',
+            'path' => 'weapons/'.$weapon->id.'/documents/revalidacion.pdf',
+            'original_name' => 'revalidacion.pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 100,
+        ]);
+
         return WeaponDocument::query()->create([
             'weapon_id' => $weapon->id,
+            'file_id' => $file->id,
             'document_name' => 'Revalidación',
             'valid_until' => $validUntil,
             'status' => 'Sin novedad',

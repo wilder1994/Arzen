@@ -15,6 +15,7 @@ use App\Models\WeaponPhoto;
 use App\Services\WeaponDocumentService;
 use App\Services\WeaponHistoryService;
 use App\Support\WeaponDocumentAlert;
+use App\Support\WeaponInternalCode;
 use App\Support\WeaponListStatusResolver;
 use App\Support\WeaponPhotoExportHighlight;
 use Illuminate\Database\Eloquent\Builder;
@@ -803,10 +804,6 @@ class WeaponController extends Controller
             return true;
         }
 
-        if (($filters['inventory_scope'] ?? 'operational') !== 'operational') {
-            return true;
-        }
-
         foreach ([
             'client_id',
             'responsible_user_id',
@@ -1588,14 +1585,7 @@ XML;
 
     private function generateInternalCode(): string
     {
-        $prefix = 'SJ-';
-        $latestCode = Weapon::where('internal_code', 'like', $prefix.'%')
-            ->orderByRaw('CAST(SUBSTRING(internal_code, 4) AS UNSIGNED) DESC')
-            ->value('internal_code');
-        $lastNumber = $latestCode ? (int) preg_replace('/\D/', '', $latestCode) : 0;
-        $code = sprintf('%s%04d', $prefix, $lastNumber + 1);
-
-        return $code;
+        return WeaponInternalCode::next();
     }
 
     public function toggleImprint(Request $request, Weapon $weapon)

@@ -61,6 +61,19 @@ class WeaponPolicy
         return false;
     }
 
+    public function manageCustody(User $user, Weapon $weapon): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ($user->isResponsibleLevelOne()) {
+            return $weapon->activeClientAssignment?->responsible_user_id === $user->id;
+        }
+
+        return false;
+    }
+
     public function delete(User $user, Weapon $weapon): bool
     {
         return false;

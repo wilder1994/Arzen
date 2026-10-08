@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('role');
             $table->foreignId('responsible_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->text('notes')->nullable();
+            $table->timestamp('archived_at')->nullable();
             $table->timestamps();
 
             $table->index(['client_id', 'role']);

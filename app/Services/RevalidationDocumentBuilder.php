@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CompanySetting;
 use App\Models\File;
 use App\Models\Weapon;
 use App\Models\WeaponPhoto;
@@ -16,11 +17,9 @@ use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\SimpleType\JcTable;
 use PhpOffice\PhpWord\Style\Language;
-use ZipArchive;
 
 class RevalidationDocumentBuilder
 {
-    private const TEMPLATE_BASE = 'resources/templates/PORTADA.docx';
     private const PAGE_WIDTH_CM = 21.59;
     private const BRANDING_HEIGHT_CM = 2.98;
     private const WEAPON_PHOTO_WIDTH_CM = 7.7;
@@ -40,11 +39,15 @@ class RevalidationDocumentBuilder
         'marginBottom' => 1418,
         'marginLeft' => 1701,
     ];
-    private const SIGNER_NAME = 'WILFREDO VELEZ CEDEÑO';
-    private const SIGNER_ID = 'C.C. No 94.506.540 DE CALI';
     private const SIGNER_ROLE = 'REPRESENTANTE LEGAL';
-    private const COMPANY_NAME = 'SJ SEGURIDAD PRIVADA LTDA';
-    private const COMPANY_NIT = 'NIT: 900.576.718-6';
+
+    private ?CompanySetting $company = null;
+
+    private ?array $letterhead = null;
+
+    public function __construct(private readonly CompanyLetterheadService $letterheadService)
+    {
+    }
 
     public function buildForWeapon(Weapon $weapon, string $outputPath): void
     {
@@ -94,8 +97,8 @@ class RevalidationDocumentBuilder
 
         return [
             'branding' => [
-                'header' => $this->pathToDataUri($this->extractTemplateMedia('word/media/image1.jpg')),
-                'footer' => $this->pathToDataUri($this->extractTemplateMedia('word/media/image2.jpg')),
+                'header' => $this->pathToDataUri($this->letterhead()['header']),
+                'footer' => $this->pathToDataUri($this->letterhead()['footer']),
             ],
             'date_line' => $this->coverDateLine($generatedAt),
             'recipient_lines' => $this->coverRecipientLines(),
@@ -108,13 +111,7 @@ class RevalidationDocumentBuilder
                 'Agradezco de antemano la atención a la presente solicitud,',
                 'Cordialmente,',
             ],
-            'signature_lines' => [
-                self::SIGNER_NAME,
-                self::SIGNER_ID,
-                self::SIGNER_ROLE,
-                self::COMPANY_NAME,
-                self::COMPANY_NIT,
-            ],
+            'signature_lines' => $this->signatureLines(),
             'annex' => $weapons->count() > 1
                 ? 'ANEXO: Registro fotográfico, improntas y copia de los salvoconductos.'
                 : null,
@@ -207,11 +204,9 @@ class RevalidationDocumentBuilder
         $section->addTextBreak(2);
         $section->addText('Agradezco de antemano la atención a la presente solicitud,', [], ['spaceAfter' => 220]);
         $section->addText('Cordialmente,', [], ['spaceAfter' => 700]);
-        $section->addText(self::SIGNER_NAME, [], ['spaceAfter' => 0]);
-        $section->addText(self::SIGNER_ID, [], ['spaceAfter' => 0]);
-        $section->addText(self::SIGNER_ROLE, [], ['spaceAfter' => 0]);
-        $section->addText(self::COMPANY_NAME, [], ['spaceAfter' => 0]);
-        $section->addText(self::COMPANY_NIT, [], ['spaceAfter' => 0]);
+        foreach ($this->signatureLines() as $line) {
+            $section->addText($line, [], ['spaceAfter' => 0]);
+        }
 
         if ($weapons->count() > 1) {
             $section->addText(
@@ -344,7 +339,38 @@ class RevalidationDocumentBuilder
 
     private function coverDateLine(CarbonInterface $generatedAt): string
     {
-        return 'Santiago de Cali, ' . $generatedAt->locale('es')->translatedFormat('j \d\e F \d\e Y');
+        $city = trim((string) $this->company()->city);
+        $date = $generatedAt->locale('es')->translatedFormat('j \d\e F \d\e Y');
+
+        return $city !== '' ? $city . ', ' . $date : $date;
+    }
+
+    private function signatureLines(): array
+    {
+        $company = $this->company();
+
+        return array_values(array_filter([
+            $this->upper((string) $company->legal_rep_name),
+            $company->legal_rep_document
+                ? 'C.C. No ' . $company->legal_rep_document . ($company->legal_rep_document_city ? ' DE ' . $this->upper($company->legal_rep_document_city) : '')
+                : null,
+            self::SIGNER_ROLE,
+            $this->upper((string) $company->legal_name),
+            $company->nit ? 'NIT: ' . $company->nit : null,
+        ], fn ($line) => filled($line)));
+    }
+
+    private function company(): CompanySetting
+    {
+        return $this->company ??= CompanySetting::current();
+    }
+
+    /**
+     * @return array{header: ?string, footer: ?string}
+     */
+    private function letterhead(): array
+    {
+        return $this->letterhead ??= $this->letterheadService->imagesFor($this->company());
     }
 
     private function coverRecipientLines(): array
@@ -364,10 +390,14 @@ class RevalidationDocumentBuilder
 
     private function coverBody(Collection $weapons): string
     {
-        return 'Yo, ' . self::SIGNER_NAME . ', identificado con cédula de ciudadanía No. 94.506.540 de Cali, '
-            . 'en mi calidad de representante legal de la compañía, ' . self::COMPANY_NAME . '. '
-            . 'Con Nit. 900.576.718-6, comedidamente me permito solicitar al señor Director del DCCA, '
-            . 'autorice al Señor ' . self::SIGNER_NAME . ', identificado con cédula de ciudadanía No. 94.506.540 de Cali, '
+        $company = $this->company();
+
+        return 'Yo, ' . $this->upper((string) $company->legal_rep_name) . ', identificado con cédula de ciudadanía No. '
+            . $company->legal_rep_document . ' de ' . $company->legal_rep_document_city . ', '
+            . 'en mi calidad de representante legal de la compañía, ' . $this->upper((string) $company->legal_name) . '. '
+            . 'Con Nit. ' . $company->nit . ', comedidamente me permito solicitar al señor Director del DCCA, '
+            . 'autorice al Señor ' . $this->upper((string) $company->agentName()) . ', identificado con cédula de ciudadanía No. '
+            . $company->agentDocument() . ' de ' . $company->agentDocumentCity() . ', '
             . 'para que en mi nombre y en representación de la compañía realice los trámites de revalidación de '
             . ($weapons->count() === 1 ? 'la siguiente arma' : 'las siguientes armas')
             . ', así:';
@@ -385,8 +415,8 @@ class RevalidationDocumentBuilder
 
     private function applyBranding($section): void
     {
-        $headerImage = $this->extractTemplateMedia('word/media/image1.jpg');
-        $footerImage = $this->extractTemplateMedia('word/media/image2.jpg');
+        $headerImage = $this->letterhead()['header'];
+        $footerImage = $this->letterhead()['footer'];
 
         if ($headerImage) {
             $header = $section->addHeader();
@@ -496,34 +526,6 @@ class RevalidationDocumentBuilder
 
         imagepng($image, $targetPath);
         imagedestroy($image);
-
-        return $targetPath;
-    }
-
-    private function extractTemplateMedia(string $entryName): ?string
-    {
-        $targetPath = storage_path('app/tmp/template-assets/' . basename($entryName));
-        if (file_exists($targetPath)) {
-            return $targetPath;
-        }
-
-        FileFacade::ensureDirectoryExists(dirname($targetPath));
-
-        $zip = new ZipArchive();
-        $templatePath = base_path(self::TEMPLATE_BASE);
-        if ($zip->open($templatePath) !== true) {
-            return null;
-        }
-
-        $stream = $zip->getStream($entryName);
-        if (!$stream) {
-            $zip->close();
-            return null;
-        }
-
-        file_put_contents($targetPath, stream_get_contents($stream));
-        fclose($stream);
-        $zip->close();
 
         return $targetPath;
     }

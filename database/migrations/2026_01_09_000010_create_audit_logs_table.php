@@ -19,6 +19,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['auditable_type', 'auditable_id']);
+            $table->index('created_at');
         });
     }
 

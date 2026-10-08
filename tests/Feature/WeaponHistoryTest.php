@@ -23,7 +23,7 @@ class WeaponHistoryTest extends TestCase
         $admin->clients()->attach($client->id);
 
         $weapon = Weapon::query()->create([
-            'internal_code' => 'SJ-HIST-1',
+            'internal_code' => 'ARM-HIST-1',
             'serial_number' => 'SER-HIST-1',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',
@@ -51,7 +51,7 @@ class WeaponHistoryTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
         $weapon = Weapon::query()->create([
-            'internal_code' => 'SJ-HIST-2',
+            'internal_code' => 'ARM-HIST-2',
             'serial_number' => 'SER-HIST-2',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',
@@ -64,7 +64,7 @@ class WeaponHistoryTest extends TestCase
 
         $this->actingAs($admin)
             ->put(route('weapons.update', $weapon), [
-                'internal_code' => 'SJ-HIST-2',
+                'internal_code' => 'ARM-HIST-2',
                 'serial_number' => 'SER-HIST-2',
                 'weapon_type' => 'Pistola',
                 'caliber' => '9MM',
@@ -94,7 +94,7 @@ class WeaponHistoryTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
         $weapon = Weapon::query()->create([
-            'internal_code' => 'SJ-HIST-3',
+            'internal_code' => 'ARM-HIST-3',
             'serial_number' => 'SER-HIST-3',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',

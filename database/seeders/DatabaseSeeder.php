@@ -2,22 +2,23 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\CompanySetting;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Installs only what the system needs to run: its own catalogs, the empty company record and the first administrator.
      */
     public function run(): void
     {
         $this->call([
-            PositionSeeder::class,
             ResponsibilityLevelSeeder::class,
-            AdminUserSeeder::class,
             IncidentTypeSeeder::class,
             IncidentModalitySeeder::class,
+            AdminUserSeeder::class,
         ]);
+
+        CompanySetting::firstOrCreateSingleton();
     }
 }

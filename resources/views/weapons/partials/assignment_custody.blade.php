@@ -2,7 +2,8 @@
     $custodyLabel = $weapon->custodyStatusLabel();
     $canManageCustody = $weapon->activeClientAssignment
         && ! $pendingTransferForWeapon
-        && ($custodyCanOperate ?? false);
+        && ($custodyCanOperate ?? false)
+        && (auth()->user()?->can('manageCustody', $weapon) ?? false);
 @endphp
 
 <style>

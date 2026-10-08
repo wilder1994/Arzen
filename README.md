@@ -28,7 +28,8 @@ Sistema web para **gestión de armamento**, **dotación (chalecos)**, **asignaci
 - ✅ **Reportes — Custodia y taller** (`/reports/weapon-custody`): armas en puestos de armerillo, armerillo para mantenimiento o armero por responsable.
 - ✅ **Custodia en ficha del arma**: acciones **Enviar a mi armerillo** (operativa), **Para mantenimiento** y **Enviar a armero** (no operativas, sin novedad); un armerillo y armeros por responsable, ubicación inicial del cliente. Al mover custodia se cierran novedades legadas abiertas (`en_mantenimiento`, `para_mantenimiento`, `en_armerillo`) y el listado muestra **Estado** alineado con el puesto de custodia (`WeaponListStatusResolver`).
 - ✅ **Formatos** (`/formatos`): catálogo en **tarjetas** (`sj-ui-card`, grid 1/2/4 columnas); **Revista mensual de armamento** (FO-OP-03) con descarga vacía o con relación de armas (tabla con filtros por columna, selección por checkbox y exportación solo de las marcadas); **plantilla carga masiva de chalecos** (tarjeta visible con permiso `import` en `Vest`); archivos en `resources/templates/`; revista usa `phpoffice/phpspreadsheet` (requiere `composer install` con PHP 8.2+). Pestaña **Formatos** en el módulo **Plataforma** (no es un menú desplegable).
-- ✅ **Shell de navegación**: sidebar con **Armamento**, **Dotación** y **Plataforma**; pestañas del módulo activo en la barra superior; el sidebar se oculta con el botón lateral (`localStorage`). **Mapa** vive en Armamento. **Cargas masivas** abre `/subir-armas` (ADMIN) o `/subir-chalecos` (quien solo importa chalecos). Árbol filtrado por rol en `App\Support\Navigation\ModuleNavBuilder`.
+- ✅ **Mi empresa** (solo ADMIN): datos legales, logo, membrete en Word, prefijo de códigos internos y Catálogos (cargos, tipos y modalidades de novedad, niveles). Ver **§14.1**.
+- ✅ **Shell de navegación**: sidebar con **Armamento**, **Dotación**, **Plataforma** y **Mi empresa**; pestañas del módulo activo en la barra superior; el sidebar se oculta con el botón lateral (`localStorage`). **Mapa** vive en Armamento. **Cargas masivas** abre `/subir-armas` (ADMIN) o `/subir-chalecos` (quien solo importa chalecos). Árbol filtrado por rol en `App\Support\Navigation\ModuleNavBuilder`.
 - ✅ **Kit UI global** (`sj-ui-*` en `resources/css/app.css`): interfaz unificada en listados, formularios, reportes, cargas masivas, auth guest, dashboard y detalle de armas/chalecos — headers (`sj-section-header`), tarjetas (`sj-ui-card`), KPIs (`sj-ui-kpi` / `sj-kpi-card`), filtros (`sj-ui-filter-bar`), botones (`sj-ui-btn` vía componentes Blade y vistas), enlaces de tabla (`sj-ui-link`). Tras cambios en `app.css`: `npm run build`.
 - ✅ **Tipografía unificada** (tokens `.sj-type-*` / `--sj-type-*` en `app.css`): eyebrow, título de página, subtítulo, sección, cuerpo, meta y KPI (números con peso **600**); los encabezados `sj-section-header__*` y héroes/KPIs del dashboard consumen los mismos tamaños fijos (sin `clamp` en títulos de página).
 
@@ -100,25 +101,11 @@ php artisan key:generate
 php artisan migrate
 ```
 
-En **producción** (`APP_ENV=production`): `php artisan migrate --force`. Antes, **respaldo de la BD** y **`git pull`** en el servidor para que los archivos en `database/migrations/` coincidan con el repo; si migras con código desactualizado, una migración puede fallar o dejar el esquema incoherente.
+En **producción** (`APP_ENV=production`): `php artisan migrate --force`. Antes, **respaldo de la BD** y **`git pull`** en el servidor para que los archivos en `database/migrations/` coincidan con el repo.
 
-**MySQL y `2026_05_08_120000_permit_authenticated_templates`:** esta migración elimina la FK de `weapons.permit_authenticated_file_id` usando el nombre real en `information_schema` y después borra la columna. Si ves `SQLSTATE[HY000]: 1828 Cannot drop column ... foreign key`, suele ser versión vieja del archivo de migración en el servidor o FK sin eliminar; actualiza el código, vuelve a ejecutar `migrate --force`, o en último caso elimina la FK manualmente en MySQL y repite la migración.
+**Migraciones unificadas (octubre 2026):** cada tabla se crea en **una sola migración** con todas sus columnas, índices y llaves foráneas finales (34 archivos). Se eliminaron las migraciones que alteraban tablas existentes (`add_*`, `fix_*`, rol `ALMACEN` vía `ALTER ... ENUM`, FK de `permit_authenticated_file_id`, etc.) y los parches propios de MySQL; por eso la suite de pruebas corre en SQLite. Orden relevante: `positions` y `responsibility_levels` van antes de `users` (FK directas) y `vests` antes de `weapon_import_rows`.
 
-**Custodia y reporte de novedades (mayo 2026):**
-
-- `2026_05_20_100000_add_is_reportable_to_incident_types_table.php` — columna `incident_types.is_reportable` (hurtada/perdida/incautada/dar de baja = `1`; en_mantenimiento, para_mantenimiento, en_armerillo = `0`).
-- `2026_05_20_100001_add_custody_fields_to_posts_table.php` — `posts.custody_role` (`armerillo`, `armerillo_para_mantenimiento`, `armero`) y `posts.owner_responsible_user_id`.
-
-Si `/reports/weapon-incidents` falla con `Unknown column 'is_reportable'`, falta ejecutar `migrate --force` tras `git pull`.
-
-**Módulo Chalecos (julio 2026):**
-
-- `2026_07_03_000001_create_vests_table.php` — tabla `vests`.
-- `2026_07_03_000002_create_vest_photos_table.php` — tabla `vest_photos`.
-- `2026_07_03_000003_add_vest_id_to_weapon_import_rows_table.php` — FK `vest_id` en filas de import.
-- `2026_07_06_000001_add_almacen_role_to_users_table.php` — amplía `users.role` (`ENUM`) con valor **`ALMACEN`**.
-
-Tras desplegar código con chalecos o rol almacén: `php artisan migrate --force` (sin `migrate:fresh`). Ver **§5.16** y **§5.17**.
+> Una base creada con las migraciones anteriores **no** se actualiza con `migrate`: requiere instalación limpia (`migrate:fresh --seed`) o migrar los datos aparte. Instalaciones nuevas: `php artisan migrate --seed`.
 
 ### 4) Instalar y compilar frontend
 
@@ -209,7 +196,7 @@ composer reverb
   - Acceso **exclusivo al módulo Chalecos** (`/vests`, `/subir-chalecos`): inventario global (todos los clientes), alta, edición, fotos e importación Excel.
   - Sin acceso a dashboard, armas, clientes, reportes ni demás módulos (middleware `RestrictAlmacenToVestModule`).
   - Tras login redirige a `/vests` (`RouteServiceProvider::homeFor()`). Solo un **ADMIN** puede crear usuarios con este rol.
-  - En formulario de usuario, conviene asignar **cargo** `Almacén` (`positions`) además del rol; rol y cargo son campos independientes.
+  - Rol y **cargo** (`positions`) son campos independientes; los cargos los crea cada empresa en **Mi empresa → Catálogos**.
 
 ### 🧩 Niveles de responsabilidad (`responsibility_levels.level`)
 
@@ -703,7 +690,7 @@ Textos: `resources/lang/es/weapons.php` (notas de cierre automático de novedade
 **Reglas técnicas**
 
 - **Responsable de custodia válido:** usuario asignado en el destino operativo del arma que sea **RESPONSABLE nivel 1** con ese cliente en cartera (`user_clients`), **o** **ADMIN** con ese cliente en cartera. Un ADMIN sin cartera para el cliente no puede operar armerillo/armero aunque figure como responsable en la ficha.
-- Quien ejecuta la acción: cualquier **ADMIN**, o el mismo responsable válido (incluido ADMIN con cartera en su propia ficha).
+- Quien ejecuta la acción: cualquier **ADMIN**, o el mismo responsable válido (incluido ADMIN con cartera en su propia ficha). Permiso `manageCustody` en `WeaponPolicy`: un RESPONSABLE nivel 2, o un nivel 1 que no es el responsable del destino, no ve los botones y recibe 403.
 - Un **armerillo** y un puesto **armerillo para mantenimiento** por responsable y cliente (se crean o reutilizan al primer uso).
 - Cada responsable registra sus **armeros** (no compartidos entre responsables).
 - Al cerrar asignación interna previa se usa `is_active = null` (igual que `WeaponInternalAssignmentController`), no `0`, para no violar el índice único `(weapon_id, is_active)` en `weapon_post_assignments`.
@@ -1439,18 +1426,11 @@ Auditoría en import: `vest_import_created`, `vest_import_updated` (además de `
 
 #### Migraciones
 
-Ejecutar en entornos existentes (no destructivo):
-
-```bash
-php artisan migrate
-```
-
 Archivos:
 
-- `2026_07_03_000001_create_vests_table.php`
-- `2026_07_03_000002_create_vest_photos_table.php`
-- `2026_07_03_000003_add_vest_id_to_weapon_import_rows_table.php`
-- `2026_07_06_000001_add_almacen_role_to_users_table.php`
+- `2026_03_15_000001_create_vests_table.php`
+- `2026_03_15_000002_create_vest_photos_table.php`
+- `weapon_import_rows.vest_id` y el valor `ALMACEN` de `users.role` viven en las migraciones de creación de cada tabla.
 
 > ⚠️ No usar `migrate:fresh` en bases con datos de producción o hosting importados.
 
@@ -1484,8 +1464,9 @@ Se registran, entre otros:
 ### Catalogos y seguridad
 
 - `users` (incluye `must_change_password`, flujo de cambio forzado de contraseña y `role` ENUM: `ADMIN`, `RESPONSABLE`, `AUDITOR`, `ALMACEN`)
-- `positions` (catálogo de **cargos** en formulario de usuario; ver `PositionSeeder`)
-- `responsibility_levels`
+- `positions` (catálogo de **cargos** en formulario de usuario; lo crea cada empresa en **Mi empresa → Catálogos**)
+- `responsibility_levels` (niveles 1 y 2 del sistema; nombre/descripción editables en Catálogos)
+- `company_settings` (fila única: razón social, NIT, ciudad, representante legal, persona autorizada, prefijo de códigos, `logo_file_id`, `letterhead_file_id`)
 - `user_clients` (pivot cartera)
 - `password_reset_tokens`
 - `personal_access_tokens`
@@ -1591,6 +1572,8 @@ Caracteristicas:
   - **Armamento**: Inicio, Armas, Revista, Mapa, Transferencias, Asignaciones, Reportes, Alertas.
   - **Dotación**: Chalecos.
   - **Plataforma**: Clientes, Puestos, Trabajadores, Usuarios, Cargas masivas, Formatos.
+  - **Mi empresa** (solo ADMIN): Datos de la empresa, Catálogos.
+- El logo del sidebar y del login es el que la empresa carga en Mi empresa (`CompanySetting::logoUrl()`, ruta pública `company.logo`); si no hay, se usa `public/images/Logo.png`.
 - Sidebar ocultable (hamburguesa; estado en `localStorage` `sj-sidebar-hidden`). En móvil abre overlay.
 - Barra superior: pestañas del módulo, tema claro/oscuro y campana de notificaciones.
 - Pie del sidebar: Idioma, Historial de notificaciones, nombre del usuario (abre el perfil) y Cerrar sesión.
@@ -1630,7 +1613,8 @@ Rutas usadas por el dominio:
 - Documentos arma: `storage/app/weapons/{weapon_id}/documents`
 - Renovacion autogenerada: `storage/app/weapons/{weapon_id}/documents/renovacion_{internal_code}.docx`
 - Archivos de importacion: `storage/app/weapon-imports`
-- Plantilla de renovacion: `resources/templates/PLANTILLA_REVALIDACION.docx`
+- Logo y membrete de la empresa: `storage/app/company` (metadatos en `files` / `company_settings`); imágenes del membrete extraídas en caché por archivo: `storage/app/tmp/letterhead/file-{id}`
+- Plantillas incluidas: `resources/templates/Revista_mensual_armamento.xlsx` (el logo se reemplaza por el de la empresa al exportar) y `resources/templates/Chalecos.xlsx`
 - Icono de mapa: `public/images/map/Icono_Ubicacion.png`
 
 ## 11. Internacionalizacion
@@ -1652,8 +1636,8 @@ Rutas usadas por el dominio:
 3. Copiar `.env.example` a `.env`
 4. Configurar base de datos en `.env`
 5. `php artisan key:generate`
-6. Definir `SEED_ADMIN_PASSWORD` en `.env`
-7. `php artisan migrate --seed`
+6. `php artisan migrate --seed` (crea el administrador `admin@arzen.com`, ver §14)
+7. Ingresar, cambiar la contraseña y completar **Mi empresa** (datos legales, logo, membrete y prefijo)
 8. Si vas a usar geocodificacion, definir `NOMINATIM_USER_AGENT`
 9. `php artisan storage:link`
 10. `npm run build` (o `npm run dev`)
@@ -1804,8 +1788,6 @@ Operacion:
 - `AUTH_ALLOW_PUBLIC_REGISTRATION`
   - `false` por defecto
   - si esta en `false`, no se exponen rutas publicas de registro
-- `SEED_ADMIN_PASSWORD`
-  - obligatoria para ejecutar `AdminUserSeeder`
 - `GOOGLE_MAPS_API_KEY`
   - clave del navegador para mapas y geocodificación de Google. Debe quedar restringida a los sitios de Arzen.
 - `APP_TIMEZONE`
@@ -1837,22 +1819,22 @@ Importante para entorno real:
 
 ## 14. Seeders y datos iniciales
 
-`DatabaseSeeder` ejecuta:
+La instalación queda **limpia**: sin clientes, puestos, trabajadores, armas ni cargos de ejemplo. `DatabaseSeeder` solo crea lo que el sistema necesita para funcionar:
 
-- `PositionSeeder` — catálogo de cargos (`positions.name`): Almacén, Analista de Operaciones, Auditor, Coordinador de Operaciones, Director de Gestion del Riesgo, Gerencia General, Jefe de Operaciones, Supervisor. Para refrescar en un entorno existente: `php artisan db:seed --class=PositionSeeder`.
-- `ResponsibilityLevelSeeder`
-- `AdminUserSeeder`
+- `ResponsibilityLevelSeeder` — niveles 1 (con gestión) y 2 (solo lectura); los permisos de responsables dependen de ellos.
+- `IncidentTypeSeeder` — tipos de novedad por código (`hurtada`, `perdida`, `incautada`, `en_mantenimiento`, `para_mantenimiento`, `en_armerillo`, `dar_de_baja`); tablero, reportes y reglas de bloqueo dependen de esos códigos.
+- `IncidentModalitySeeder` — modalidades iniciales de hurto, pérdida e incautación (editables en Catálogos).
+- `AdminUserSeeder` — único usuario: **`admin@arzen.com`**, contraseña inicial **`ArzenAdmin.2026`**, con `must_change_password = true` (el primer ingreso obliga a cambiarla).
+- Fila vacía de `company_settings` (prefijo por defecto `ARM-`).
 
-`AdminUserSeeder` crea/actualiza dos usuarios ADMIN por email:
+## 14.1 Mi empresa y Catálogos (solo ADMIN)
 
-- `wilder.rivera@example.com`
-- `andres.sanmiguel@example.com`
-
-Requisito:
-
-- exige `SEED_ADMIN_PASSWORD` antes de ejecutar `php artisan db:seed`
-
-Se recomienda cambiar passwords y correos en produccion inmediatamente despues del primer despliegue.
+- **Datos de la empresa** (`/empresa`, `CompanySettingsController`): razón social, NIT, dirección, ciudad (encabeza la fecha de la carta), contacto, representante legal (nombre, cédula, ciudad de expedición), persona autorizada para trámites (opcional; si se omite, la carta autoriza al representante), **logo** (PNG/JPG/WEBP ≤ 2 MB), **membrete en Word** (`.docx` ≤ 10 MB) y **prefijo de códigos internos**.
+- **Membrete:** `CompanyLetterheadService` toma la imagen más grande referenciada por el encabezado y la más grande del pie del `.docx`, y `RevalidationDocumentBuilder` las aplica a cada página de la carta. Un Word sin imagen en el encabezado se rechaza.
+- **Carta de revalidación:** razón social, NIT, ciudad y representante salen de `company_settings`. Si faltan datos obligatorios, Alertas muestra un aviso y la descarga/vista previa no se genera hasta completarlos.
+- **Códigos internos:** `App\Support\WeaponInternalCode` genera `{prefijo}{consecutivo de 4 dígitos}` para altas manuales e importaciones; cambiar el prefijo no modifica códigos existentes.
+- **Revista mensual (FO-OP-03):** el logo de la plantilla se reemplaza al exportar por el de la empresa, centrado en la misma casilla.
+- **Catálogos** (`/empresa/catalogos`, `CatalogController`): **Cargos** (crear, editar, eliminar si no están asignados), **Tipos de novedad** (nombre, color, orden, horas de atención, adjunto/nota de cierre obligatorios, activo; no se crean ni eliminan), **modalidades** por tipo (crear, editar, activar/desactivar) y **Niveles de responsabilidad** (nombre y descripción).
 
 ## 15. Pruebas automatizadas
 
@@ -1865,6 +1847,9 @@ Suite actual en `tests/`:
 - Feature de rol **ALMACEN** (`AlmacenRoleTest`): acceso a Chalecos, bloqueo del resto de módulos, redirect post-login y alta de usuario por ADMIN.
 - Unit/Feature de shell de módulos (`ModuleNavBuilderTest`, `ModuleNavigationTest`): visibilidad por rol y pestañas del módulo activo.
 - Feature de inventario operativo (`WeaponOperationalInventoryTest`), incluyendo listado con transferencia pendiente y asignación de cliente legacy cerrada (`operationalDisplayClient`).
+- Feature de **Mi empresa** (`CompanySettingsTest`): instalación limpia (solo admin y catálogos del sistema), acceso solo ADMIN, logo y membrete Word, rechazo de Word sin imagen, prefijo de códigos internos y cargos asignados no eliminables.
+
+Con las migraciones unificadas la suite corre completa en SQLite (octubre 2026: 158 pruebas en verde).
 
 Comando:
 
@@ -1872,7 +1857,7 @@ Comando:
 
 Configuracion de testing:
 
-- `phpunit.xml` define variables de entorno para PHPUnit (`APP_ENV=testing`, SQLite en memoria, etc.)
+- `phpunit.xml` define variables de entorno para PHPUnit (`APP_ENV=testing`, SQLite en memoria, broadcasting desactivado, etc.)
 
 Con esto, `php artisan test` no debe tocar la base real del proyecto.
 

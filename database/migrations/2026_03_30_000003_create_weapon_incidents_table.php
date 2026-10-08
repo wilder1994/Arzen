@@ -24,12 +24,14 @@ return new class extends Migration
             $table->dateTime('resolved_at')->nullable();
             $table->foreignId('resolved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->text('resolution_note')->nullable();
+            $table->string('closure_outcome', 100)->nullable();
             $table->timestamps();
 
             $table->index(['incident_type_id', 'status', 'event_at'], 'weapon_incidents_type_status_event_idx');
             $table->index(['weapon_id', 'status', 'event_at'], 'weapon_incidents_weapon_status_event_idx');
             $table->index(['reported_at'], 'weapon_incidents_reported_at_idx');
             $table->index(['event_at'], 'weapon_incidents_event_at_idx');
+            $table->index(['status', 'closure_outcome'], 'weapon_incidents_status_closure_outcome_idx');
         });
     }
 

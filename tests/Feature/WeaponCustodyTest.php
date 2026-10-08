@@ -76,6 +76,18 @@ class WeaponCustodyTest extends TestCase
         $this->assertTrue($weapon->isOperationalForInventory());
     }
 
+    public function test_level_two_responsible_cannot_use_custody(): void
+    {
+        [$weapon, $responsible] = $this->createWeaponContext('SER-CUST-L2');
+        $responsible->update([
+            'responsibility_level_id' => ResponsibilityLevel::query()->where('level', 2)->value('id'),
+        ]);
+
+        $this->actingAs($responsible->refresh())
+            ->post(route('weapons.custody.armerillo', $weapon))
+            ->assertForbidden();
+    }
+
     public function test_move_to_para_mantenimiento_is_non_operational(): void
     {
         [$weapon, $responsible] = $this->createWeaponContext();

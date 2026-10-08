@@ -2,10 +2,12 @@
 
 namespace App\Services\Formats;
 
+use App\Models\CompanySetting;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -52,6 +54,7 @@ class MonthlyWeaponReviewSpreadsheetExporter
 
         $spreadsheet = $this->loadTemplate();
         $templateSheet = $spreadsheet->getSheet(0);
+        $this->applyCompanyLogo($templateSheet);
 
         for ($index = 1; $index < $totalPages; $index++) {
             $clonedSheet = clone $templateSheet;
@@ -115,6 +118,38 @@ class MonthlyWeaponReviewSpreadsheetExporter
         }
 
         return IOFactory::load($path);
+    }
+
+    private function applyCompanyLogo(Worksheet $sheet): void
+    {
+        $logoPath = CompanySetting::current()->logoPath();
+        $drawings = $sheet->getDrawingCollection();
+
+        foreach ($drawings as $key => $drawing) {
+            if (! $drawing instanceof Drawing || ! is_file($logoPath)) {
+                continue;
+            }
+
+            [$boxWidth, $boxHeight] = [$drawing->getWidth(), $drawing->getHeight()];
+            [$coordinates, $offsetX, $offsetY] = [$drawing->getCoordinates(), $drawing->getOffsetX(), $drawing->getOffsetY()];
+            $drawings->offsetUnset($key);
+
+            $logo = new Drawing();
+            $logo->setName('Logo');
+            $logo->setPath($logoPath);
+            $logo->setResizeProportional(true);
+
+            [$imageWidth, $imageHeight] = getimagesize($logoPath) ?: [$boxWidth, $boxHeight];
+            $scale = min($boxWidth / max(1, $imageWidth), $boxHeight / max(1, $imageHeight));
+            $logo->setWidthAndHeight((int) round($imageWidth * $scale), (int) round($imageHeight * $scale));
+
+            $logo->setCoordinates($coordinates);
+            $logo->setOffsetX($offsetX + (int) round(($boxWidth - $logo->getWidth()) / 2));
+            $logo->setOffsetY($offsetY + (int) round(($boxHeight - $logo->getHeight()) / 2));
+            $logo->setWorksheet($sheet);
+
+            return;
+        }
     }
 
     /**

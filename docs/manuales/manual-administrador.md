@@ -48,7 +48,7 @@ El navegador abre la pantalla **Inicio de sesión** (`/login`).
 | Ref. | Qué señalar en la captura |
 |------|---------------------------|
 | **①** | Botón completo **Iniciar sesión** (esquina inferior derecha en escritorio; abajo centrado en móvil) — **flecha hacia el botón** |
-| *(opc.)* | Imagen de fondo / marca SJ (sin anotar si distrae) |
+| *(opc.)* | Imagen de fondo / logo de la empresa (sin anotar si distrae) |
 
 **[Insertar imagen: fig-01-01-bienvenida.png]**
 
@@ -115,7 +115,7 @@ El navegador abre la pantalla **Inicio de sesión** (`/login`).
 |---|---|
 | **Pantalla** | **Cambio de contraseña obligatorio** |
 | **Cuándo aplica** | Usuario creado en el sistema con **contraseña temporal** o tras acción **Enviar** en el listado de usuarios |
-| **Cuándo NO aplica** | Administrador inicial del **seed** (`SEED_ADMIN_PASSWORD` en `.env`); véase **§2.1**. No aplica cambio obligatorio en primer ingreso seed. |
+| **Cuándo NO aplica** | Administrador inicial de la instalación (`admin@arzen.com`); véase **§2.1**. Sí aplica cambio obligatorio en el primer ingreso. |
 
 #### Qué hacer
 
@@ -228,14 +228,14 @@ URL del sistema (/)
 #### Qué hacer
 
 1. Complete **§1.2** (bienvenida) y **§1.3** (login).
-2. En **Correo electrónico**, use el correo del admin configurado en base de datos (seeder).
-3. En **Contraseña**, use el valor de **`SEED_ADMIN_PASSWORD`** del archivo `.env` del servidor (solo personal autorizado de TI).
+2. En **Correo electrónico**, escriba `admin@arzen.com`.
+3. En **Contraseña**, escriba la contraseña inicial `ArzenAdmin.2026`.
 4. Pulse **Ingresar**.
-5. Si las credenciales son correctas, entra directo al **Inicio** — **no** aparece §1.4 (cambio obligatorio).
+5. El sistema pide cambiar la contraseña (§1.4); defina una nueva y guárdela.
 
 #### Resultado esperado
 
-Dashboard **Inicio** con menú completo de ADMIN.
+Dashboard **Inicio** con menú completo de ADMIN. Complete después **Mi empresa** (§16).
 
 #### Figura 2.1 — Login admin seed
 
@@ -1492,6 +1492,80 @@ Perfil actualizado.
 #### Figura 15.3 — Perfil
 
 **[Insertar imagen: fig-15-03-profile.png]**
+
+---
+
+## 16. Mi empresa
+
+### 16.1 Datos de la empresa, logo y membrete
+
+| | |
+|---|---|
+| **Menú** | Sidebar → **Mi empresa** → **Datos de la empresa** |
+| **Ruta** | `/empresa` |
+| **Objetivo** | Registrar la información que usan las cartas, los formatos y el logo del sistema |
+
+#### Qué hacer
+
+1. Complete **Razón social**, **NIT**, **Ciudad** y los datos del **Representante legal** (nombre, cédula y ciudad de expedición).
+2. Si los trámites los hace otra persona, complete **Persona autorizada para trámites**; si lo deja vacío, la carta autoriza al representante legal.
+3. En **Logo**, cargue la imagen de la empresa (PNG, JPG o WEBP, máximo 2 MB).
+4. En **Membrete (Word)**, cargue el `.docx` con el membrete como imagen en el encabezado y en el pie.
+5. Defina el **Prefijo** de los códigos internos de armas (por ejemplo `ACME-`).
+6. Clic **Guardar cambios**.
+
+#### Resultado esperado
+
+El logo aparece en el sidebar, el inicio de sesión y la revista mensual; las cartas de revalidación salen con el membrete y los datos de la empresa; las armas nuevas reciben el prefijo.
+
+#### Figura 16.1 — Datos de la empresa
+
+| Ref. | Qué señalar |
+|------|-------------|
+| **①** | Datos de la empresa y representante legal |
+| **②** | Logo y vista previa del membrete |
+| **③** | Prefijo de códigos internos |
+
+**[Insertar imagen: fig-16-01-company.png]**
+
+#### Notas
+
+- Cambiar el prefijo no modifica los códigos de armas ya registradas.
+
+#### Errores frecuentes
+
+| Situación | Acción |
+|-----------|--------|
+| Alertas muestra «faltan datos en Mi empresa» | Complete los campos indicados y guarde. |
+| El Word se rechaza | Inserte el membrete como imagen dentro del encabezado del documento. |
+
+---
+
+### 16.2 Catálogos
+
+| | |
+|---|---|
+| **Menú** | Sidebar → **Mi empresa** → **Catálogos** |
+| **Ruta** | `/empresa/catalogos` |
+| **Objetivo** | Mantener las listas de cargos, novedades y niveles |
+
+#### Qué hacer
+
+1. Pestaña **Cargos**: escriba el nombre (y descripción opcional) → **Agregar**. Edite y **Guardar**, o **Eliminar** si no está asignado a usuarios.
+2. Pestaña **Tipos de novedad**: ajuste nombre, color, orden, horas de atención y si exige adjunto o nota de cierre → **Guardar tipo**. En los tipos con modalidades, agregue o edite modalidades.
+3. Pestaña **Niveles de responsabilidad**: cambie el nombre o la descripción de los niveles 1 y 2 → **Guardar**.
+
+#### Resultado esperado
+
+Los formularios de usuarios y de novedades muestran las listas actualizadas.
+
+#### Figura 16.2 — Catálogos
+
+**[Insertar imagen: fig-16-02-catalogs.png]**
+
+#### Notas
+
+- Los tipos de novedad y los niveles son del sistema: no se crean ni se eliminan, porque el tablero, los reportes y los permisos dependen de ellos.
 
 ---
 

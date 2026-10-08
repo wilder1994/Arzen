@@ -48,7 +48,7 @@ El navegador abre la pantalla **Inicio de sesión** (`/login`).
 | Ref. | Qué señalar en la captura |
 |------|---------------------------|
 | **①** | Botón completo **Iniciar sesión** (esquina inferior derecha en escritorio; abajo centrado en móvil) — **flecha hacia el botón** |
-| *(opc.)* | Imagen de fondo / marca SJ (sin anotar si distrae) |
+| *(opc.)* | Imagen de fondo / logo de la empresa (sin anotar si distrae) |
 
 **[Insertar imagen: fig-01-01-bienvenida.png]**
 

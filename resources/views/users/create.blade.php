@@ -46,6 +46,9 @@
                                     <option value="{{ $position->id }}" @selected(old('position_id') == $position->id)>{{ $position->name }}</option>
                                 @endforeach
                             </select>
+                            @if ($positions->isEmpty())
+                                <p class="mt-1 text-xs text-gray-500">{{ __('No hay cargos creados.') }} <a href="{{ route('catalogs.index', ['tab' => 'cargos']) }}" class="font-semibold underline">{{ __('Crear cargos') }}</a></p>
+                            @endif
                             <x-input-error :messages="$errors->get('position_id')" class="mt-2" />
                         </div>
 

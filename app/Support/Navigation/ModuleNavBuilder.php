@@ -18,6 +18,7 @@ class ModuleNavBuilder
             $this->armamento($user),
             $this->dotacion($user),
             $this->plataforma($user),
+            $this->empresa($user),
         ]));
 
         $activeModule = collect($modules)->first(
@@ -156,6 +157,26 @@ class ModuleNavBuilder
                 route('formatos.index'),
                 $canSeeFormats,
                 request()->routeIs('formatos.*'),
+            ),
+        ]);
+    }
+
+    private function empresa(User $user): ?array
+    {
+        return $this->module('empresa', __('Mi empresa'), [
+            $this->link(
+                'datos-empresa',
+                __('Datos de la empresa'),
+                route('company.edit'),
+                $user->isAdmin(),
+                request()->routeIs('company.*'),
+            ),
+            $this->link(
+                'catalogos',
+                __('Catálogos'),
+                route('catalogs.index'),
+                $user->isAdmin(),
+                request()->routeIs('catalogs.*'),
             ),
         ]);
     }

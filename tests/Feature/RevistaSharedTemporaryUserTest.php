@@ -8,12 +8,17 @@ use App\Models\TemporaryPhotoUser;
 use App\Models\User;
 use App\Models\Weapon;
 use App\Models\WeaponClientAssignment;
+use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class RevistaSharedTemporaryUserTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected bool $seed = true;
+
+    protected string $seeder = ResponsibilityLevelSeeder::class;
 
     private function createResponsibleWithWeapon(string $serial, string $suffix): array
     {
@@ -29,7 +34,7 @@ class RevistaSharedTemporaryUserTest extends TestCase
         ]);
 
         $weapon = Weapon::create([
-            'internal_code' => "SJ-{$suffix}",
+            'internal_code' => "ARM-{$suffix}",
             'serial_number' => $serial,
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',
@@ -98,7 +103,7 @@ class RevistaSharedTemporaryUserTest extends TestCase
                 'temporary_photo_user_id' => $temporaryUser->id,
                 'weapon_ids' => [$ownerWeapon->id],
             ])
-            ->assertRedirect(route('revista-armas.index'));
+            ->assertRedirect(route('revista-armas.index', ['temporary_photo_user_id' => $temporaryUser->id]));
 
         $this->actingAs($authorized)
             ->get(route('revista-armas.temporary-users.index'))
@@ -110,7 +115,7 @@ class RevistaSharedTemporaryUserTest extends TestCase
                 'temporary_photo_user_id' => $temporaryUser->id,
                 'weapon_ids' => [$authorizedWeapon->id],
             ])
-            ->assertRedirect(route('revista-armas.index'));
+            ->assertRedirect(route('revista-armas.index', ['temporary_photo_user_id' => $temporaryUser->id]));
 
         $grant = TemporaryPhotoAccessGrant::query()->where('temporary_photo_user_id', $temporaryUser->id)->first();
         $this->assertNotNull($grant);

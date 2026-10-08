@@ -9,6 +9,7 @@ use App\Models\WeaponImportBatch;
 use App\Models\WeaponImportRow;
 use App\Services\Imports\Contracts\ImportBatchProcessor;
 use App\Services\WeaponDocumentService;
+use App\Support\WeaponInternalCode;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -261,7 +262,7 @@ class WeaponImportProcessor implements ImportBatchProcessor
             $payload = $row->normalized_payload ?? [];
 
             if ($row->action === WeaponImportRow::ACTION_CREATE) {
-                $payload['internal_code'] = sprintf('SJ-%04d', $this->nextInternalCodeNumber());
+                $payload['internal_code'] = WeaponInternalCode::next(lockForUpdate: true);
                 $payload['ownership_type'] = 'company_owned';
 
                 $weapon = Weapon::create($payload);
@@ -536,18 +537,6 @@ class WeaponImportProcessor implements ImportBatchProcessor
         return mb_convert_encoding($value, 'UTF-8', $encoding);
     }
 
-    private function nextInternalCodeNumber(): int
-    {
-        $latestCode = Weapon::query()
-            ->lockForUpdate()
-            ->where('internal_code', 'like', 'SJ-%')
-            ->orderByRaw('CAST(SUBSTRING(internal_code, 4) AS UNSIGNED) DESC')
-            ->value('internal_code');
-
-        $lastNumber = $latestCode ? (int) preg_replace('/\D/', '', $latestCode) : 0;
-
-        return $lastNumber + 1;
-    }
 
     private function normalizeHeader(string $value): string
     {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompanySetting;
 use App\Models\Weapon;
 use App\Models\WeaponDocument;
 use App\Services\WeaponDocumentService;
@@ -108,6 +109,12 @@ class AlertsController extends Controller
     {
         $this->authorizeAdmin();
 
+        if ($missing = CompanySetting::current()->missingLetterFields()) {
+            return redirect()
+                ->route('alerts.documents')
+                ->with('error', __('Completa los datos de Mi empresa antes de generar la carta: :fields.', ['fields' => implode(', ', $missing)]));
+        }
+
         $weapons = $this->selectedWeapons($request);
         $downloadBaseName = $this->resolveDownloadBaseName($request);
 
@@ -119,6 +126,10 @@ class AlertsController extends Controller
     public function previewBatch(Request $request, WeaponDocumentService $documentService)
     {
         $this->authorizeAdmin();
+
+        if ($missing = CompanySetting::current()->missingLetterFields()) {
+            abort(422, __('Completa los datos de Mi empresa antes de generar la carta: :fields.', ['fields' => implode(', ', $missing)]));
+        }
 
         $weapons = $this->selectedWeapons($request);
         $downloadBaseName = $this->resolveDownloadBaseName($request);

@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('executed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('status')->default('draft');
+            $table->string('type')->default('weapon');
             $table->string('source_name');
             $table->unsignedInteger('total_rows')->default(0);
             $table->unsignedInteger('create_count')->default(0);
@@ -21,7 +22,15 @@ return new class extends Migration
             $table->unsignedInteger('no_change_count')->default(0);
             $table->unsignedInteger('error_count')->default(0);
             $table->timestamp('executed_at')->nullable();
+            $table->timestamp('started_at')->nullable();
+            $table->timestamp('finished_at')->nullable();
+            $table->unsignedInteger('processed_rows')->default(0);
+            $table->unsignedInteger('successful_rows')->default(0);
+            $table->unsignedInteger('failed_rows')->default(0);
+            $table->text('last_error')->nullable();
             $table->timestamps();
+
+            $table->index(['type', 'status'], 'weapon_import_batches_type_status_idx');
         });
     }
 

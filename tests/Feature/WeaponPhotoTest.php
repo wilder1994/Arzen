@@ -22,7 +22,7 @@ class WeaponPhotoTest extends TestCase
         $admin = User::factory()->create(['role' => 'ADMIN']);
 
         $weapon = Weapon::create([
-            'internal_code' => 'SJ-PHOTO-001',
+            'internal_code' => 'ARM-PHOTO-001',
             'serial_number' => 'PHOTO-001',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',

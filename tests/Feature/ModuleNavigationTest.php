@@ -21,6 +21,7 @@ class ModuleNavigationTest extends TestCase
             ->assertSee('Dotación')
             ->assertDontSee('Supervisión')
             ->assertSee('Plataforma')
+            ->assertSee('Mi empresa')
             ->assertSee('Mapa')
             ->assertDontSee('Cargas masivas')
             ->assertDontSee('Subir armas');
@@ -36,6 +37,7 @@ class ModuleNavigationTest extends TestCase
             ->assertSee('Armamento')
             ->assertSee('Mapa')
             ->assertDontSee('Subir armas')
+            ->assertDontSee('Mi empresa')
             ->assertDontSee('Usuarios');
     }
 }

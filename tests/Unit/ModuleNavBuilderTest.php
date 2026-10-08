@@ -33,7 +33,9 @@ class ModuleNavBuilderTest extends TestCase
         $nav = $this->builder()->forUser($this->user(User::ROLE_ADMIN));
         $keys = $this->itemKeys($nav);
 
-        $this->assertSame(['armamento', 'dotacion', 'plataforma'], $this->moduleKeys($nav));
+        $this->assertSame(['armamento', 'dotacion', 'plataforma', 'empresa'], $this->moduleKeys($nav));
+        $this->assertContains('datos-empresa', $keys);
+        $this->assertContains('catalogos', $keys);
         $this->assertContains('usuarios', $keys);
         $this->assertContains('asignaciones', $keys);
         $this->assertContains('cargas', $keys);
@@ -54,6 +56,7 @@ class ModuleNavBuilderTest extends TestCase
         $this->assertContains('formatos', $keys);
         $this->assertContains('mapa', $keys);
         $this->assertNotContains('usuarios', $keys);
+        $this->assertNotContains('datos-empresa', $keys);
         $this->assertNotContains('asignaciones', $keys);
         $this->assertNotContains('cargas', $keys);
         $this->assertNotContains('revista', $keys);

@@ -24,7 +24,7 @@ class WeaponImportTest extends TestCase
         ]);
 
         Weapon::create([
-            'internal_code' => 'SJ-0001',
+            'internal_code' => 'ARM-0001',
             'serial_number' => 'IM1509AD',
             'weapon_type' => 'Revólver',
             'caliber' => '38L',
@@ -87,7 +87,7 @@ class WeaponImportTest extends TestCase
         ]);
 
         Weapon::create([
-            'internal_code' => 'SJ-0001',
+            'internal_code' => 'ARM-0001',
             'serial_number' => 'IM1509AD',
             'weapon_type' => 'Revólver',
             'caliber' => '38L',
@@ -155,7 +155,7 @@ class WeaponImportTest extends TestCase
         ]);
 
         Weapon::create([
-            'internal_code' => 'SJ-0001',
+            'internal_code' => 'ARM-0001',
             'serial_number' => 'SER-1000',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',
@@ -195,7 +195,7 @@ class WeaponImportTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('weapons', [
-            'internal_code' => 'SJ-0001',
+            'internal_code' => 'ARM-0001',
             'serial_number' => 'SER-1000',
         ]);
     }

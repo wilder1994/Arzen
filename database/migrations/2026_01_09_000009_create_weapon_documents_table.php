@@ -21,6 +21,8 @@ return new class extends Migration
             $table->boolean('is_permit')->default(false);
             $table->boolean('is_renewal')->default(false);
             $table->timestamps();
+
+            $table->index('valid_until');
         });
     }
 

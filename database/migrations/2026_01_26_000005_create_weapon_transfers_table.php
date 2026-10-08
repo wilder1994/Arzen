@@ -21,6 +21,8 @@ return new class extends Migration
             $table->dateTime('requested_at');
             $table->dateTime('answered_at')->nullable();
             $table->text('note')->nullable();
+            $table->unsignedInteger('ammo_count')->nullable();
+            $table->unsignedInteger('provider_count')->nullable();
             $table->timestamps();
 
             $table->index(['to_user_id', 'status']);

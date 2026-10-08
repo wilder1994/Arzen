@@ -567,7 +567,7 @@ class WeaponIncidentTest extends TestCase
         $responsible->clients()->attach($client->id);
 
         $weapon = Weapon::query()->create([
-            'internal_code' => 'SJ-2001',
+            'internal_code' => 'ARM-2001',
             'serial_number' => 'SER-2001',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',

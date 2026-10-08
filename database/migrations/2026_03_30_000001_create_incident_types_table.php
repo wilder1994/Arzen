@@ -15,7 +15,14 @@ return new class extends Migration
             $table->string('color', 20)->nullable();
             $table->unsignedSmallInteger('sort_order')->default(0);
             $table->boolean('requires_modality')->default(false);
+            $table->boolean('requires_attachment')->default(false);
+            $table->boolean('requires_resolution_note')->default(false);
+            $table->string('default_status', 30)->default('open');
+            $table->unsignedSmallInteger('sla_hours')->nullable();
+            $table->boolean('blocks_operation')->default(false);
+            $table->boolean('persists_operational_block')->default(false);
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_reportable')->default(true);
             $table->timestamps();
         });
     }

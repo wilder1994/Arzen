@@ -12,8 +12,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('batch_id')->constrained('weapon_import_batches')->cascadeOnDelete();
             $table->foreignId('weapon_id')->nullable()->constrained('weapons')->nullOnDelete();
+            $table->foreignId('vest_id')->nullable()->constrained('vests')->nullOnDelete();
+            $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete();
             $table->unsignedInteger('row_number');
             $table->string('action');
+            $table->string('execution_status')->nullable();
+            $table->timestamp('processed_at')->nullable();
+            $table->text('execution_error')->nullable();
             $table->string('summary')->nullable();
             $table->json('raw_payload')->nullable();
             $table->json('normalized_payload')->nullable();
@@ -24,6 +29,7 @@ return new class extends Migration
 
             $table->index(['batch_id', 'action']);
             $table->index(['batch_id', 'row_number']);
+            $table->index(['batch_id', 'execution_status']);
         });
     }
 

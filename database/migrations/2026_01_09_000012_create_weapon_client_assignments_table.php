@@ -22,6 +22,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['weapon_id', 'is_active']);
+            $table->index(['client_id', 'is_active'], 'weapon_client_assignments_client_active_idx');
+            $table->index(['responsible_user_id', 'is_active'], 'weapon_client_assignments_responsible_active_idx');
         });
     }
 

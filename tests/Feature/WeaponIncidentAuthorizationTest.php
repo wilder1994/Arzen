@@ -112,7 +112,7 @@ class WeaponIncidentAuthorizationTest extends TestCase
         $otherResponsible->clients()->attach($otherClient->id);
 
         $hiddenWeapon = Weapon::query()->create([
-            'internal_code' => 'SJ-3999',
+            'internal_code' => 'ARM-3999',
             'serial_number' => 'SER-3999',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',
@@ -148,7 +148,7 @@ class WeaponIncidentAuthorizationTest extends TestCase
         $responsible->clients()->attach($client->id);
 
         $weapon = Weapon::query()->create([
-            'internal_code' => 'SJ-3001',
+            'internal_code' => 'ARM-3001',
             'serial_number' => 'SER-3001',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',

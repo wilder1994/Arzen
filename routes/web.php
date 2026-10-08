@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AlertsController;
+use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\RevistaArmasController;
 use App\Http\Controllers\RevistaGuestAuthController;
 use App\Http\Controllers\RevistaGuestWeaponController;
@@ -52,6 +54,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/empresa/logo', [CompanySettingsController::class, 'logo'])->name('company.logo');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -238,6 +242,23 @@ Route::middleware('auth')->group(function () {
         Route::resource('usuarios-temporales', TemporaryPhotoUserController::class)
             ->parameters(['usuarios-temporales' => 'temporary_photo_user'])
             ->names('temporary-users');
+    });
+
+    Route::get('/empresa', [CompanySettingsController::class, 'edit'])->name('company.edit');
+    Route::put('/empresa', [CompanySettingsController::class, 'update'])->name('company.update');
+    Route::get('/empresa/membrete/{part}', [CompanySettingsController::class, 'letterheadImage'])
+        ->whereIn('part', ['header', 'footer'])
+        ->name('company.letterhead.image');
+
+    Route::prefix('empresa/catalogos')->name('catalogs.')->group(function () {
+        Route::get('/', [CatalogController::class, 'index'])->name('index');
+        Route::post('/cargos', [CatalogController::class, 'storePosition'])->name('positions.store');
+        Route::put('/cargos/{position}', [CatalogController::class, 'updatePosition'])->name('positions.update');
+        Route::delete('/cargos/{position}', [CatalogController::class, 'destroyPosition'])->name('positions.destroy');
+        Route::put('/novedades/{incidentType}', [CatalogController::class, 'updateIncidentType'])->name('incident-types.update');
+        Route::post('/novedades/{incidentType}/modalidades', [CatalogController::class, 'storeModality'])->name('modalities.store');
+        Route::put('/modalidades/{incidentModality}', [CatalogController::class, 'updateModality'])->name('modalities.update');
+        Route::put('/niveles/{responsibilityLevel}', [CatalogController::class, 'updateLevel'])->name('levels.update');
     });
 
     Route::get('/alerts/documents', [AlertsController::class, 'documents'])->name('alerts.documents');

@@ -6,12 +6,17 @@ use App\Models\Client;
 use App\Models\User;
 use App\Models\Weapon;
 use App\Models\WeaponClientAssignment;
+use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class FormatControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected bool $seed = true;
+
+    protected string $seeder = ResponsibilityLevelSeeder::class;
 
     private function createWeaponWithAssignment(User $responsible, string $serial = 'FMT-001'): Weapon
     {
@@ -21,7 +26,7 @@ class FormatControllerTest extends TestCase
         ]);
 
         $weapon = Weapon::create([
-            'internal_code' => 'SJ-FMT-'.$serial,
+            'internal_code' => 'ARM-FMT-'.$serial,
             'serial_number' => $serial,
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',

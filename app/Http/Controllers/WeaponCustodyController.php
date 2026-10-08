@@ -18,7 +18,7 @@ class WeaponCustodyController extends Controller
 
     public function moveToArmerillo(Request $request, Weapon $weapon)
     {
-        $this->authorize('update', $weapon);
+        $this->authorize('manageCustody', $weapon);
 
         try {
             $this->custody->moveToArmerillo($weapon, $request->user(), $request->input('reason'));
@@ -33,7 +33,7 @@ class WeaponCustodyController extends Controller
 
     public function moveToParaMantenimiento(Request $request, Weapon $weapon)
     {
-        $this->authorize('update', $weapon);
+        $this->authorize('manageCustody', $weapon);
 
         try {
             $this->custody->moveToParaMantenimiento($weapon, $request->user(), $request->input('reason'));
@@ -48,7 +48,7 @@ class WeaponCustodyController extends Controller
 
     public function moveToArmero(Request $request, Weapon $weapon)
     {
-        $this->authorize('update', $weapon);
+        $this->authorize('manageCustody', $weapon);
 
         $data = $request->validate([
             'post_id' => ['required', 'integer', 'exists:posts,id'],
@@ -70,7 +70,7 @@ class WeaponCustodyController extends Controller
 
     public function storeArmeroPost(Request $request, Weapon $weapon)
     {
-        $this->authorize('update', $weapon);
+        $this->authorize('manageCustody', $weapon);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],

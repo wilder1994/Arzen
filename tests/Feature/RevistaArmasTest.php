@@ -12,6 +12,7 @@ use App\Models\WeaponClientAssignment;
 use App\Models\WeaponHistory;
 use App\Models\WeaponPhotoStaging;
 use App\Support\RevistaWeaponPhotoSlots;
+use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -21,6 +22,10 @@ use Tests\TestCase;
 class RevistaArmasTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected bool $seed = true;
+
+    protected string $seeder = ResponsibilityLevelSeeder::class;
 
     private function createResponsibleWithWeapon(): array
     {
@@ -35,7 +40,7 @@ class RevistaArmasTest extends TestCase
         ]);
 
         $weapon = Weapon::create([
-            'internal_code' => 'SJ-REV-001',
+            'internal_code' => 'ARM-REV-001',
             'serial_number' => 'REV-001',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',
@@ -81,7 +86,7 @@ class RevistaArmasTest extends TestCase
                 'temporary_photo_user_id' => $temporaryUser->id,
                 'weapon_ids' => [$weapon->id],
             ])
-            ->assertRedirect(route('revista-armas.index'));
+            ->assertRedirect(route('revista-armas.index', ['temporary_photo_user_id' => $temporaryUser->id]));
 
         $grant = TemporaryPhotoAccessGrant::query()->latest('id')->first();
         $this->assertNotNull($grant);
@@ -201,7 +206,7 @@ class RevistaArmasTest extends TestCase
         [$responsible, $weaponAssigned] = $this->createResponsibleWithWeapon();
 
         $weaponOther = Weapon::create([
-            'internal_code' => 'SJ-REV-002',
+            'internal_code' => 'ARM-REV-002',
             'serial_number' => 'REV-OTHER-999',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',
@@ -269,7 +274,7 @@ class RevistaArmasTest extends TestCase
         [$responsible, $weaponWithStaging] = $this->createResponsibleWithWeapon();
 
         $weaponOther = Weapon::create([
-            'internal_code' => 'SJ-REV-003',
+            'internal_code' => 'ARM-REV-003',
             'serial_number' => 'REV-NEW-003',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',
@@ -423,7 +428,7 @@ class RevistaArmasTest extends TestCase
 
         foreach (RevistaWeaponPhotoSlots::keys() as $description) {
             $path = 'weapons/'.$weapon->id.'/staging/'.$temporaryUser->id.'/'.$description.'.jpg';
-            Storage::disk('public')->put($path, 'fake-image');
+            Storage::disk('public')->put($path, UploadedFile::fake()->image($description.'.jpg', 40, 30)->getContent());
 
             $file = File::create([
                 'disk' => 'public',

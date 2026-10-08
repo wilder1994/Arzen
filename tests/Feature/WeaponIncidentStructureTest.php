@@ -128,7 +128,7 @@ class WeaponIncidentStructureTest extends TestCase
         $responsible->clients()->attach($client->id);
 
         $weapon = Weapon::query()->create([
-            'internal_code' => 'SJ-4001',
+            'internal_code' => 'ARM-4001',
             'serial_number' => 'SER-4001',
             'weapon_type' => 'Pistola',
             'caliber' => '9MM',

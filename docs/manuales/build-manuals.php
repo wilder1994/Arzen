@@ -87,7 +87,7 @@ function footerDoc(string $name): string
 
 // --- ADMIN ---
 $admin = headerDoc('Manual de usuario — Administrador (rol ADMIN)', 'rol **ADMIN**');
-$admin .= accessBlock('Administrador inicial del **seed** (`SEED_ADMIN_PASSWORD` en `.env`); véase **§2.1**. No aplica cambio obligatorio en primer ingreso seed.');
+$admin .= accessBlock('Administrador inicial de la instalación (`admin@arzen.com`); véase **§2.1**. Sí aplica cambio obligatorio en el primer ingreso.');
 $admin .= chapter('2', 'Tipos de cuenta administrador');
 $admin .= proc(
     '2.1 Administrador inicial (seed)',
@@ -97,12 +97,12 @@ $admin .= proc(
     ],
     [
         'Complete **§1.2** (bienvenida) y **§1.3** (login).',
-        'En **Correo electrónico**, use el correo del admin configurado en base de datos (seeder).',
-        'En **Contraseña**, use el valor de **`SEED_ADMIN_PASSWORD`** del archivo `.env` del servidor (solo personal autorizado de TI).',
+        'En **Correo electrónico**, escriba `admin@arzen.com`.',
+        'En **Contraseña**, escriba la contraseña inicial `ArzenAdmin.2026`.',
         'Pulse **Ingresar**.',
-        'Si las credenciales son correctas, entra directo al **Inicio** — **no** aparece §1.4 (cambio obligatorio).',
+        'El sistema pide cambiar la contraseña (§1.4); defina una nueva y guárdela.',
     ],
-    'Dashboard **Inicio** con menú completo de ADMIN.',
+    'Dashboard **Inicio** con menú completo de ADMIN. Complete después **Mi empresa** (§16).',
     [['id' => '2.1', 'title' => 'Login admin seed', 'file' => 'fig-02-01-login-seed.png', 'refs' => ['①' => 'Correo', '②' => 'Contraseña', '③' => 'Ingresar']]],
     null,
     ['Tras el despliegue, cambie la contraseña desde **Perfil** (§17) o cree admins nuevos con contraseña temporal.']
@@ -699,6 +699,44 @@ $admin .= proc(
     ],
     'Perfil actualizado.',
     [['id' => '15.3', 'title' => 'Perfil', 'file' => 'fig-15-03-profile.png', 'refs' => []]]
+);
+
+$admin .= chapter('16', 'Mi empresa');
+$admin .= proc(
+    '16.1 Datos de la empresa, logo y membrete',
+    ['Menú' => 'Sidebar → **Mi empresa** → **Datos de la empresa**', 'Ruta' => '`/empresa`', 'Objetivo' => 'Registrar la información que usan las cartas, los formatos y el logo del sistema'],
+    [
+        'Complete **Razón social**, **NIT**, **Ciudad** y los datos del **Representante legal** (nombre, cédula y ciudad de expedición).',
+        'Si los trámites los hace otra persona, complete **Persona autorizada para trámites**; si lo deja vacío, la carta autoriza al representante legal.',
+        'En **Logo**, cargue la imagen de la empresa (PNG, JPG o WEBP, máximo 2 MB).',
+        'En **Membrete (Word)**, cargue el `.docx` con el membrete como imagen en el encabezado y en el pie.',
+        'Defina el **Prefijo** de los códigos internos de armas (por ejemplo `ACME-`).',
+        'Clic **Guardar cambios**.',
+    ],
+    'El logo aparece en el sidebar, el inicio de sesión y la revista mensual; las cartas de revalidación salen con el membrete y los datos de la empresa; las armas nuevas reciben el prefijo.',
+    [['id' => '16.1', 'title' => 'Datos de la empresa', 'file' => 'fig-16-01-company.png', 'refs' => [
+        '①' => 'Datos de la empresa y representante legal',
+        '②' => 'Logo y vista previa del membrete',
+        '③' => 'Prefijo de códigos internos',
+    ]]],
+    [
+        ['Alertas muestra «faltan datos en Mi empresa»', 'Complete los campos indicados y guarde.'],
+        ['El Word se rechaza', 'Inserte el membrete como imagen dentro del encabezado del documento.'],
+    ],
+    ['Cambiar el prefijo no modifica los códigos de armas ya registradas.']
+);
+$admin .= proc(
+    '16.2 Catálogos',
+    ['Menú' => 'Sidebar → **Mi empresa** → **Catálogos**', 'Ruta' => '`/empresa/catalogos`', 'Objetivo' => 'Mantener las listas de cargos, novedades y niveles'],
+    [
+        'Pestaña **Cargos**: escriba el nombre (y descripción opcional) → **Agregar**. Edite y **Guardar**, o **Eliminar** si no está asignado a usuarios.',
+        'Pestaña **Tipos de novedad**: ajuste nombre, color, orden, horas de atención y si exige adjunto o nota de cierre → **Guardar tipo**. En los tipos con modalidades, agregue o edite modalidades.',
+        'Pestaña **Niveles de responsabilidad**: cambie el nombre o la descripción de los niveles 1 y 2 → **Guardar**.',
+    ],
+    'Los formularios de usuarios y de novedades muestran las listas actualizadas.',
+    [['id' => '16.2', 'title' => 'Catálogos', 'file' => 'fig-16-02-catalogs.png', 'refs' => []]],
+    null,
+    ['Los tipos de novedad y los niveles son del sistema: no se crean ni se eliminan, porque el tablero, los reportes y los permisos dependen de ellos.']
 );
 
 $admin .= footerDoc('manual de administrador');

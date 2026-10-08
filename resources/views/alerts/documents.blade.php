@@ -208,6 +208,7 @@
 
     <div class="py-8" data-alerts-page>
         <div class="sj-page-shell sj-page-shell--wide space-y-6">
+            @include('company.partials.letter-readiness')
             <section class="sj-ui-kpi-grid mb-0" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
                 <button type="button" class="sj-ui-kpi sj-ui-kpi--red text-left" data-open-modal="expired">
                     <span class="sj-ui-kpi__label">{{ $monthLabel }}</span>
