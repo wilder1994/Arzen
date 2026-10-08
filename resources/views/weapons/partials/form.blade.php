@@ -42,14 +42,14 @@
 @endif
 
 <div class="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
-    <p class="md:col-span-2 text-sm font-medium text-gray-700">{{ __('Datos del arma') }}</p>
+    <h3 class="md:col-span-2 sj-type-section text-gray-900">{{ __('Datos del arma') }}</h3>
 
     <div>
         <x-input-label for="weapon_type" :value="__('Tipo de arma')" />
         @php
             $selectedWeaponType = old('weapon_type', $weapon?->weapon_type);
         @endphp
-        <select id="weapon_type" name="weapon_type" class="mt-1 block w-full rounded-md border-gray-300 text-sm" required>
+        <select id="weapon_type" name="weapon_type" class="sj-ui-field__control mt-1 block w-full" required>
             <option value="">{{ __('Seleccione') }}</option>
             @foreach ($weaponTypes as $weaponTypeOption)
                 <option value="{{ $weaponTypeOption }}" @selected($selectedWeaponType === $weaponTypeOption)>
@@ -89,7 +89,7 @@
 
     <div>
         <x-input-label for="ownership_type" :value="__('Tipo de propiedad')" />
-        <select id="ownership_type" name="ownership_type" class="mt-1 block w-full rounded-md border-gray-300">
+        <select id="ownership_type" name="ownership_type" class="sj-ui-field__control mt-1 block w-full">
             @foreach ($ownershipTypes as $value => $label)
                 <option value="{{ $value }}" @selected(old('ownership_type', $weapon?->ownership_type) === $value)>{{ $label }}</option>
             @endforeach
@@ -105,7 +105,7 @@
 </div>
 
 <div class="md:col-span-2">
-    <span class="text-sm font-medium text-gray-700">{{ __('Registro fotográfico del arma') }}</span>
+    <span class="sj-ui-field__label">{{ __('Registro fotográfico del arma') }}</span>
     <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5">
         @foreach ($photoDescriptions as $description => $label)
             @php
@@ -151,7 +151,7 @@
 <div class="md:col-span-2 grid grid-cols-1 gap-4 md:grid-cols-2">
     <div>
         <x-input-label for="permit_type" :value="__('Tipo de permiso')" />
-    <select id="permit_type" name="permit_type" class="mt-1 block w-full rounded-md border-gray-300" required>
+    <select id="permit_type" name="permit_type" class="sj-ui-field__control mt-1 block w-full" required>
         <option value="">{{ __('Seleccione') }}</option>
         <option value="porte" @selected(old('permit_type', $weapon?->permit_type) === 'porte')>{{ __('Porte') }}</option>
         <option value="tenencia" @selected(old('permit_type', $weapon?->permit_type) === 'tenencia')>{{ __('Tenencia') }}</option>
@@ -201,7 +201,7 @@
 <div class="md:col-span-2">
     <x-input-label for="notes" :value="__('Notas')" />
     <p class="mt-1 text-xs text-gray-500">{{ __('Al guardar, el texto se añade al historial de la ficha del arma (junto con el resumen de cambios al editar).') }}</p>
-    <textarea id="notes" name="notes" spellcheck="true" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">{{ old('notes', $weapon?->notes) }}</textarea>
+    <textarea id="notes" name="notes" spellcheck="true" class="sj-ui-field__control mt-1 block w-full">{{ old('notes', $weapon?->notes) }}</textarea>
     <x-input-error :messages="$errors->get('notes')" class="mt-2" />
 </div>
 
@@ -216,8 +216,8 @@
     <div class="w-full max-w-sm rounded bg-white shadow-lg">
         <div class="border-b px-4 py-3 text-sm font-semibold text-gray-800">{{ __('Agregar imagen') }}</div>
         <div class="p-4 space-y-2 text-sm text-gray-700">
-            <button id="weapon_photo_source_camera" type="button" class="w-full rounded border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-sm font-medium text-indigo-900 hover:bg-indigo-100">{{ __('Tomar foto') }}</button>
-            <button id="weapon_photo_source_gallery" type="button" class="w-full rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100">{{ __('Elegir de galería') }}</button>
+            <button id="weapon_photo_source_camera" type="button" class="sj-ui-btn sj-ui-btn--ghost w-full">{{ __('Tomar foto') }}</button>
+            <button id="weapon_photo_source_gallery" type="button" class="sj-ui-btn sj-ui-btn--ghost w-full">{{ __('Elegir de galería') }}</button>
         </div>
         <div class="flex justify-end border-t px-4 py-2">
             <button id="weapon_photo_source_cancel" type="button" class="text-sm text-gray-600 hover:text-gray-900">{{ __('Cancelar') }}</button>
@@ -231,7 +231,7 @@
 <div id="image_editor_modal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-hidden bg-black/50 p-2 sm:p-4">
     <div class="sj-image-editor-panel flex max-h-[calc(100dvh-0.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-lg sm:max-h-[calc(100dvh-2rem)]">
         <div class="flex shrink-0 items-center justify-between border-b px-4 py-3">
-            <h3 class="text-sm font-semibold text-gray-800">{{ __('Editar imagen') }}</h3>
+            <h3 class="sj-type-section text-gray-800">{{ __('Editar imagen') }}</h3>
             <button id="image_editor_close" type="button" class="text-sm text-gray-500 hover:text-gray-700">
                 {{ __('Cerrar') }}
             </button>
@@ -245,10 +245,10 @@
             <div class="flex flex-col gap-3 px-3 py-3 sm:px-4">
                 <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                     <div class="flex flex-wrap gap-2">
-                        <button id="image_editor_rotate_left" type="button" class="rounded border border-gray-300 px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 sm:py-1">
+                        <button id="image_editor_rotate_left" type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">
                             {{ __('Girar izquierda') }}
                         </button>
-                        <button id="image_editor_rotate_right" type="button" class="rounded border border-gray-300 px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 sm:py-1">
+                        <button id="image_editor_rotate_right" type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">
                             {{ __('Girar derecha') }}
                         </button>
                     </div>
@@ -256,7 +256,7 @@
                         <span class="text-xs font-medium text-gray-600">{{ __('Ajuste fino') }}</span>
                         <input id="image_editor_rotate_fine" type="range" min="-10" max="10" step="0.1" value="0" class="h-2 w-full min-w-0 flex-1 cursor-pointer accent-indigo-600 sm:min-w-[8rem]">
                         <span id="image_editor_rotate_value" class="text-xs font-medium text-gray-600 sm:w-14 sm:text-right">0.0°</span>
-                        <button id="image_editor_rotate_reset" type="button" class="rounded border border-gray-300 px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 sm:py-1">
+                        <button id="image_editor_rotate_reset" type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">
                             {{ __('Restablecer') }}
                         </button>
                     </div>

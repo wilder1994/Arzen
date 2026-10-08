@@ -33,7 +33,7 @@
                                 id="incident_weapon_search"
                                 type="text"
                                 value="{{ $selectedWeapon['summary'] ?? '' }}"
-                                class="mt-1 block w-full rounded-xl border-slate-300 text-sm shadow-sm"
+                                class="sj-ui-field__control mt-1 block w-full"
                                 placeholder="{{ __('Buscar por cliente, marca o serie...') }}"
                                 autocomplete="off"
                                 spellcheck="false"
@@ -61,7 +61,7 @@
 
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500" for="incident_type_id">{{ __('Tipo') }}</label>
-                            <select id="incident_type_id" name="incident_type_id" class="mt-1 block w-full rounded-xl border-slate-300 text-sm shadow-sm" data-incident-type-select required>
+                            <select id="incident_type_id" name="incident_type_id" class="sj-ui-field__control mt-1 block w-full" data-incident-type-select required>
                                 <option value="">{{ __('Seleccione') }}</option>
                                 @foreach ($types as $type)
                                     <option value="{{ $type->id }}" @selected((int) old('incident_type_id', $selectedType?->id) === (int) $type->id)>{{ $type->name }}</option>
@@ -74,7 +74,7 @@
                             <select
                                 id="incident_modality_id"
                                 name="incident_modality_id"
-                                class="mt-1 block w-full rounded-xl border-slate-300 text-sm shadow-sm"
+                                class="sj-ui-field__control mt-1 block w-full"
                                 data-incident-modality-select
                                 data-modality-map='@json($modalityMap)'
                                 data-selected-modality="{{ old('incident_modality_id') }}"
@@ -85,7 +85,7 @@
 
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500" for="incident_status">{{ __('Estado') }}</label>
-                            <select id="incident_status" name="status" class="mt-1 block w-full rounded-xl border-slate-300 text-sm shadow-sm">
+                            <select id="incident_status" name="status" class="sj-ui-field__control mt-1 block w-full">
                                 <option value="">{{ __('Según tipo') }}</option>
                                 @foreach (App\Models\WeaponIncident::initialStatusOptions() as $value => $label)
                                     <option value="{{ $value }}" @selected(old('status') === $value)>{{ $label }}</option>
@@ -102,12 +102,12 @@
                     <div class="mt-4 grid gap-4">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500" for="incident_observation">{{ __('Observación') }}</label>
-                            <input id="incident_observation" name="observation" type="text" value="{{ old('observation') }}" class="mt-1 block w-full rounded-xl border-slate-300 text-sm shadow-sm" maxlength="255" required>
+                            <input id="incident_observation" name="observation" type="text" value="{{ old('observation') }}" class="sj-ui-field__control mt-1 block w-full" maxlength="255" required>
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500" for="incident_note">{{ __('Nota') }}</label>
-                            <textarea id="incident_note" name="note" rows="4" class="mt-1 block w-full rounded-xl border-slate-300 text-sm shadow-sm">{{ old('note') }}</textarea>
+                            <textarea id="incident_note" name="note" rows="4" class="sj-ui-field__control mt-1 block w-full">{{ old('note') }}</textarea>
                         </div>
                     </div>
 

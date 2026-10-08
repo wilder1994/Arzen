@@ -38,7 +38,7 @@
                                 id="history_weapon_search"
                                 type="text"
                                 value="{{ $selectedWeapon['summary'] ?? '' }}"
-                                class="mt-1 block w-full rounded-xl border-slate-300 text-sm shadow-sm"
+                                class="sj-ui-field__control mt-1 block w-full"
                                 placeholder="{{ __('Buscar por cliente, marca o serie...') }}"
                                 autocomplete="off"
                                 spellcheck="false"

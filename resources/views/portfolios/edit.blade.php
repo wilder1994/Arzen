@@ -237,16 +237,16 @@
         border-radius: 9999px;
         color: rgb(51 65 85);
         display: inline-flex;
-        font-size: 0.9rem;
+        font-size: var(--sj-fs-md);
         font-weight: 600;
         gap: 0.45rem;
-        min-height: 2.75rem;
+        min-height: var(--sj-ui-control-height);
         padding: 0 1rem;
     }
 
     .portfolio-edit-header__stat strong {
         color: rgb(15 23 42);
-        font-size: 1rem;
+        font-size: var(--sj-fs-lg);
     }
 
     .portfolio-edit-header__back:hover {
@@ -275,7 +275,7 @@
 
     .portfolio-edit-panel__eyebrow {
         color: #4b6280;
-        font-size: 0.76rem;
+        font-size: var(--sj-fs-xs);
         font-weight: 800;
         letter-spacing: 0.16em;
         margin: 0 0 0.4rem;
@@ -284,14 +284,14 @@
 
     .portfolio-edit-panel__title {
         color: rgb(15 23 42);
-        font-size: 1.25rem;
+        font-size: var(--sj-fs-xl);
         font-weight: 800;
         margin: 0;
     }
 
     .portfolio-edit-panel__subtitle {
         color: rgb(82 99 122);
-        font-size: 0.94rem;
+        font-size: var(--sj-fs-lg);
         line-height: 1.5;
         margin: 0.45rem 0 0;
     }
@@ -318,8 +318,8 @@
         border: 1px solid rgb(203 213 225);
         border-radius: 0.95rem;
         color: rgb(30 41 59);
-        font-size: 0.94rem;
-        min-height: 2.9rem;
+        font-size: var(--sj-fs-lg);
+        min-height: var(--sj-ui-control-height);
         padding: 0 0.95rem;
         width: 100%;
     }
@@ -337,9 +337,9 @@
         border-radius: 9999px;
         color: rgb(51 65 85);
         display: inline-flex;
-        font-size: 0.88rem;
+        font-size: var(--sj-fs-md);
         font-weight: 700;
-        min-height: 2.65rem;
+        min-height: var(--sj-ui-control-height);
         padding: 0 0.95rem;
     }
 
@@ -363,9 +363,9 @@
         border: 1px solid rgb(203 213 225);
         border-radius: 9999px;
         display: inline-flex;
-        font-size: 0.88rem;
+        font-size: var(--sj-fs-md);
         font-weight: 700;
-        min-height: 2.65rem;
+        min-height: var(--sj-ui-control-height);
         padding: 0 0.95rem;
     }
 
@@ -439,7 +439,7 @@
 
     .portfolio-card__name {
         color: rgb(15 23 42);
-        font-size: 0.96rem;
+        font-size: var(--sj-fs-lg);
         font-weight: 700;
         line-height: 1.35;
     }
@@ -457,7 +457,7 @@
         border-radius: 9999px;
         color: rgb(71 85 105);
         display: inline-flex;
-        font-size: 0.78rem;
+        font-size: var(--sj-fs-sm);
         font-weight: 700;
         min-height: 2rem;
         padding: 0 0.75rem;
@@ -490,7 +490,7 @@
 
     .portfolio-savebar__count {
         color: rgb(51 65 85);
-        font-size: 0.9rem;
+        font-size: var(--sj-fs-md);
         font-weight: 700;
     }
 
@@ -502,7 +502,7 @@
 
     .portfolio-savebar__link {
         color: rgb(71 85 105);
-        font-size: 0.9rem;
+        font-size: var(--sj-fs-md);
         font-weight: 700;
     }
 
@@ -513,10 +513,10 @@
         border-radius: 0.95rem;
         color: #fff;
         display: inline-flex;
-        font-size: 0.92rem;
+        font-size: var(--sj-fs-md);
         font-weight: 700;
         justify-content: center;
-        min-height: 2.85rem;
+        min-height: var(--sj-ui-control-height);
         padding: 0 1.1rem;
         transition: 150ms ease;
     }
@@ -535,7 +535,7 @@
     .portfolio-transfer-form__label {
         color: rgb(71 85 105);
         display: block;
-        font-size: 0.85rem;
+        font-size: var(--sj-fs-md);
         font-weight: 700;
         margin-bottom: 0.45rem;
         text-transform: uppercase;
@@ -552,7 +552,7 @@
 
     .portfolio-transfer-summary__label {
         color: rgb(82 99 122);
-        font-size: 0.82rem;
+        font-size: var(--sj-fs-sm);
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
@@ -560,7 +560,7 @@
 
     .portfolio-transfer-summary strong {
         color: rgb(15 23 42);
-        font-size: 1.05rem;
+        font-size: var(--sj-fs-lg);
         font-weight: 800;
     }
 
@@ -603,7 +603,7 @@
 
     .portfolio-modal__title {
         color: rgb(15 23 42);
-        font-size: 1.05rem;
+        font-size: var(--sj-fs-lg);
         font-weight: 800;
         margin: 0;
     }
@@ -611,7 +611,7 @@
     .portfolio-modal__description,
     .portfolio-modal__summary {
         color: rgb(71 85 105);
-        font-size: 0.94rem;
+        font-size: var(--sj-fs-lg);
         line-height: 1.55;
         margin: 0;
     }
@@ -628,7 +628,7 @@
         cursor: pointer;
         display: inline-flex;
         font-size: 1.75rem;
-        height: 2.15rem;
+        height: var(--sj-ui-control-height-sm);
         justify-content: center;
         line-height: 1;
         width: 2.15rem;
@@ -647,10 +647,10 @@
         align-items: center;
         border-radius: 0.9rem;
         display: inline-flex;
-        font-size: 0.92rem;
+        font-size: var(--sj-fs-md);
         font-weight: 700;
         justify-content: center;
-        min-height: 2.75rem;
+        min-height: var(--sj-ui-control-height);
         padding: 0 1rem;
     }
 

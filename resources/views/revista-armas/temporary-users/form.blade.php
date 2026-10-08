@@ -39,7 +39,7 @@
                 @if ($isAdmin)
                     <div>
                         <label for="owner_responsible_user_id" class="block text-sm font-medium text-slate-700">{{ __('Responsable dueño') }}</label>
-                        <select name="owner_responsible_user_id" id="owner_responsible_user_id" required class="mt-1 w-full rounded-lg border-slate-300 text-sm @error('owner_responsible_user_id') border-red-500 @enderror">
+                        <select name="owner_responsible_user_id" id="owner_responsible_user_id" required class="sj-ui-field__control mt-1 w-full @error('owner_responsible_user_id') border-red-500 @enderror">
                             @foreach ($responsibles as $responsible)
                                 <option value="{{ $responsible->id }}" @selected(old('owner_responsible_user_id', $temporaryPhotoUser->owner_responsible_user_id) == $responsible->id)>{{ $responsible->name }}</option>
                             @endforeach
@@ -72,7 +72,7 @@
                                 id="authorized_responsible_ids"
                                 multiple
                                 size="6"
-                                class="mt-1 w-full rounded-lg border-slate-300 text-sm @error('authorized_responsible_ids') border-red-500 @enderror @error('authorized_responsible_ids.*') border-red-500 @enderror"
+                                class="sj-ui-field__control mt-1 w-full @error('authorized_responsible_ids') border-red-500 @enderror @error('authorized_responsible_ids.*') border-red-500 @enderror"
                             >
                                 @php
                                     $selectedIds = collect(old('authorized_responsible_ids', $temporaryPhotoUser->exists ? $temporaryPhotoUser->authorizedResponsibles->pluck('id')->all() : []))

@@ -86,7 +86,7 @@
                             type="text"
                             id="internal-post-search"
                             data-combobox-search
-                            class="block w-full rounded-md border-gray-300 pr-10 text-sm shadow-sm"
+                            class="sj-ui-field__control block w-full pr-10"
                             placeholder="{{ __('Buscar puesto...') }}"
                             autocomplete="off"
                             spellcheck="false"
@@ -149,7 +149,7 @@
                             type="text"
                             id="internal-worker-search"
                             data-combobox-search
-                            class="block w-full rounded-md border-gray-300 pr-10 text-sm shadow-sm"
+                            class="sj-ui-field__control block w-full pr-10"
                             placeholder="{{ __('Buscar trabajador...') }}"
                             autocomplete="off"
                             spellcheck="false"
@@ -182,21 +182,21 @@
                 </div>
                 <div>
                     <label class="text-sm text-gray-600">{{ __('Fecha de entrega') }}</label>
-                    <input type="date" name="start_at" value="{{ old('start_at') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                    <input type="date" name="start_at" value="{{ old('start_at') }}" class="sj-ui-field__control mt-1 block w-full">
                     <x-input-error :messages="$errors->get('start_at')" class="mt-2" />
                 </div>
                 <div>
                     <label class="text-sm text-gray-600">{{ __('Observaciones') }}</label>
-                    <input type="text" name="reason" value="{{ old('reason') }}" spellcheck="true" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                    <input type="text" name="reason" value="{{ old('reason') }}" spellcheck="true" class="sj-ui-field__control mt-1 block w-full">
                 </div>
                 <div>
                     <label class="text-sm text-gray-600">{{ __('weapons.ammo_count') }}</label>
-                    <input type="number" name="ammo_count" min="0" value="{{ old('ammo_count') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                    <input type="number" name="ammo_count" min="0" value="{{ old('ammo_count') }}" class="sj-ui-field__control mt-1 block w-full">
                     <x-input-error :messages="$errors->get('ammo_count')" class="mt-2" />
                 </div>
                 <div>
                     <label class="text-sm text-gray-600">{{ __('Cnt. proveedor') }}</label>
-                    <input type="number" name="provider_count" min="0" value="{{ old('provider_count') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                    <input type="number" name="provider_count" min="0" value="{{ old('provider_count') }}" class="sj-ui-field__control mt-1 block w-full">
                     <x-input-error :messages="$errors->get('provider_count')" class="mt-2" />
                 </div>
             </div>
@@ -244,7 +244,7 @@
             <div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center sm:gap-4">
                 <button
                     type="button"
-                    class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 sm:w-auto"
+                    class="sj-ui-btn sj-ui-btn--ghost w-full sm:w-auto"
                     x-on:click="window.dispatchEvent(new CustomEvent('close-modal', { detail: 'internal-assignment-location' }))"
                 >
                     {{ __('Cancelar') }}

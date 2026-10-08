@@ -52,7 +52,7 @@
                 </section>
 
                 <section class="sj-ui-card flex h-full flex-col p-4">
-                    <h3 class="mb-3 shrink-0 text-sm font-semibold uppercase tracking-wide text-gray-500">{{ __('Asignación') }}</h3>
+                    <h3 class="sj-type-eyebrow mb-3 shrink-0 text-gray-500">{{ __('Asignación') }}</h3>
                     <dl class="grid flex-1 grid-cols-1 gap-2.5 text-sm sm:grid-cols-2 sm:content-start">
                         <div class="sm:col-span-2">
                             <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ __('Cliente') }}</dt>
@@ -80,7 +80,7 @@
 
             @if ($vest->notes)
                 <section class="mt-4 sj-ui-card p-4">
-                    <h3 class="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">{{ __('Notas') }}</h3>
+                    <h3 class="sj-type-eyebrow mb-2 text-gray-500">{{ __('Notas') }}</h3>
                     <p class="text-sm text-gray-700 whitespace-pre-line">{{ $vest->notes }}</p>
                 </section>
             @endif

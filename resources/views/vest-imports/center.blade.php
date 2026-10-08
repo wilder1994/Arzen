@@ -3,12 +3,12 @@
         .vest-import-progress { display: none; gap: 0.75rem; border: 1px solid #dbeafe; border-radius: 0.9rem; background: #eff6ff; padding: 1rem; }
         .vest-import-progress.is-visible { display: grid; }
         .vest-import-progress__top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-        .vest-import-progress__title { color: #1e3a8a; font-size: 0.95rem; font-weight: 700; }
-        .vest-import-progress__meta { color: #475569; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+        .vest-import-progress__title { color: #1e3a8a; font-size: var(--sj-fs-lg); font-weight: 700; }
+        .vest-import-progress__meta { color: #475569; font-size: var(--sj-fs-md); font-weight: 600; white-space: nowrap; }
         .vest-import-progress__bar { width: 100%; height: 0.75rem; overflow: hidden; border-radius: 999px; background: rgba(148, 163, 184, 0.28); }
         .vest-import-progress__fill { height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%); transition: width 0.25s ease; }
         .vest-import-progress__fill.is-indeterminate { width: 35%; animation: vest-import-progress-slide 1.25s ease-in-out infinite; }
-        .vest-import-progress__details { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; color: #475569; font-size: 0.85rem; }
+        .vest-import-progress__details { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; color: #475569; font-size: var(--sj-fs-md); }
 
         @keyframes vest-import-progress-slide {
             0% { transform: translateX(-120%); }

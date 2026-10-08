@@ -3,21 +3,21 @@
         .weapon-import-progress { display: none; gap: 0.75rem; border: 1px solid #dbeafe; border-radius: 0.9rem; background: #eff6ff; padding: 1rem; }
         .weapon-import-progress.is-visible { display: grid; }
         .weapon-import-progress__top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-        .weapon-import-progress__title { color: #1e3a8a; font-size: 0.95rem; font-weight: 700; }
-        .weapon-import-progress__meta { color: #475569; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+        .weapon-import-progress__title { color: #1e3a8a; font-size: var(--sj-fs-lg); font-weight: 700; }
+        .weapon-import-progress__meta { color: #475569; font-size: var(--sj-fs-md); font-weight: 600; white-space: nowrap; }
         .weapon-import-progress__bar { width: 100%; height: 0.75rem; overflow: hidden; border-radius: 999px; background: rgba(148, 163, 184, 0.28); }
         .weapon-import-progress__fill { height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%); transition: width 0.25s ease; }
         .weapon-import-progress__fill.is-indeterminate { width: 35%; animation: weapon-import-progress-slide 1.25s ease-in-out infinite; }
-        .weapon-import-progress__details { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; color: #475569; font-size: 0.85rem; }
+        .weapon-import-progress__details { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; color: #475569; font-size: var(--sj-fs-md); }
         .weapon-import-execution-panel { display: none; position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 5500; width: min(28rem, calc(100vw - 2rem)); border: 1px solid #cbd5e1; border-radius: 1rem; background: #ffffff; box-shadow: 0 22px 55px rgba(15, 23, 42, 0.18); padding: 1rem 1rem 0.9rem; }
         .weapon-import-execution-panel.is-visible { display: grid; gap: 0.85rem; }
-        .weapon-import-execution-panel__title { color: #0f172a; font-size: 1rem; font-weight: 800; }
-        .weapon-import-execution-panel__subtitle { color: #64748b; font-size: 0.86rem; }
+        .weapon-import-execution-panel__title { color: #0f172a; font-size: var(--sj-fs-lg); font-weight: 800; }
+        .weapon-import-execution-panel__subtitle { color: #64748b; font-size: var(--sj-fs-md); }
         .weapon-import-execution-panel__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
         .weapon-import-execution-panel__stat { border-radius: 0.85rem; background: #f8fafc; padding: 0.75rem; }
-        .weapon-import-execution-panel__stat-label { color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-        .weapon-import-execution-panel__stat-value { margin-top: 0.2rem; color: #0f172a; font-size: 1.1rem; font-weight: 800; }
-        .weapon-import-execution-panel__message { color: #334155; font-size: 0.86rem; }
+        .weapon-import-execution-panel__stat-label { color: #64748b; font-size: var(--sj-fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+        .weapon-import-execution-panel__stat-value { margin-top: 0.2rem; color: #0f172a; font-size: var(--sj-fs-lg); font-weight: 800; }
+        .weapon-import-execution-panel__message { color: #334155; font-size: var(--sj-fs-md); }
         .weapon-import-execution-panel__message.is-error { color: #b91c1c; }
         @keyframes weapon-import-progress-slide { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
     </style>

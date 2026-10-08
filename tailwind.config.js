@@ -41,6 +41,16 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            // Mirrors the --sj-fs-* scale in resources/css/app.css.
+            fontSize: {
+                xs: ['0.75rem', { lineHeight: '1.1rem' }],
+                sm: ['0.875rem', { lineHeight: '1.3rem' }],
+                base: ['0.9375rem', { lineHeight: '1.4rem' }],
+                lg: ['0.9375rem', { lineHeight: '1.4rem' }],
+                xl: ['1.125rem', { lineHeight: '1.6rem' }],
+                '2xl': ['1.375rem', { lineHeight: '1.75rem' }],
+                '3xl': ['1.5rem', { lineHeight: '1.9rem' }],
+            },
         },
     },
 

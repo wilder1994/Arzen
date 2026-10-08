@@ -58,25 +58,25 @@
                 <div class="sj-weapon-detail-documents__static mt-3">
                     <form method="POST" action="{{ route('weapons.documents.store', $weapon) }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
                         @csrf
-                        <label class="inline-flex cursor-pointer items-center rounded border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50">
+                        <label class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm cursor-pointer">
                             <span class="mr-2">{{ __('Seleccionar archivo') }}</span>
                             <span class="text-xs text-gray-500" data-document-file-name>{{ __('Ningún archivo') }}</span>
                             <input type="file" name="document" required class="hidden" accept=".pdf,.doc,.docx,image/jpeg,image/png,image/webp" data-document-file-input>
                         </label>
-                        <input type="date" name="valid_until" class="rounded-md border-gray-300 text-sm" placeholder="{{ __('Vence') }}">
-                        <select name="status" class="rounded-md border-gray-300 text-sm" required>
+                        <input type="date" name="valid_until" class="sj-ui-field__control w-auto" placeholder="{{ __('Vence') }}">
+                        <select name="status" class="sj-ui-field__control w-auto" required>
                             <option value="">{{ __('Estado') }}</option>
                             @foreach ($statusOptions as $option)
                                 <option value="{{ $option }}" @selected(old('status') === $option)>{{ $option }}</option>
                             @endforeach
                         </select>
-                        <select name="observations" class="rounded-md border-gray-300 text-sm" required>
+                        <select name="observations" class="sj-ui-field__control w-auto" required>
                             <option value="">{{ __('Observaciones') }}</option>
                             <option value="En Armerillo" @selected(old('observations') === 'En Armerillo')>{{ __('En Armerillo') }}</option>
                             <option value="En Mantenimiento" @selected(old('observations') === 'En Mantenimiento')>{{ __('En Mantenimiento') }}</option>
                             <option value="Para Mantenimiento" @selected(old('observations') === 'Para Mantenimiento')>{{ __('Para Mantenimiento') }}</option>
                         </select>
-                        <x-primary-button class="text-xs">
+                        <x-primary-button class="sj-ui-btn--sm">
                             {{ __('Subir') }}
                         </x-primary-button>
                     </form>
@@ -96,25 +96,25 @@
                 @endphp
                 <form method="POST" action="{{ route('weapons.documents.store', $weapon) }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
                     @csrf
-                    <label class="inline-flex cursor-pointer items-center rounded border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50">
+                    <label class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm cursor-pointer">
                         <span class="mr-2">{{ __('Seleccionar archivo') }}</span>
                         <span class="text-xs text-gray-500" data-document-file-name>{{ __('Ningún archivo') }}</span>
                         <input type="file" name="document" required class="hidden" accept=".pdf,.doc,.docx,image/jpeg,image/png,image/webp" data-document-file-input>
                     </label>
-                    <input type="date" name="valid_until" class="rounded-md border-gray-300 text-sm" placeholder="{{ __('Vence') }}">
-                    <select name="status" class="rounded-md border-gray-300 text-sm" required>
+                    <input type="date" name="valid_until" class="sj-ui-field__control w-auto" placeholder="{{ __('Vence') }}">
+                    <select name="status" class="sj-ui-field__control w-auto" required>
                         <option value="">{{ __('Estado') }}</option>
                         @foreach ($statusOptions as $option)
                             <option value="{{ $option }}" @selected(old('status') === $option)>{{ $option }}</option>
                         @endforeach
                     </select>
-                    <select name="observations" class="rounded-md border-gray-300 text-sm" required>
+                    <select name="observations" class="sj-ui-field__control w-auto" required>
                         <option value="">{{ __('Observaciones') }}</option>
                         <option value="En Armerillo" @selected(old('observations') === 'En Armerillo')>{{ __('En Armerillo') }}</option>
                         <option value="En Mantenimiento" @selected(old('observations') === 'En Mantenimiento')>{{ __('En Mantenimiento') }}</option>
                         <option value="Para Mantenimiento" @selected(old('observations') === 'Para Mantenimiento')>{{ __('Para Mantenimiento') }}</option>
                     </select>
-                    <x-primary-button class="text-xs">
+                    <x-primary-button class="sj-ui-btn--sm">
                         {{ __('Subir') }}
                     </x-primary-button>
                 </form>

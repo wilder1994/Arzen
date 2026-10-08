@@ -282,9 +282,9 @@
             align-items: center;
             border-radius: 0.75rem;
             display: inline-flex;
-            font-size: 0.875rem;
+            font-size: var(--sj-fs-md);
             font-weight: 600;
-            height: 2.5rem;
+            height: var(--sj-ui-control-height);
         }
 
         .client-directory-header__primary-action {

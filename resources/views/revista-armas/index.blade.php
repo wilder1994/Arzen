@@ -176,7 +176,7 @@
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
                         <div class="min-w-0">
                             <label for="revista-assign-temp-user" class="block text-sm font-medium text-slate-700">{{ __('Usuario temporal') }}</label>
-                            <select id="revista-assign-temp-user" name="temporary_photo_user_id" required class="mt-1 w-full rounded-lg border-slate-300 text-sm">
+                            <select id="revista-assign-temp-user" name="temporary_photo_user_id" required class="sj-ui-field__control mt-1 w-full">
                                 <option value="">{{ __('Seleccione...') }}</option>
                                 @foreach ($temporaryUsers as $tu)
                                     <option value="{{ $tu->id }}" @selected((int) old('temporary_photo_user_id', $selectedTemporaryUserId) === (int) $tu->id)>
@@ -194,7 +194,7 @@
                                 id="revista-weapons-filter"
                                 type="search"
                                 autocomplete="off"
-                                class="mt-1 h-10 w-full rounded-lg border-slate-300 text-sm shadow-sm"
+                                class="sj-ui-field__control mt-1 h-10 w-full"
                                 placeholder="{{ __('Serie, código, marca, calibre, cliente, responsable...') }}"
                             >
                             <p class="mt-1 text-xs text-slate-500">
@@ -266,14 +266,14 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap justify-end gap-2 border-t px-4 py-3">
-                    <button type="button" data-revista-assign-cancel class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">{{ __('Cancelar') }}</button>
+                    <button type="button" data-revista-assign-cancel class="sj-ui-btn sj-ui-btn--ghost">{{ __('Cancelar') }}</button>
                     <button
                         type="button"
                         id="revista-renew-access"
-                        class="rounded-lg border border-[#0b6fb6] px-3 py-2 text-sm font-semibold text-[#0b6fb6] disabled:cursor-not-allowed disabled:opacity-40"
+                        class="sj-ui-btn sj-ui-btn--ghost disabled:cursor-not-allowed disabled:opacity-40"
                         disabled
                     >{{ __('Renovar último acceso') }}</button>
-                    <button type="submit" class="rounded-lg bg-[#0b6fb6] px-3 py-2 text-sm font-bold text-white">{{ __('Enviar') }}</button>
+                    <button type="submit" class="sj-ui-btn sj-ui-btn--primary">{{ __('Enviar') }}</button>
                 </div>
             </form>
             <form id="revista-renew-form" method="POST" action="{{ route('revista-armas.access.renew') }}" class="hidden">
@@ -306,7 +306,7 @@
                         {{ __('Copie y envíe estos datos al colaborador. También se envió un correo si el servidor de correo está configurado.') }}
                     @endif
                 </p>
-                <textarea id="revista-success-copy" readonly rows="6" class="mt-3 w-full rounded-lg border-slate-300 text-sm">@foreach (array_filter([
+                <textarea id="revista-success-copy" readonly rows="6" class="sj-ui-field__control mt-3 w-full">@foreach (array_filter([
                     __('Enlace') . ': ' . $ok['login_url'],
                     __('Correo') . ': ' . $ok['email'],
                     ! empty($ok['code']) ? __('Código') . ': ' . $ok['code'] : null,
@@ -314,8 +314,8 @@
                 ]) as $line){{ $line }}
 @endforeach</textarea>
                 <div class="mt-4 flex justify-end gap-2">
-                    <button type="button" id="revista-copy-success" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">{{ __('Copiar') }}</button>
-                    <button type="button" onclick="document.getElementById('revista-success-modal').remove()" class="rounded-lg bg-[#0b6fb6] px-3 py-2 text-sm font-bold text-white">{{ __('Cerrar') }}</button>
+                    <button type="button" id="revista-copy-success" class="sj-ui-btn sj-ui-btn--ghost">{{ __('Copiar') }}</button>
+                    <button type="button" onclick="document.getElementById('revista-success-modal').remove()" class="sj-ui-btn sj-ui-btn--primary">{{ __('Cerrar') }}</button>
                 </div>
             </div>
         </div>
@@ -327,7 +327,7 @@
             <h3 id="revista-alert-title" class="sj-type-section text-slate-900">{{ __('Aviso') }}</h3>
             <p id="revista-alert-message" class="mt-3 text-sm text-slate-600"></p>
             <div class="mt-5 flex justify-end">
-                <button type="button" id="revista-alert-ok" class="rounded-lg bg-[#0b6fb6] px-4 py-2 text-sm font-bold text-white">{{ __('Entendido') }}</button>
+                <button type="button" id="revista-alert-ok" class="sj-ui-btn sj-ui-btn--primary">{{ __('Entendido') }}</button>
             </div>
         </div>
     </div>
@@ -338,8 +338,8 @@
             <h3 id="revista-confirm-title" class="sj-type-section text-slate-900">{{ __('Confirmar') }}</h3>
             <p id="revista-confirm-message" class="mt-3 text-sm text-slate-600"></p>
             <div class="mt-5 flex justify-end gap-2">
-                <button type="button" id="revista-confirm-cancel" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">{{ __('Cancelar') }}</button>
-                <button type="button" id="revista-confirm-accept" class="rounded-lg bg-[#0b6fb6] px-4 py-2 text-sm font-bold text-white">{{ __('Aceptar') }}</button>
+                <button type="button" id="revista-confirm-cancel" class="sj-ui-btn sj-ui-btn--ghost">{{ __('Cancelar') }}</button>
+                <button type="button" id="revista-confirm-accept" class="sj-ui-btn sj-ui-btn--primary">{{ __('Aceptar') }}</button>
             </div>
         </div>
     </div>
@@ -348,13 +348,13 @@
     <div id="revista-review-modal" class="fixed inset-0 z-[1050] hidden items-center justify-center bg-black/40 p-4">
         <div class="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
             <div class="border-b px-4 py-3">
-                <h3 class="font-semibold text-slate-900">{{ __('Revisión de fotos') }} — <span id="revista-review-serial"></span></h3>
+                <h3 class="sj-type-section text-slate-900">{{ __('Revisión de fotos') }} — <span id="revista-review-serial"></span></h3>
             </div>
             <div id="revista-review-grid" class="grid grid-cols-2 gap-3 overflow-y-auto p-4"></div>
             <div class="flex justify-end gap-2 border-t px-4 py-3">
-                <button type="button" id="revista-review-reject" class="rounded-lg border border-red-300 px-3 py-2 text-sm font-semibold text-red-700">{{ __('Rechazar') }}</button>
-                <button type="button" id="revista-review-approve" class="rounded-lg bg-[#0b6fb6] px-3 py-2 text-sm font-bold text-white">{{ __('Actualizar') }}</button>
-                <button type="button" data-revista-review-close class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">{{ __('Cerrar') }}</button>
+                <button type="button" id="revista-review-reject" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--danger">{{ __('Rechazar') }}</button>
+                <button type="button" id="revista-review-approve" class="sj-ui-btn sj-ui-btn--primary">{{ __('Actualizar') }}</button>
+                <button type="button" data-revista-review-close class="sj-ui-btn sj-ui-btn--ghost">{{ __('Cerrar') }}</button>
             </div>
         </div>
     </div>

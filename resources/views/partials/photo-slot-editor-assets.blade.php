@@ -2,8 +2,8 @@
     <div class="w-full max-w-sm rounded bg-white shadow-lg">
         <div class="border-b px-4 py-3 text-sm font-semibold text-gray-800">{{ __('Agregar imagen') }}</div>
         <div class="p-4 space-y-2 text-sm text-gray-700">
-            <button id="photo_source_camera" type="button" class="w-full rounded border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-sm font-medium text-indigo-900 hover:bg-indigo-100">{{ __('Tomar foto') }}</button>
-            <button id="photo_source_gallery" type="button" class="w-full rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100">{{ __('Elegir de galería') }}</button>
+            <button id="photo_source_camera" type="button" class="sj-ui-btn sj-ui-btn--ghost w-full">{{ __('Tomar foto') }}</button>
+            <button id="photo_source_gallery" type="button" class="sj-ui-btn sj-ui-btn--ghost w-full">{{ __('Elegir de galería') }}</button>
         </div>
         <div class="flex justify-end border-t px-4 py-2">
             <button id="photo_source_cancel" type="button" class="text-sm text-gray-600 hover:text-gray-900">{{ __('Cancelar') }}</button>
@@ -15,8 +15,8 @@
     <div class="w-full max-w-sm rounded bg-white shadow-lg">
         <div class="border-b px-4 py-3 text-sm font-semibold text-gray-800">{{ __('Editar imagen') }}</div>
         <div class="p-4 space-y-2 text-sm text-gray-700">
-            <button id="photo_action_crop" type="button" class="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">{{ __('Recortar o mover') }}</button>
-            <button id="photo_action_change" type="button" class="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">{{ __('Cambiar imagen') }}</button>
+            <button id="photo_action_crop" type="button" class="sj-ui-btn sj-ui-btn--ghost w-full">{{ __('Recortar o mover') }}</button>
+            <button id="photo_action_change" type="button" class="sj-ui-btn sj-ui-btn--ghost w-full">{{ __('Cambiar imagen') }}</button>
         </div>
         <div class="flex justify-end border-t px-4 py-2">
             <button id="photo_action_cancel" type="button" class="text-sm text-gray-600 hover:text-gray-900">{{ __('Cancelar') }}</button>
@@ -27,7 +27,7 @@
 <div id="image_editor_modal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-hidden bg-black/50 p-2 sm:p-4">
     <div class="sj-image-editor-panel flex max-h-[calc(100dvh-0.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-lg sm:max-h-[calc(100dvh-2rem)]">
         <div class="flex shrink-0 items-center justify-between border-b px-4 py-3">
-            <h3 class="text-sm font-semibold text-gray-800">{{ __('Editar imagen') }}</h3>
+            <h3 class="sj-type-section text-gray-800">{{ __('Editar imagen') }}</h3>
             <button id="image_editor_close" type="button" class="text-sm text-gray-500 hover:text-gray-700">{{ __('Cerrar') }}</button>
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
@@ -39,14 +39,14 @@
             <div class="flex flex-col gap-3 px-3 py-3 sm:px-4">
                 <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                     <div class="flex flex-wrap gap-2">
-                        <button id="image_editor_rotate_left" type="button" class="rounded border border-gray-300 px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 sm:py-1">{{ __('Girar izquierda') }}</button>
-                        <button id="image_editor_rotate_right" type="button" class="rounded border border-gray-300 px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 sm:py-1">{{ __('Girar derecha') }}</button>
+                        <button id="image_editor_rotate_left" type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">{{ __('Girar izquierda') }}</button>
+                        <button id="image_editor_rotate_right" type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">{{ __('Girar derecha') }}</button>
                     </div>
                     <div class="flex w-full flex-col gap-2 sm:flex-1 sm:flex-row sm:flex-wrap sm:items-center">
                         <span class="text-xs font-medium text-gray-600">{{ __('Ajuste fino') }}</span>
                         <input id="image_editor_rotate_fine" type="range" min="-10" max="10" step="0.1" value="0" class="h-2 w-full min-w-0 flex-1 cursor-pointer accent-indigo-600 sm:min-w-[8rem]">
                         <span id="image_editor_rotate_value" class="text-xs font-medium text-gray-600 sm:w-14 sm:text-right">0.0°</span>
-                        <button id="image_editor_rotate_reset" type="button" class="rounded border border-gray-300 px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 sm:py-1">{{ __('Restablecer') }}</button>
+                        <button id="image_editor_rotate_reset" type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">{{ __('Restablecer') }}</button>
                     </div>
                 </div>
                 <div class="flex w-full gap-2 border-t border-gray-100 pt-3">
@@ -65,7 +65,7 @@
         <h3 class="sj-type-section text-slate-900">{{ __('Aviso') }}</h3>
         <p id="weapon-photo-alert-message" class="mt-3 text-sm text-slate-600"></p>
         <div class="mt-5 flex justify-end">
-            <button type="button" id="weapon-photo-alert-ok" class="rounded-lg bg-[#0b6fb6] px-4 py-2 text-sm font-bold text-white">{{ __('Entendido') }}</button>
+            <button type="button" id="weapon-photo-alert-ok" class="sj-ui-btn sj-ui-btn--primary">{{ __('Entendido') }}</button>
         </div>
     </div>
 </div>
@@ -75,9 +75,9 @@
         <h3 id="weapon-photo-confirm-title" class="sj-type-section text-slate-900">{{ __('Atención') }}</h3>
         <p id="weapon-photo-confirm-message" class="mt-3 text-sm text-slate-600"></p>
         <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button type="button" id="weapon-photo-confirm-cancel" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">{{ __('Cancelar') }}</button>
-            <button type="button" id="weapon-photo-confirm-discard" class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">{{ __('Salir sin guardar') }}</button>
-            <button type="button" id="weapon-photo-confirm-save" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700">{{ __('Guardar cambios') }}</button>
+            <button type="button" id="weapon-photo-confirm-cancel" class="sj-ui-btn sj-ui-btn--ghost">{{ __('Cancelar') }}</button>
+            <button type="button" id="weapon-photo-confirm-discard" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--danger">{{ __('Salir sin guardar') }}</button>
+            <button type="button" id="weapon-photo-confirm-save" class="sj-ui-btn sj-ui-btn--primary">{{ __('Guardar cambios') }}</button>
         </div>
     </div>
 </div>

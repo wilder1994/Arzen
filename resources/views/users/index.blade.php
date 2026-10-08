@@ -68,7 +68,7 @@
                         </code>
                         <button
                             type="button"
-                            class="rounded-md bg-amber-700 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-800"
+                            class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm"
                             @click="
                                 const el = document.getElementById('sj-temp-user-password');
                                 if (el) { navigator.clipboard.writeText(el.textContent.trim()); copied = true; setTimeout(() => copied = false, 2000); }
@@ -181,7 +181,7 @@
         >
             <div class="w-full max-w-lg rounded-lg bg-white shadow-xl">
                 <div class="border-b border-gray-200 px-5 py-4">
-                    <h3 class="text-base font-semibold text-gray-900">{{ __('Confirmar envío de credenciales') }}</h3>
+                    <h3 class="sj-type-section text-gray-900">{{ __('Confirmar envío de credenciales') }}</h3>
                     <p class="mt-1 text-sm text-gray-600">
                         {{ __('Correo destino') }}: <span class="font-medium text-gray-900" x-text="sendCredEmail"></span>
                     </p>
@@ -207,7 +207,7 @@
                 <div class="flex items-center justify-end gap-2 border-t border-gray-200 px-5 py-4">
                     <button
                         type="button"
-                        class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        class="sj-ui-btn sj-ui-btn--ghost"
                         @click="closeSendCred()"
                     >
                         {{ __('Cancelar') }}
@@ -235,7 +235,7 @@
         >
             <div class="w-full max-w-lg rounded-lg bg-white shadow-xl">
                 <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-                    <h3 class="text-base font-semibold text-gray-900">
+                    <h3 class="sj-type-section text-gray-900">
                         {{ __('Clientes asignados') }}:
                         <span class="font-medium" x-text="modalUserName"></span>
                     </h3>

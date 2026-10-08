@@ -9,7 +9,7 @@
     data-images-only-message="{{ __('Solo puede usar archivos de imagen.') }}"
 >
     <div class="mb-3">
-        <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500">{{ __('Fotografías del chaleco') }}</h3>
+        <h3 class="sj-type-eyebrow text-gray-500">{{ __('Fotografías del chaleco') }}</h3>
         <p class="sj-form-help mt-1">{{ __('Opcional. 4 fotos: 2 vistas completas y 2 placas de serie. Clic, arrastre o pegue en cada casilla.') }}</p>
     </div>
 

@@ -30,7 +30,7 @@
 
                         <div>
                             <x-input-label for="role" :value="__('Responsable')" />
-                            <select id="role" name="role" class="mt-1 block w-full rounded-md border-gray-300" required>
+                            <select id="role" name="role" class="sj-ui-field__control mt-1 block w-full" required>
                                 @foreach ($roles as $value => $label)
                                     <option value="{{ $value }}" @selected(old('role') === $value)>{{ $label }}</option>
                                 @endforeach
@@ -40,7 +40,7 @@
 
                         <div>
                             <x-input-label for="position_id" :value="__('Cargo')" />
-                            <select id="position_id" name="position_id" class="mt-1 block w-full rounded-md border-gray-300">
+                            <select id="position_id" name="position_id" class="sj-ui-field__control mt-1 block w-full">
                                 <option value="">{{ __('Seleccione') }}</option>
                                 @foreach ($positions as $position)
                                     <option value="{{ $position->id }}" @selected(old('position_id') == $position->id)>{{ $position->name }}</option>
@@ -54,7 +54,7 @@
 
                         <div>
                             <x-input-label for="responsibility_level_id" :value="__('Nivel de responsabilidad')" />
-                            <select id="responsibility_level_id" name="responsibility_level_id" class="mt-1 block w-full rounded-md border-gray-300">
+                            <select id="responsibility_level_id" name="responsibility_level_id" class="sj-ui-field__control mt-1 block w-full">
                                 <option value="">{{ __('Seleccione') }}</option>
                                 @foreach ($responsibilityLevels as $level)
                                     <option value="{{ $level->id }}" @selected(old('responsibility_level_id') == $level->id)>
@@ -67,7 +67,7 @@
 
                         <div>
                             <x-input-label for="is_active" :value="__('Estado activo')" />
-                            <select id="is_active" name="is_active" class="mt-1 block w-full rounded-md border-gray-300">
+                            <select id="is_active" name="is_active" class="sj-ui-field__control mt-1 block w-full">
                                 <option value="1" @selected(old('is_active', '1') === '1')>{{ __('Activo') }}</option>
                                 <option value="0" @selected(old('is_active') === '0')>{{ __('Inactivo') }}</option>
                             </select>

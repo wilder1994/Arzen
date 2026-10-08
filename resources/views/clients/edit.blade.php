@@ -72,7 +72,7 @@
 
                                 <div>
                                     <x-input-label for="department" :value="__('Departamento')" />
-                                    <select id="department" name="department" class="mt-1 block w-full rounded-md border-gray-300 text-sm" data-department-select data-current="{{ old('department', $client->department) }}" required>
+                                    <select id="department" name="department" class="sj-ui-field__control mt-1 block w-full" data-department-select data-current="{{ old('department', $client->department) }}" required>
                                         <option value="">{{ __('Seleccione') }}</option>
                                     </select>
                                     <x-input-error :messages="$errors->get('department')" class="mt-2" />
@@ -80,7 +80,7 @@
 
                                 <div>
                                     <x-input-label for="city" :value="__('Municipio')" />
-                                    <select id="city" name="city" class="mt-1 block w-full rounded-md border-gray-300 text-sm" data-municipality-select data-current="{{ old('city', $client->city) }}" required>
+                                    <select id="city" name="city" class="sj-ui-field__control mt-1 block w-full" data-municipality-select data-current="{{ old('city', $client->city) }}" required>
                                         <option value="">{{ __('Seleccione') }}</option>
                                     </select>
                                     <x-input-error :messages="$errors->get('city')" class="mt-2" />
@@ -128,8 +128,8 @@
         <div id="location-map" class="mt-4 h-96 w-full rounded border"></div>
         <p class="mt-3 hidden text-sm text-red-600" data-map-error></p>
         <div class="mt-4 flex justify-end gap-2">
-            <button type="button" class="rounded-md border border-gray-300 px-4 py-2 text-sm" data-map-close>{{ __('Cancelar') }}</button>
-            <button type="button" class="rounded-md bg-blue-600 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60" data-map-accept disabled>{{ __('Aceptar') }}</button>
+            <button type="button" class="sj-ui-btn sj-ui-btn--ghost" data-map-close>{{ __('Cancelar') }}</button>
+            <button type="button" class="sj-ui-btn sj-ui-btn--primary disabled:cursor-not-allowed disabled:opacity-60" data-map-accept disabled>{{ __('Aceptar') }}</button>
         </div>
     </div>
 </div>

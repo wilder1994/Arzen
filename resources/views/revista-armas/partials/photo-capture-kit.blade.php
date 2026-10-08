@@ -18,8 +18,8 @@
     <div class="w-full max-w-sm rounded-xl bg-white shadow-lg">
         <div class="border-b px-4 py-3 text-sm font-semibold text-gray-800">{{ __('Agregar imagen') }}</div>
         <div class="space-y-2 p-4">
-            <button type="button" data-revista-source="camera" class="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-sm font-medium text-indigo-900">{{ __('Tomar foto') }}</button>
-            <button type="button" data-revista-source="gallery" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-700">{{ __('Elegir de galería') }}</button>
+            <button type="button" data-revista-source="camera" class="sj-ui-btn sj-ui-btn--ghost w-full">{{ __('Tomar foto') }}</button>
+            <button type="button" data-revista-source="gallery" class="sj-ui-btn sj-ui-btn--ghost w-full">{{ __('Elegir de galería') }}</button>
         </div>
         <div class="flex justify-end border-t px-4 py-2">
             <button type="button" data-revista-source-cancel class="text-sm text-gray-600">{{ __('Cancelar') }}</button>
@@ -30,7 +30,7 @@
 <div id="revista_image_editor_modal" class="fixed inset-0 z-[1070] hidden items-center justify-center overflow-hidden bg-black/50 p-2 sm:p-4">
     <div class="sj-image-editor-panel flex max-h-[calc(100dvh-0.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
         <div class="flex shrink-0 items-center justify-between border-b px-4 py-3">
-            <h3 class="text-sm font-semibold text-gray-800">{{ __('Editar imagen') }}</h3>
+            <h3 class="sj-type-section text-gray-800">{{ __('Editar imagen') }}</h3>
             <button type="button" data-revista-editor-close class="text-sm text-gray-500">{{ __('Cerrar') }}</button>
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
@@ -53,7 +53,7 @@
         <h3 class="sj-type-section text-slate-900">{{ __('Aviso') }}</h3>
         <p id="revista-photo-alert-message" class="mt-3 text-sm text-slate-600"></p>
         <div class="mt-5 flex justify-end">
-            <button type="button" id="revista-photo-alert-ok" class="rounded-lg bg-[#0b6fb6] px-4 py-2 text-sm font-bold text-white">{{ __('Entendido') }}</button>
+            <button type="button" id="revista-photo-alert-ok" class="sj-ui-btn sj-ui-btn--primary">{{ __('Entendido') }}</button>
         </div>
     </div>
 </div>

@@ -187,7 +187,7 @@
                 @click.outside="notificationsOpen = false"
             >
                 <div class="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3">
-                    <h2 class="text-base font-semibold text-gray-900" x-text="notificationHistoryMode ? '{{ __('Historial de notificaciones') }}' : '{{ __('Notificaciones') }}'"></h2>
+                    <h2 class="sj-type-section text-gray-900" x-text="notificationHistoryMode ? '{{ __('Historial de notificaciones') }}' : '{{ __('Notificaciones') }}'"></h2>
                     <div class="flex items-center gap-2">
                         <button
                             type="button"

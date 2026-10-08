@@ -31,7 +31,7 @@ Sistema web para **gestión de armamento**, **dotación (chalecos)**, **asignaci
 - ✅ **Mi empresa** (solo ADMIN): datos legales, logo, membrete en Word, prefijo de códigos internos y Catálogos (cargos, tipos y modalidades de novedad, niveles). Ver **§14.1**.
 - ✅ **Shell de navegación**: sidebar con **Armamento**, **Dotación**, **Plataforma** y **Mi empresa**; pestañas del módulo activo en la barra superior; el sidebar se oculta con el botón lateral (`localStorage`). **Mapa** vive en Armamento. **Cargas masivas** abre `/subir-armas` (ADMIN) o `/subir-chalecos` (quien solo importa chalecos). Árbol filtrado por rol en `App\Support\Navigation\ModuleNavBuilder`.
 - ✅ **Kit UI global** (`sj-ui-*` en `resources/css/app.css`): interfaz unificada en listados, formularios, reportes, cargas masivas, auth guest, dashboard y detalle de armas/chalecos — headers (`sj-section-header`), tarjetas (`sj-ui-card`), KPIs (`sj-ui-kpi` / `sj-kpi-card`), filtros (`sj-ui-filter-bar`), botones (`sj-ui-btn` vía componentes Blade y vistas), enlaces de tabla (`sj-ui-link`). Tras cambios en `app.css`: `npm run build`.
-- ✅ **Tipografía unificada** (tokens `.sj-type-*` / `--sj-type-*` en `app.css`): eyebrow, título de página, subtítulo, sección, cuerpo, meta y KPI (números con peso **600**); los encabezados `sj-section-header__*` y héroes/KPIs del dashboard consumen los mismos tamaños fijos (sin `clamp` en títulos de página).
+- ✅ **Tipografía unificada** (tokens `.sj-type-*` / `--sj-type-*` en `app.css`): eyebrow, título de página, subtítulo, sección, cuerpo, meta y KPI (números con peso **600**); los encabezados `sj-section-header__*` y héroes/KPIs del dashboard consumen los mismos tamaños fijos (sin `clamp` en títulos de página). Jerarquía única en todas las vistas: título de página 22px/600 → sección 15px/600 (`sj-type-section`, `sj-form-section__title`) → etiqueta de campo 13px/500 (`sj-ui-field__label`, sin mayúsculas) → meta 12px → eyebrow 11px en mayúsculas. Escala `--sj-fs-*` (11–24px) espejada en `tailwind.config.js`. Controles compactos: `--sj-ui-control-height` 36px (`-sm` 32px, `-xs` 28px). La prueba `tests/Unit/ViewTypographyConsistencyTest.php` falla si un `h1–h4` usa tamaños/pesos Tailwind sueltos o si un campo usa bordes grises en lugar de `sj-ui-field__control`.
 
 ---
 
@@ -1591,7 +1591,7 @@ Caracteristicas:
 **Kit UI (`sj-ui-*`)**
 
 - Definido en `resources/css/app.css` (bloque «Kit UI» tras `.sj-btn-secondary`).
-- Variables CSS: `--sj-ui-surface-bg`, `--sj-ui-neon-glow`, `--sj-ui-control-height` (2.5rem), etc.
+- Variables CSS: `--sj-ui-surface-bg`, `--sj-ui-neon-glow`, `--sj-ui-control-height` (2.25rem; `-sm` 2rem, `-xs` 1.75rem), etc.
 - KPIs del dashboard (`.sj-kpi-card`) y paneles (`.sj-panel`) comparten superficie translúcida y perímetro neón con el kit.
 - Componentes Blade `<x-primary-button>`, `<x-secondary-button>` y `<x-danger-button>` delegan en `.sj-ui-btn`.
 - Tras editar `app.css` o clases en vistas: `npm run build` (local) o `npm run build:deploy` (hosting); refrescar con **Ctrl+F5**.

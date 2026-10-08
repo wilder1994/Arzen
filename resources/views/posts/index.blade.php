@@ -122,7 +122,7 @@
                     >
                         <div class="max-h-[85vh] w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl" @click.outside="historyOpen = false">
                             <div class="flex items-center justify-between border-b px-4 py-3">
-                                <h3 class="text-base font-semibold text-gray-900">{{ __('Historial') }}: <span x-text="historyTitle"></span></h3>
+                                <h3 class="sj-type-section text-gray-900">{{ __('Historial') }}: <span x-text="historyTitle"></span></h3>
                                 <button type="button" class="text-2xl leading-none text-gray-500 hover:text-gray-800" @click="historyOpen = false">&times;</button>
                             </div>
                             <div class="max-h-[calc(85vh-4rem)] overflow-y-auto p-4 text-sm">

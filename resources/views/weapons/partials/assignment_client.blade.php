@@ -42,7 +42,7 @@
                         type="text"
                         id="destination-client-search"
                         data-combobox-search
-                        class="block w-full rounded-md border-gray-300 pr-10 text-sm shadow-sm"
+                        class="sj-ui-field__control block w-full pr-10"
                         placeholder="{{ __('Buscar cliente...') }}"
                         autocomplete="off"
                         spellcheck="false"
@@ -91,7 +91,7 @@
 
         <div>
             <label class="text-xs font-medium text-gray-500 mb-1 block">{{ __('Observaciones') }}</label>
-            <input type="text" name="reason" class="block w-full rounded-md border-gray-300 text-sm shadow-sm" />
+            <input type="text" name="reason" class="sj-ui-field__control block w-full" />
             <x-input-error :messages="$errors->get('reason')" class="mt-2" />
         </div>
     </form>
@@ -99,7 +99,7 @@
 
 <div id="missing-responsible-modal" class="fixed inset-0 z-[1400] hidden items-center justify-center bg-black/50 p-4">
     <div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-        <h4 class="text-base font-semibold text-gray-900">{{ __('Atención') }}</h4>
+        <h4 class="sj-type-section text-gray-900">{{ __('Atención') }}</h4>
         <p class="mt-2 text-sm text-gray-700">{{ __('Primero debe realizar la asignación del responsable.') }}</p>
         <div class="mt-4 flex justify-end">
             <button type="button" id="missing-responsible-modal-close" class="sj-ui-btn sj-ui-btn--primary">

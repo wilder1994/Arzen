@@ -4,7 +4,7 @@
             margin: 0;
             padding: 0.7rem 1rem;
             text-align: center;
-            font-size: 0.75rem;
+            font-size: var(--sj-fs-xs);
             line-height: 1.4;
             letter-spacing: 0.01em;
             color: #64748b;

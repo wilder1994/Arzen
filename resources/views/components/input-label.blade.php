@@ -1,6 +1,6 @@
 @props(['value'])
 
-<label {{ $attributes->merge(['class' => 'block font-medium text-sm text-gray-700 leading-tight']) }}>
+<label {{ $attributes->merge(['class' => 'sj-ui-field__label block']) }}>
     {{ $value ?? $slot }}
 </label>
 

@@ -112,16 +112,16 @@
         border-radius: 9999px;
         color: rgb(51 65 85);
         display: inline-flex;
-        font-size: 0.9rem;
+        font-size: var(--sj-fs-md);
         font-weight: 600;
         gap: 0.45rem;
-        min-height: 2.75rem;
+        min-height: var(--sj-ui-control-height);
         padding: 0 1rem;
     }
 
     .portfolio-header__stat strong {
         color: rgb(15 23 42);
-        font-size: 1rem;
+        font-size: var(--sj-fs-lg);
     }
 
     .portfolio-panel {
@@ -137,13 +137,13 @@
     }
 
     .portfolio-table thead th {
-        font-size: 0.76rem;
+        font-size: var(--sj-fs-xs);
         letter-spacing: 0.12em;
         padding: 0.95rem 1rem;
     }
 
     .portfolio-table tbody td {
-        font-size: 0.95rem;
+        font-size: var(--sj-fs-lg);
         padding: 1rem;
     }
 
@@ -154,14 +154,14 @@
 
     .portfolio-user__name {
         color: rgb(15 23 42);
-        font-size: 1rem;
+        font-size: var(--sj-fs-lg);
         font-weight: 700;
     }
 
     .portfolio-user__role,
     .portfolio-user__email {
         color: rgb(82 99 122);
-        font-size: 0.88rem;
+        font-size: var(--sj-fs-md);
     }
 
     .portfolio-load {
@@ -177,7 +177,7 @@
         border-radius: 9999px;
         color: rgb(51 65 85);
         display: inline-flex;
-        font-size: 0.88rem;
+        font-size: var(--sj-fs-md);
         font-weight: 600;
         gap: 0.45rem;
         min-height: 2.4rem;
@@ -192,7 +192,7 @@
 
     .portfolio-load__badge strong {
         color: inherit;
-        font-size: 0.96rem;
+        font-size: var(--sj-fs-lg);
     }
 
     .portfolio-table__actions {
@@ -205,9 +205,9 @@
         border-radius: 0.9rem;
         color: #fff;
         display: inline-flex;
-        font-size: 0.9rem;
+        font-size: var(--sj-fs-md);
         font-weight: 700;
-        min-height: 2.65rem;
+        min-height: var(--sj-ui-control-height);
         padding: 0 1rem;
         transition: 150ms ease;
     }

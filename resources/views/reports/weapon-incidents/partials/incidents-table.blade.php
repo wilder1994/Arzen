@@ -69,7 +69,7 @@
                     <td class="px-3 py-2">
                         <button
                             type="button"
-                            class="inline-flex items-center rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                            class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm"
                             data-open-modal="incident-case-{{ $incident->id }}"
                         >
                             @can('update', $incident)

@@ -1,6 +1,6 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <h2 class="sj-type-section text-gray-900">
             {{ __('Información del perfil') }}
         </h2>
 

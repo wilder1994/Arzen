@@ -8,14 +8,14 @@
             <div>
                 <label for="email" class="block text-sm font-medium text-slate-700">{{ __('Correo') }}</label>
                 <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email"
-                    class="mt-1 w-full rounded-lg border-slate-300 text-sm shadow-sm">
+                    class="sj-ui-field__control mt-1 w-full">
             </div>
             <div>
                 <label for="access_code" class="block text-sm font-medium text-slate-700">{{ __('Código temporal') }}</label>
                 <input id="access_code" name="access_code" type="text" required autocomplete="one-time-code"
-                    class="mt-1 w-full rounded-lg border-slate-300 text-sm uppercase shadow-sm" placeholder="XXXXXXXX">
+                    class="sj-ui-field__control mt-1 w-full uppercase" placeholder="XXXXXXXX">
             </div>
-            <button type="submit" class="w-full rounded-lg bg-[#0b6fb6] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#085a93]">
+            <button type="submit" class="sj-ui-btn sj-ui-btn--primary w-full">
                 {{ __('Entrar') }}
             </button>
         </form>

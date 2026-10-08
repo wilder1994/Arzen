@@ -52,12 +52,12 @@
                     <div class="mt-4 flex flex-wrap gap-2">
                         @if ($canManageTransfers)
                             <button type="button" id="sj-reopen-accept-modal"
-                                class="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700">
+                                class="sj-ui-btn sj-ui-btn--primary sj-ui-btn--sm">
                                 {{ __('Volver a seleccionar') }}
                             </button>
                         @endif
                         <button type="button" id="sj-dismiss-accept-alert"
-                            class="rounded border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-50">
+                            class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--danger sj-ui-btn--sm">
                             {{ __('Cerrar aviso') }}
                         </button>
                     </div>
@@ -167,7 +167,7 @@
                                         <div class="inline-flex flex-wrap items-center justify-end gap-2">
                                         @if ($canAcceptRow)
                                             <button type="button"
-                                                class="inline-flex items-center rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white shadow-sm ring-1 ring-emerald-800/80 hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-1"
+                                                class="sj-ui-btn sj-ui-btn--primary sj-ui-btn--sm"
                                                 data-transfer-id="{{ $transfer->id }}"
                                                 data-transfer-action="{{ route('transfers.accept', $transfer) }}"
                                                 data-transfer-code="{{ $serie }}"
@@ -179,7 +179,7 @@
                                         @endif
                                         @if ($canCancelRow)
                                             <button type="button"
-                                                class="inline-flex items-center rounded-md border-2 border-amber-800 bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-1"
+                                                class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm border-2"
                                                 data-cancel-action="{{ route('transfers.cancel', $transfer) }}"
                                                 data-transfer-code="{{ $serie }}">
                                                 {{ __('Cancelar') }}
@@ -228,12 +228,12 @@
                 @csrf
                 @method('PATCH')
                 <button type="button"
-                    class="order-2 w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 sm:order-1 sm:w-auto"
+                    class="sj-ui-btn sj-ui-btn--ghost order-2 w-full sm:order-1 sm:w-auto"
                     x-on:click="$dispatch('close-modal', 'cancel-transfer')">
                     {{ __('Cerrar') }}
                 </button>
                 <button type="submit"
-                    class="order-1 w-full rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-amber-900/30 hover:bg-amber-800 sm:order-2 sm:w-auto">
+                    class="sj-ui-btn sj-ui-btn--ghost order-1 w-full ring-1 ring-amber-900/30 sm:order-2 sm:w-auto">
                     {{ __('Confirmar cancelación') }}
                 </button>
             </form>
@@ -343,7 +343,7 @@
                 </div>
 
                 <div>
-                    <input id="weapons-filter" type="search" class="w-full rounded-md border-gray-300 text-sm"
+                    <input id="weapons-filter" type="search" class="sj-ui-field__control w-full"
                         placeholder="{{ __('Filtrar armas...') }}">
                 </div>
 
@@ -393,7 +393,7 @@
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="sm:col-span-1">
                             <label class="block text-sm font-medium text-gray-700">{{ __('Destinatario') }}</label>
-                            <select name="to_user_id" id="bulk-to-user" class="mt-1 block w-full rounded-md border-gray-300 text-sm" required>
+                            <select name="to_user_id" id="bulk-to-user" class="sj-ui-field__control mt-1 block w-full" required>
                                 <option value="">{{ __('Seleccione') }}</option>
                                 @foreach ($transferRecipients as $recipient)
                                     <option value="{{ $recipient->id }}"
@@ -417,7 +417,7 @@
                     </div>
 
                     <div class="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-4">
-                        <p class="text-sm font-medium text-gray-800">{{ __('Munición y proveedores con el envío') }}</p>
+                        <p class="sj-ui-field__label">{{ __('Munición y proveedores con el envío') }}</p>
                         <p class="text-xs text-gray-600">{{ __('Si no activa las opciones, el arma se envía sola. Las cantidades aplican a cada arma de este envío.') }}</p>
                         <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
                             <div class="min-w-[200px] space-y-2">
@@ -425,7 +425,7 @@
                                     <input type="checkbox" name="send_ammo" id="transfer-send-ammo" value="1" class="rounded border-gray-300" @checked(old('send_ammo'))>
                                     {{ __('Incluir munición') }}
                                 </label>
-                                <input type="number" name="ammo_count" id="transfer-ammo-count" min="1" class="block w-full rounded-md border-gray-300 text-sm" placeholder="{{ __('Cantidad') }}" value="{{ old('ammo_count') }}">
+                                <input type="number" name="ammo_count" id="transfer-ammo-count" min="1" class="sj-ui-field__control block w-full" placeholder="{{ __('Cantidad') }}" value="{{ old('ammo_count') }}">
                                 <x-input-error :messages="$errors->get('ammo_count')" class="mt-1" />
                             </div>
                             <div class="min-w-[200px] space-y-2">
@@ -433,7 +433,7 @@
                                     <input type="checkbox" name="send_provider" id="transfer-send-provider" value="1" class="rounded border-gray-300" @checked(old('send_provider'))>
                                     {{ __('Incluir proveedores') }}
                                 </label>
-                                <input type="number" name="provider_count" id="transfer-provider-count" min="1" class="block w-full rounded-md border-gray-300 text-sm" placeholder="{{ __('Cantidad') }}" value="{{ old('provider_count') }}">
+                                <input type="number" name="provider_count" id="transfer-provider-count" min="1" class="sj-ui-field__control block w-full" placeholder="{{ __('Cantidad') }}" value="{{ old('provider_count') }}">
                                 <x-input-error :messages="$errors->get('provider_count')" class="mt-1" />
                             </div>
                         </div>
@@ -441,7 +441,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">{{ __('Observaciones') }}</label>
-                        <textarea name="note" rows="2" spellcheck="true" class="mt-1 block w-full rounded-md border-gray-300 text-sm">{{ old('note') }}</textarea>
+                        <textarea name="note" rows="2" spellcheck="true" class="sj-ui-field__control mt-1 block w-full">{{ old('note') }}</textarea>
                         <x-input-error :messages="$errors->get('note')" class="mt-2" />
                     </div>
                 </div>
@@ -451,7 +451,7 @@
                         x-on:click="$dispatch('close-modal', 'bulk-transfer')">
                         {{ __('Cancelar') }}
                     </button>
-                    <button type="submit" class="text-sm text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded">
+                    <button type="submit" class="sj-ui-btn sj-ui-btn--primary">
                         {{ __('Transferir') }}
                     </button>
                 </div>
@@ -477,7 +477,7 @@
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div>
                         <label class="text-sm text-gray-600">{{ __('Cliente') }}</label>
-                        <select name="client_id" id="accept-client" class="mt-1 block w-full rounded-md border-gray-300 text-sm" required>
+                        <select name="client_id" id="accept-client" class="sj-ui-field__control mt-1 block w-full" required>
                             <option value="">{{ __('Seleccione') }}</option>
                             @foreach ($acceptClients as $client)
                                 <option value="{{ $client->id }}">{{ $client->name }}</option>
@@ -488,7 +488,7 @@
 
                     <div>
                         <label class="text-sm text-gray-600">{{ __('Puesto (opcional)') }}</label>
-                        <select name="post_id" id="accept-post" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select name="post_id" id="accept-post" class="sj-ui-field__control mt-1 block w-full">
                             <option value="">{{ __('Seleccione') }}</option>
                             @foreach ($acceptPosts as $post)
                                 <option value="{{ $post->id }}" data-client-id="{{ $post->client_id }}">{{ $post->name }}</option>
@@ -499,7 +499,7 @@
 
                     <div>
                         <label class="text-sm text-gray-600">{{ __('Trabajador (opcional)') }}</label>
-                        <select name="worker_id" id="accept-worker" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select name="worker_id" id="accept-worker" class="sj-ui-field__control mt-1 block w-full">
                             <option value="">{{ __('Seleccione') }}</option>
                             @foreach ($acceptWorkers as $worker)
                                 <option value="{{ $worker->id }}" data-client-id="{{ $worker->client_id }}">{{ $worker->name }}</option>
@@ -520,7 +520,7 @@
                         x-on:click="$dispatch('close-modal', 'accept-transfer')">
                         {{ __('Cancelar') }}
                     </button>
-                    <button type="submit" class="text-sm text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded">
+                    <button type="submit" class="sj-ui-btn sj-ui-btn--primary">
                         {{ __('Aceptar transferencia') }}
                     </button>
                 </div>

@@ -82,7 +82,7 @@
                     </div>
                     <div>
                         <x-input-label for="monthly-review-inventory" :value="__('Inventario')" />
-                        <select id="monthly-review-inventory" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <select id="monthly-review-inventory" class="sj-ui-field__control mt-1 block w-full">
                             @foreach ($formOptions['inventory_scopes'] as $value => $label)
                                 <option value="{{ $value }}" @selected($value === 'operational')>{{ $label }}</option>
                             @endforeach
@@ -90,7 +90,7 @@
                     </div>
                     <div>
                         <x-input-label for="monthly-review-destination" :value="__('Destino')" />
-                        <select id="monthly-review-destination" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <select id="monthly-review-destination" class="sj-ui-field__control mt-1 block w-full">
                             @foreach ($formOptions['destinations'] as $value => $label)
                                 <option value="{{ $value }}">{{ $label }}</option>
                             @endforeach
@@ -195,7 +195,7 @@
     </x-modal>
 
     <div id="monthly-review-col-popover" class="fixed z-[80] hidden w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-        <input type="search" data-col-filter-search class="mb-2 w-full rounded-md border-slate-300 text-sm" placeholder="{{ __('Buscar...') }}">
+        <input type="search" data-col-filter-search class="sj-ui-field__control mb-2 w-full" placeholder="{{ __('Buscar...') }}">
         <div class="mb-2 flex items-center justify-between border-b border-slate-200 pb-2 text-xs">
             <button type="button" data-col-filter-select-all class="font-semibold text-indigo-700">{{ __('Seleccionar todo') }}</button>
             <button type="button" data-col-filter-clear class="font-semibold text-slate-600">{{ __('Limpiar') }}</button>

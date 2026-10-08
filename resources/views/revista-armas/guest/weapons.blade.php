@@ -57,7 +57,7 @@
             <p id="revista-guest-grid-hint" class="hidden border-b border-slate-100 bg-slate-50 px-4 py-2 text-center text-xs text-slate-500"></p>
             <div id="revista-guest-slot-grid" class="grid grid-cols-2 gap-3 overflow-y-auto p-4"></div>
             <div class="flex justify-end border-t px-4 py-3">
-                <button type="button" data-revista-guest-close class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">{{ __('Cerrar') }}</button>
+                <button type="button" data-revista-guest-close class="sj-ui-btn sj-ui-btn--ghost">{{ __('Cerrar') }}</button>
             </div>
         </div>
     </div>

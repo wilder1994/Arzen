@@ -26,12 +26,12 @@
         .mass-import-progress { display: none; gap: 0.75rem; border: 1px solid #dbeafe; border-radius: 0.9rem; background: #eff6ff; padding: 1rem; }
         .mass-import-progress.is-visible { display: grid; }
         .mass-import-progress__top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-        .mass-import-progress__title { color: #1e3a8a; font-size: 0.95rem; font-weight: 700; }
-        .mass-import-progress__meta { color: #475569; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+        .mass-import-progress__title { color: #1e3a8a; font-size: var(--sj-fs-lg); font-weight: 700; }
+        .mass-import-progress__meta { color: #475569; font-size: var(--sj-fs-md); font-weight: 600; white-space: nowrap; }
         .mass-import-progress__bar { width: 100%; height: 0.75rem; overflow: hidden; border-radius: 999px; background: rgba(148, 163, 184, 0.28); }
         .mass-import-progress__fill { height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%); transition: width 0.25s ease; }
         .mass-import-progress__fill.is-indeterminate { width: 35%; animation: mass-import-progress-slide 1.25s ease-in-out infinite; }
-        .mass-import-progress__details { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; color: #475569; font-size: 0.85rem; }
+        .mass-import-progress__details { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; color: #475569; font-size: var(--sj-fs-md); }
 
         @keyframes mass-import-progress-slide {
             0% { transform: translateX(-120%); }
@@ -682,7 +682,7 @@
                                 </label>
                             </div>
 
-                            <button type="submit" id="pa-btn-{{ $kind }}" disabled class="inline-flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300">
+                            <button type="submit" id="pa-btn-{{ $kind }}" disabled class="sj-ui-btn sj-ui-btn--primary w-full disabled:cursor-not-allowed disabled:bg-indigo-300">
                                 {{ __('Guardar imagen') }}
                             </button>
                         </form>
@@ -702,7 +702,7 @@
         <div id="permit-auth-editor-modal" class="p-4">
         <div class="w-full rounded bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b px-4 py-3">
-                <h3 class="text-sm font-semibold text-gray-800">{{ __('Editar imagen') }}</h3>
+                <h3 class="sj-type-section text-gray-800">{{ __('Editar imagen') }}</h3>
                 <button id="permit-auth-editor-close" type="button" class="text-sm text-gray-500 hover:text-gray-700">{{ __('Cerrar') }}</button>
             </div>
             <div class="p-4">
@@ -713,19 +713,19 @@
             <div class="flex items-center justify-between gap-2 border-t px-4 py-3">
                 <div class="flex flex-1 flex-wrap items-center gap-3">
                     <div class="flex items-center gap-2">
-                        <button id="permit-auth-editor-rotate-left" type="button" class="rounded border border-gray-300 px-3 py-1 text-xs text-gray-700 hover:bg-gray-100">{{ __('Girar izquierda') }}</button>
-                        <button id="permit-auth-editor-rotate-right" type="button" class="rounded border border-gray-300 px-3 py-1 text-xs text-gray-700 hover:bg-gray-100">{{ __('Girar derecha') }}</button>
+                        <button id="permit-auth-editor-rotate-left" type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">{{ __('Girar izquierda') }}</button>
+                        <button id="permit-auth-editor-rotate-right" type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">{{ __('Girar derecha') }}</button>
                     </div>
                     <div class="flex min-w-[18rem] flex-1 flex-wrap items-center gap-2">
                         <span class="text-xs font-medium text-gray-600">{{ __('Ajuste fino') }}</span>
                         <input id="permit-auth-editor-rotate-fine" type="range" min="-10" max="10" step="0.1" value="0" class="h-2 min-w-[10rem] flex-1 cursor-pointer accent-indigo-600">
                         <span id="permit-auth-editor-rotate-value" class="w-14 text-right text-xs font-medium text-gray-600">0.0°</span>
-                        <button id="permit-auth-editor-rotate-reset" type="button" class="rounded border border-gray-300 px-3 py-1 text-xs text-gray-700 hover:bg-gray-100">{{ __('Restablecer') }}</button>
+                        <button id="permit-auth-editor-rotate-reset" type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">{{ __('Restablecer') }}</button>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <button id="permit-auth-editor-cancel" type="button" class="text-sm text-gray-600 hover:text-gray-900">{{ __('Cancelar') }}</button>
-                    <button id="permit-auth-editor-apply" type="button" class="rounded bg-indigo-600 px-3 py-1 text-xs text-white hover:bg-indigo-700">{{ __('Guardar') }}</button>
+                    <button id="permit-auth-editor-apply" type="button" class="sj-ui-btn sj-ui-btn--primary sj-ui-btn--sm">{{ __('Guardar') }}</button>
                 </div>
             </div>
         </div>

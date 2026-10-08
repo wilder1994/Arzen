@@ -61,11 +61,11 @@
                             <a href="{{ route('vest-imports.show', ['vestImportBatch' => $selectedBatch->id, 'preview' => 1]) }}" class="inline-flex items-center rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50">{{ __('Revisar lote') }}</a>
                             <form method="POST" action="{{ route('vest-imports.execute', $selectedBatch) }}" class="vest-import-execute-form" data-batch-name="{{ $selectedBatch->source_name }}" data-start-url="{{ route('vest-imports.start', $selectedBatch) }}" data-process-url="{{ route('vest-imports.process', $selectedBatch) }}" data-status-url="{{ route('vest-imports.status', $selectedBatch) }}" data-redirect-url="{{ route('vest-imports.show', $selectedBatch) }}">
                                 @csrf
-                                <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300" @disabled($selectedBatch->hasErrors())>{{ __('Ejecutar') }}</button>
+                                <button type="submit" class="sj-ui-btn sj-ui-btn--primary disabled:cursor-not-allowed disabled:bg-gray-300" @disabled($selectedBatch->hasErrors())>{{ __('Ejecutar') }}</button>
                             </form>
                             <form method="POST" action="{{ route('vest-imports.discard', $selectedBatch) }}" class="vest-import-discard-form">
                                 @csrf
-                                <button type="submit" class="inline-flex items-center rounded-md border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50">{{ __('Cancelar carga') }}</button>
+                                <button type="submit" class="sj-ui-btn sj-ui-btn--ghost">{{ __('Cancelar carga') }}</button>
                             </form>
                         </div>
                     @endif

@@ -21,7 +21,7 @@
             @if (session('revista_grant_id'))
                 <form method="POST" action="{{ route('revista-armas.guest.logout') }}">
                     @csrf
-                    <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                    <button type="submit" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">
                         {{ __('Salir') }}
                     </button>
                 </form>

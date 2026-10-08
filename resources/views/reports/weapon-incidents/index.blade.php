@@ -93,7 +93,7 @@
                 </div>
                 <button
                     type="button"
-                    class="inline-flex shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+                    class="sj-ui-btn sj-ui-btn--ghost shrink-0"
                     x-on:click="$dispatch('close-modal', 'weapon-incidents-list')"
                 >
                     {{ __('Cerrar') }}
@@ -112,7 +112,7 @@
                         autocomplete="off"
                         spellcheck="false"
                         placeholder="{{ __('Buscar (ej. número de serie, código arma, cliente, tipo…)') }}"
-                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        class="sj-ui-field__control block w-full"
                     />
                 </div>
                 <p class="text-xs text-gray-500">

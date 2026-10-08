@@ -41,7 +41,7 @@
 >
     <div class="sj-weapon-detail-section__head mb-4">
         <div>
-            <h3 class="text-base font-semibold text-gray-900">{{ __('Fotografías del chaleco') }}</h3>
+            <h3 class="sj-type-section text-gray-900">{{ __('Fotografías del chaleco') }}</h3>
             <p class="sj-weapon-detail-section__hint mt-1 mb-0">{{ __('4 fotos: 2 vistas completas y 2 placas de serie. Clic, arrastre o pegue para cargar.') }}</p>
         </div>
         <div class="flex shrink-0 items-center gap-3">

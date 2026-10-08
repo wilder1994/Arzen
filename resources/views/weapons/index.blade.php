@@ -330,7 +330,7 @@
         box-shadow:
             0 0 1px rgba(224, 247, 255, 0.75),
             0 0 4px rgba(0, 123, 255, 0.08);
-        font-size: 0.875rem;
+        font-size: var(--sj-fs-md);
         padding: 0 0.75rem;
         color: #0f172a;
         transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -361,7 +361,7 @@
             0 0 4px var(--sj-ui-neon-glow);
         color: #334155;
         display: inline-flex;
-        font-size: 0.78rem;
+        font-size: var(--sj-fs-sm);
         font-weight: 600;
         height: var(--sj-ui-control-height);
         padding: 0 0.75rem;
@@ -378,7 +378,7 @@
             0 0 1px rgba(224, 247, 255, 0.75),
             0 0 4px rgba(0, 123, 255, 0.08);
         color: #334155;
-        font-size: 0.875rem;
+        font-size: var(--sj-fs-md);
         font-weight: 600;
         padding: 0 1.8rem 0 0.75rem;
         background-image:
@@ -399,7 +399,7 @@
         align-items: center;
         border-radius: var(--sj-ui-control-radius);
         display: inline-flex;
-        font-size: 0.875rem;
+        font-size: var(--sj-fs-md);
         font-weight: 600;
         height: var(--sj-ui-control-height);
         text-decoration: none;
@@ -455,7 +455,7 @@
             0 0 1px rgba(224, 247, 255, 0.75),
             0 0 4px rgba(0, 123, 255, 0.08);
         padding: 0 1rem;
-        font-size: 0.875rem;
+        font-size: var(--sj-fs-md);
         font-weight: 600;
         height: var(--sj-ui-control-height);
         color: #334155;
@@ -539,7 +539,7 @@
         border: 1px solid rgb(203 213 225);
         border-radius: 0.6rem;
         padding: 0.4rem 0.55rem;
-        font-size: 0.85rem;
+        font-size: var(--sj-fs-md);
         margin-bottom: 0.55rem;
     }
 
@@ -555,13 +555,13 @@
         display: flex;
         align-items: center;
         gap: 0.45rem;
-        font-size: 0.85rem;
+        font-size: var(--sj-fs-md);
         color: rgb(51 65 85);
     }
 
     .weapon-col-filter-popover__empty {
         color: rgb(100 116 139);
-        font-size: 0.82rem;
+        font-size: var(--sj-fs-sm);
         margin: 0.25rem 0;
     }
 
@@ -574,7 +574,7 @@
 
     .weapon-col-filter-popover__btn {
         border-radius: 0.55rem;
-        font-size: 0.78rem;
+        font-size: var(--sj-fs-sm);
         font-weight: 600;
         padding: 0.35rem 0.55rem;
         border: 1px solid transparent;
@@ -653,14 +653,14 @@
 
     .weapon-export-modal__title {
         color: rgb(15 23 42);
-        font-size: 1.1rem;
+        font-size: var(--sj-fs-lg);
         font-weight: 700;
         margin: 0;
     }
 
     .weapon-export-modal__description {
         color: rgb(71 85 105);
-        font-size: 0.95rem;
+        font-size: var(--sj-fs-lg);
         margin: 0.35rem 0 0;
     }
 
@@ -673,7 +673,7 @@
         cursor: pointer;
         display: inline-flex;
         font-size: 1.75rem;
-        height: 2.25rem;
+        height: var(--sj-ui-control-height-sm);
         justify-content: center;
         line-height: 1;
         width: 2.25rem;
@@ -684,7 +684,7 @@
         border-bottom: 1px solid rgb(254 215 170);
         color: rgb(154 52 18);
         flex-shrink: 0;
-        font-size: 0.95rem;
+        font-size: var(--sj-fs-lg);
         margin: 0;
         padding: 1rem 1.5rem;
     }
@@ -700,7 +700,7 @@
 
     .weapon-export-modal__format-label {
         color: rgb(51 65 85);
-        font-size: 0.9rem;
+        font-size: var(--sj-fs-md);
         font-weight: 700;
     }
 
@@ -712,7 +712,7 @@
         color: rgb(30 41 59);
         cursor: pointer;
         display: inline-flex;
-        font-size: 0.9rem;
+        font-size: var(--sj-fs-md);
         font-weight: 600;
         gap: 0.5rem;
         padding: 0.55rem 0.95rem;
@@ -755,9 +755,9 @@
         align-items: center;
         border-radius: 0.9rem;
         display: inline-flex;
-        font-size: 0.95rem;
+        font-size: var(--sj-fs-lg);
         font-weight: 600;
-        height: 2.75rem;
+        height: var(--sj-ui-control-height);
         justify-content: center;
         padding: 0 1.15rem;
         transition: 160ms ease;

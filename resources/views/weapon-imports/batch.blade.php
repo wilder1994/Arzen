@@ -53,11 +53,11 @@
                             <a href="{{ route('weapon-imports.show', ['weaponImportBatch' => $selectedBatch->id, 'preview' => 1]) }}" class="inline-flex items-center rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50">Revisar lote</a>
                             <form method="POST" action="{{ route('weapon-imports.execute', $selectedBatch) }}" class="weapon-import-execute-form" data-batch-name="{{ $selectedBatch->source_name }}" data-start-url="{{ route('weapon-imports.start', $selectedBatch) }}" data-process-url="{{ route('weapon-imports.process', $selectedBatch) }}" data-status-url="{{ route('weapon-imports.status', $selectedBatch) }}" data-redirect-url="{{ route('weapon-imports.show', $selectedBatch) }}">
                                 @csrf
-                                <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300" @disabled($selectedBatch->hasErrors())>Ejecutar</button>
+                                <button type="submit" class="sj-ui-btn sj-ui-btn--primary disabled:cursor-not-allowed disabled:bg-gray-300" @disabled($selectedBatch->hasErrors())>Ejecutar</button>
                             </form>
                             <form method="POST" action="{{ route('weapon-imports.discard', $selectedBatch) }}" class="weapon-import-discard-form">
                                 @csrf
-                                <button type="submit" class="inline-flex items-center rounded-md border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50">Cancelar carga</button>
+                                <button type="submit" class="sj-ui-btn sj-ui-btn--ghost">Cancelar carga</button>
                             </form>
                         </div>
                     @endif

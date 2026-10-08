@@ -46,14 +46,14 @@
                 align-items: center;
                 justify-content: center;
                 min-width: 9.5rem;
-                height: 2.5rem;
+                height: var(--sj-ui-control-height);
                 padding: 0 1.15rem;
                 border-radius: 0.75rem;
                 text-decoration: none;
                 color: #ffffff;
                 font-weight: 650;
                 letter-spacing: 0.06em;
-                font-size: 0.82rem;
+                font-size: var(--sj-fs-sm);
                 text-transform: uppercase;
                 background: linear-gradient(180deg, #2a7c88 0%, #1a6572 100%);
                 border: 1px solid rgba(196, 255, 246, 0.95);
@@ -79,7 +79,7 @@
                 .login-button {
                     min-width: 0;
                     height: 2.25rem;
-                    font-size: 0.72rem;
+                    font-size: var(--sj-fs-xs);
                 }
             }
         </style>

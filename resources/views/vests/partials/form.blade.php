@@ -291,7 +291,7 @@
 
 <div id="vest-missing-responsible-modal" class="fixed inset-0 z-[1400] hidden items-center justify-center bg-black/50 p-4">
     <div class="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
-        <h4 class="text-base font-semibold text-gray-900">{{ __('Atención') }}</h4>
+        <h4 class="sj-type-section text-gray-900">{{ __('Atención') }}</h4>
         <p class="mt-2 text-sm text-gray-700">{{ __('Primero debe realizar la asignación del responsable.') }}</p>
         <div class="mt-4 flex justify-end">
             <button type="button" id="vest-missing-responsible-modal-close" class="sj-ui-btn sj-ui-btn--primary">

@@ -21,7 +21,7 @@
                             <div class="sj-form-grid sj-form-grid--two">
                                 <div>
                                     <x-input-label for="client_id" :value="__('Cliente')" />
-                                    <select id="client_id" name="client_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm" required>
+                                    <select id="client_id" name="client_id" class="sj-ui-field__control mt-1 block w-full" required>
                                         <option value="">{{ __('Seleccione') }}</option>
                                         @foreach ($clients as $client)
                                             <option value="{{ $client->id }}" @selected(old('client_id') == $client->id)>
@@ -51,7 +51,7 @@
                             <div class="sj-form-grid sj-form-grid--two">
                                 <div>
                                     <x-input-label for="role" :value="__('Rol')" />
-                                    <select id="role" name="role" class="mt-1 block w-full rounded-md border-gray-300 text-sm" required>
+                                    <select id="role" name="role" class="sj-ui-field__control mt-1 block w-full" required>
                                         <option value="">{{ __('Seleccione') }}</option>
                                         @foreach ($roles as $value => $label)
                                             <option value="{{ $value }}" @selected(old('role') == $value)>{{ $label }}</option>
@@ -67,7 +67,7 @@
                                         <p class="mt-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800">{{ auth()->user()->name }}</p>
                                         <p class="sj-form-help">{{ __('Asignado automáticamente a su usuario.') }}</p>
                                     @else
-                                        <select id="responsible_user_id" name="responsible_user_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                                        <select id="responsible_user_id" name="responsible_user_id" class="sj-ui-field__control mt-1 block w-full">
                                             <option value="">{{ __('Sin responsable') }}</option>
                                             @foreach ($responsibles as $responsible)
                                                 <option value="{{ $responsible->id }}" @selected(old('responsible_user_id') == $responsible->id)>
@@ -85,7 +85,7 @@
                             <div class="sj-form-section__title">Notas</div>
                             <div>
                                 <x-input-label for="notes" :value="__('Notas')" />
-                                <textarea id="notes" name="notes" class="mt-1 block w-full rounded-md border-gray-300 text-sm" rows="3">{{ old('notes') }}</textarea>
+                                <textarea id="notes" name="notes" class="sj-ui-field__control mt-1 block w-full" rows="3">{{ old('notes') }}</textarea>
                                 <p class="sj-form-help">{{ __('El registro inicial quedará en el historial junto con estas notas si las completa.') }}</p>
                                 <x-input-error :messages="$errors->get('notes')" class="mt-2" />
                             </div>
