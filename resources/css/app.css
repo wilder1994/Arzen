@@ -197,7 +197,7 @@
     .sj-has-sidebar {
         --sj-sidebar-width: 15.5rem;
         --sj-topbar-height: 2.75rem;
-        --sj-tab-height: 1.65rem;
+        --sj-tab-height: 1.875rem;
         --sj-tab-width: 8rem;
         --sj-tabbar: var(--sj-navy);
         --sj-tab: rgba(255, 255, 255, 0.06);
@@ -415,9 +415,11 @@
         white-space: nowrap;
     }
 
-    .sj-sidebar__link--module {
-        min-height: 2.65rem;
-        font-size: var(--sj-fs-lg);
+    .sj-sidebar__link--module,
+    .sj-sidebar__account-link {
+        min-height: 2.375rem;
+        font-size: var(--sj-fs-md);
+        font-weight: 600;
         padding-inline: 0.85rem;
     }
 
@@ -530,7 +532,7 @@
         cursor: pointer;
         display: inline-flex;
         font-family: inherit;
-        font-size: var(--sj-fs-2xs);
+        font-size: var(--sj-fs-sm);
         font-weight: 600;
         gap: 0.2rem;
         height: var(--sj-tab-height);
@@ -649,11 +651,6 @@
         height: 1.15rem;
         opacity: 0.85;
         width: 1.15rem;
-    }
-
-    .sj-sidebar__account-link {
-        font-size: var(--sj-fs-md);
-        font-weight: 500;
     }
 
     .sj-sidebar__value {
@@ -1384,7 +1381,8 @@
         height: var(--sj-ui-control-height);
         justify-content: center;
         line-height: 1.2;
-        padding: 0 0.875rem;
+        min-width: 6rem;
+        padding: 0 1.125rem;
         text-decoration: none;
         transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, transform 0.15s ease;
         white-space: nowrap;
