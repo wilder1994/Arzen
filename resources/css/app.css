@@ -5626,52 +5626,9 @@
 }
 
 @layer utilities {
-    .sj-form-compact form label {
-        line-height: 1.1;
-        margin-bottom: 0.12rem;
-    }
-
-    .sj-form-compact form .mt-1 {
-        margin-top: 0.075rem;
-    }
-
-    .sj-form-compact form .mt-2 {
-        margin-top: 0.125rem;
-    }
-
-    .sj-form-compact form .mt-3 {
-        margin-top: 0.25rem;
-    }
-
-    .sj-form-compact form .mt-4 {
-        margin-top: 0.375rem;
-    }
-
-    .sj-form-compact form.gap-4,
-    .sj-form-compact form .gap-4 {
-        gap: 0.375rem;
-    }
-
-    .sj-form-compact form.gap-3,
-    .sj-form-compact form .gap-3 {
-        gap: 0.25rem;
-    }
-
-    .sj-form-compact form.gap-2,
-    .sj-form-compact form .gap-2 {
-        gap: 0.2rem;
-    }
-
-    .sj-form-compact form label + input,
-    .sj-form-compact form label + select,
-    .sj-form-compact form label + textarea {
-        margin-top: 0.12rem !important;
-    }
-
-    .sj-form-compact form input.mt-1,
-    .sj-form-compact form select.mt-1,
-    .sj-form-compact form textarea.mt-1 {
-        margin-top: 0.12rem !important;
+    .sj-form-compact form label:not(.inline-flex):not(.flex):not(.sj-ui-btn) {
+        line-height: 1.35;
+        margin-bottom: 0.375rem;
     }
 
     .sj-form-compact form :where(

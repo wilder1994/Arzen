@@ -324,7 +324,7 @@
     .weapon-toolbar__search-input {
         width: 100%;
         height: var(--sj-ui-control-height);
-        background: rgba(255, 255, 255, 0.82);
+        background: var(--sj-field-bg);
         border: 1px solid var(--sj-ui-surface-border);
         border-radius: var(--sj-ui-control-radius);
         box-shadow:
@@ -332,7 +332,7 @@
             0 0 4px rgba(0, 123, 255, 0.08);
         font-size: var(--sj-fs-md);
         padding: 0 0.75rem;
-        color: #0f172a;
+        color: var(--sj-field-text);
         transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
@@ -353,13 +353,11 @@
         align-items: center;
         border-radius: var(--sj-ui-control-radius);
         border: 1px solid var(--sj-ui-surface-border);
-        background:
-            radial-gradient(ellipse 100% 80% at 0% 0%, rgba(255, 255, 255, 0.5), transparent 60%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(248, 251, 255, 0.62) 100%);
+        background: var(--sj-field-bg);
         box-shadow:
             0 0 1px var(--sj-ui-neon-line),
             0 0 4px var(--sj-ui-neon-glow);
-        color: #334155;
+        color: var(--sj-muted);
         display: inline-flex;
         font-size: var(--sj-fs-sm);
         font-weight: 600;
@@ -371,26 +369,24 @@
     .weapon-toolbar__scope {
         appearance: none;
         height: var(--sj-ui-control-height);
-        background: rgba(255, 255, 255, 0.82);
+        background-color: var(--sj-field-bg);
         border: 1px solid var(--sj-ui-surface-border);
         border-radius: var(--sj-ui-control-radius);
         box-shadow:
             0 0 1px rgba(224, 247, 255, 0.75),
             0 0 4px rgba(0, 123, 255, 0.08);
-        color: #334155;
+        color: var(--sj-field-text);
         font-size: var(--sj-fs-md);
         font-weight: 600;
         padding: 0 1.8rem 0 0.75rem;
         background-image:
             linear-gradient(45deg, transparent 50%, #64748b 50%),
-            linear-gradient(135deg, #64748b 50%, transparent 50%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.82) 100%);
+            linear-gradient(135deg, #64748b 50%, transparent 50%);
         background-position:
             calc(100% - 0.8rem) calc(50% - 0.1rem),
-            calc(100% - 0.55rem) calc(50% - 0.1rem),
-            0 0;
+            calc(100% - 0.55rem) calc(50% - 0.1rem);
         background-repeat: no-repeat;
-        background-size: 0.3rem 0.3rem, 0.3rem 0.3rem, auto;
+        background-size: 0.3rem 0.3rem, 0.3rem 0.3rem;
     }
 
     .weapon-header__primary-action,
@@ -427,17 +423,16 @@
 
     .weapon-header__utility,
     .weapon-header__counter {
-        background: rgba(255, 255, 255, 0.78);
+        background: var(--sj-field-bg);
         border: 1px solid var(--sj-ui-surface-border);
         box-shadow:
             0 0 1px rgba(224, 247, 255, 0.75),
             0 0 4px rgba(0, 123, 255, 0.08);
-        color: #334155;
+        color: var(--sj-ink);
         padding: 0 1rem;
     }
 
     .weapon-header__utility:hover {
-        background: rgba(255, 255, 255, 0.95);
         border-color: rgba(147, 197, 253, 0.9);
         box-shadow:
             0 0 1px var(--sj-ui-neon-line),
@@ -450,7 +445,7 @@
         justify-content: center;
         border-radius: var(--sj-ui-control-radius);
         border: 1px solid var(--sj-ui-surface-border);
-        background: rgba(255, 255, 255, 0.78);
+        background: var(--sj-field-bg);
         box-shadow:
             0 0 1px rgba(224, 247, 255, 0.75),
             0 0 4px rgba(0, 123, 255, 0.08);
@@ -458,13 +453,12 @@
         font-size: var(--sj-fs-md);
         font-weight: 600;
         height: var(--sj-ui-control-height);
-        color: #334155;
+        color: var(--sj-ink);
         text-decoration: none;
         transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     .weapon-toolbar-action:hover {
-        background: rgba(255, 255, 255, 0.95);
         border-color: rgba(147, 197, 253, 0.9);
         box-shadow:
             0 0 1px var(--sj-ui-neon-line),
@@ -472,7 +466,7 @@
     }
 
     .weapon-toolbar-action-danger {
-        color: rgb(185 28 28);
+        color: var(--sj-danger);
     }
 
     .weapon-toolbar-action.is-disabled {
@@ -484,6 +478,11 @@
         outline: 2px solid rgb(37 99 235);
         outline-offset: -2px;
         box-shadow: inset 0 0 0 9999px rgba(219, 234, 254, 0.62);
+    }
+
+    html[data-theme="dark"] .weapon-row.is-selected {
+        outline-color: #38bdf8;
+        box-shadow: inset 0 0 0 9999px rgba(14, 116, 144, 0.32);
     }
 
     .weapon-col-filter {
