@@ -164,7 +164,9 @@ class UserController extends Controller
             'must_change_password' => true,
         ]);
 
-        $loginUrl = rtrim((string) config('app.url'), '/');
+        $loginUrl = in_array($request->getHost(), ['localhost', '127.0.0.1', '::1'], true)
+            ? rtrim((string) config('app.url'), '/')
+            : $request->getSchemeAndHttpHost();
         $appName = (string) config('app.name');
 
         try {

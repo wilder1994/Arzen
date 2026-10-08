@@ -1646,56 +1646,37 @@ Rutas usadas por el dominio:
 
 ### 12.1 Acceso por red local con Laragon/Apache
 
-Para acceder al sistema desde otros equipos de la misma red local:
+Arzen se abre desde otros equipos con `http://<IP-actual-del-PC>`, sin tocar nada al cambiar de red (cable de la oficina, otra Wi‑Fi). Tres piezas lo hacen posible:
 
-- Apache debe escuchar en `*:80`.
-- El `VirtualHost` debe apuntar a `public/` y aceptar el hostname o IP del equipo.
-- El firewall de Windows debe permitir entrada TCP al puerto `80`.
+- **Apache:** `00-aaa-arzen.conf` es el primer `VirtualHost *:80` que carga Laragon, así que Apache lo usa como servidor por defecto para cualquier Host que no sea de otro proyecto (una IP nueva incluida). Los demás proyectos siguen por su nombre `.test` o por su puerto propio (8082, 8083, 8084, 8085, 8086). No renombre el archivo a algo que ordene después de `00-default.conf`.
+- **Laravel:** en `APP_ENV=local`, `AppServiceProvider` toma el host de cada petición para las URL y para Sanctum; el WebSocket de Reverb usa el mismo host que el navegador (`resources/js/bootstrap.js`). El correo de credenciales usa la dirección por la que navega el administrador (o `APP_URL` si entra por `localhost`).
+- **Firewall de Windows:** reglas `Arzen - HTTP (80)` y `Arzen - Reverb (6001)`, entrada TCP, perfiles Dominio, Privado y Público. Solo abren esos dos puertos; las reglas de Apache y PHP de los otros proyectos no cambian. Para crearlas de nuevo (PowerShell como administrador):
 
-Ejemplo de `VirtualHost`:
-
-```apache
-<VirtualHost *:80>
-    ServerName NOMBRE-EQUIPO
-    ServerAlias arzen.test
-    ServerAlias *.arzen.test
-
-    DocumentRoot "C:/laragon/www/Arzen/public"
-
-    <Directory "C:/laragon/www/Arzen/public">
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
+```powershell
+New-NetFirewallRule -DisplayName 'Arzen - HTTP (80)' -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow -Profile Domain,Private,Public
+New-NetFirewallRule -DisplayName 'Arzen - Reverb (6001)' -Direction Inbound -Protocol TCP -LocalPort 6001 -Action Allow -Profile Domain,Private,Public
 ```
 
 Notas:
 
-- Con `Listen 80` en `*:80`, **cualquier IP local** del equipo sirve el primer `VirtualHost` (no hace falta `ServerAlias` por IP).
-- Abra `http://<IP-actual-del-PC>` o `http://SJPCANAOPE1` desde otro equipo en la misma red.
-- En `.env` local use `APP_URL=http://127.0.0.1` y **no** fije la IP de la Wi‑Fi: `AppServiceProvider` ajusta URL y Sanctum al host de cada petición.
-- Si se accede por un dominio local como `arzen.test`, cada equipo cliente debe resolver ese nombre via `hosts` o DNS interno.
-- Para abrir el puerto `80` solo a la red local en Windows:
-
-```cmd
-netsh advfirewall firewall add rule name="Laragon Apache HTTP 80 (LocalSubnet)" dir=in action=allow protocol=TCP localport=80 program="C:\laragon\bin\apache\httpd-2.4.54-win64-VS16\bin\httpd.exe" remoteip=LocalSubnet profile=any
-```
+- Para saber la IP actual: `ipconfig` (adaptador Wi‑Fi o Ethernet activo).
+- Google Maps: si la clave tiene restricción por sitio (referrer), agregue `http://<IP>/*` de cada red en la consola de Google Cloud.
+- Si se accede por un dominio local como `arzen.test`, cada equipo cliente debe resolver ese nombre vía `hosts` o DNS interno.
 
 ### 12.2 Configuracion recomendada en local (LAN)
 
-`.env` local (sin IP fija de red):
+`.env` local:
 
-- `APP_ENV=local`
-- `APP_URL=http://127.0.0.1`
-- `SANCTUM_STATEFUL_DOMAINS=localhost,127.0.0.1,arzen.test,arzen.test:80,SJPCANAOPE1,SJPCANAOPE1:80`
-- `REVERB_HOST=127.0.0.1` (WebSocket usa el mismo host que el navegador en LAN)
+- `APP_ENV=local` (activa el ajuste de host por petición)
+- `APP_URL=http://172.16.16.70` (IP de la oficina; solo se usa en consola y como respaldo del enlace del correo de credenciales cuando el administrador entra por `localhost`)
+- `REVERB_HOST=127.0.0.1` y `REVERB_SERVER_HOST=0.0.0.0` (el navegador conecta al mismo host por el que abrió la página)
 - `SESSION_DOMAIN=` vacío
 
 VirtualHost Laragon (`00-aaa-arzen.conf`):
 
 ```apache
 <VirtualHost *:80>
-    ServerName SJPCANAOPE1
+    ServerName SJPCANAOPE
     ServerAlias arzen.test
     ServerAlias *.arzen.test
 
@@ -1710,8 +1691,8 @@ VirtualHost Laragon (`00-aaa-arzen.conf`):
 
 Acceso desde otros equipos en la misma red:
 
-- `http://<IP-actual-del-servidor>` (p. ej. `http://192.168.18.47`)
-- `http://SJPCANAOPE1` (si el cliente resuelve ese nombre)
+- `http://<IP-actual-del-servidor>` (p. ej. `http://172.16.16.70` en la oficina o `http://192.168.1.5` en Wi‑Fi)
+- `http://SJPCANAOPE` (si el cliente resuelve ese nombre)
 - `http://arzen.test` (requiere entrada en `hosts` del cliente)
 
 No hace falta editar `.env` ni Apache al cambiar de red Wi‑Fi; solo usar la IP nueva del PC.

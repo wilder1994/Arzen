@@ -39,6 +39,20 @@ class UserSendAccessCredentialsTest extends TestCase
         $this->assertFalse(Hash::check('old-password-stable', $target->password));
     }
 
+    public function test_credentials_link_uses_the_address_the_admin_is_browsing(): void
+    {
+        Mail::fake();
+
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $target = User::factory()->create(['is_active' => true]);
+
+        $this->actingAs($admin)
+            ->post('http://192.168.1.5/users/'.$target->id.'/send-access-credentials')
+            ->assertRedirect();
+
+        Mail::assertSent(UserAccessCredentialsMail::class, fn (UserAccessCredentialsMail $mail) => $mail->loginUrl === 'http://192.168.1.5');
+    }
+
     public function test_inactive_user_cannot_receive_credentials(): void
     {
         Mail::fake();
