@@ -9,6 +9,7 @@ use App\Support\AlertDocumentPeriod;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File as FileFacade;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
@@ -105,6 +106,7 @@ class WeaponDocumentService
     {
         $fileName = $this->resolveBatchFileName($downloadBaseName, 'docx');
         $absolutePath = storage_path('app/tmp/' . Str::uuid() . '_' . basename($fileName));
+        FileFacade::ensureDirectoryExists(dirname($absolutePath));
 
         $this->builder->buildForWeapons($weapons, $absolutePath);
 
