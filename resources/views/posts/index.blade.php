@@ -99,7 +99,7 @@
                             <tr>
                                 <th>{{ __('Puesto') }}</th>
                                 <th>{{ __('Cliente') }}</th>
-                                <th>{{ __('Dirección') }}</th>
+                                <th>{{ __('Instalación') }}</th>
                                 <th>{{ __('Estado') }}</th>
                                 <th>{{ __('Acciones') }}</th>
                             </tr>

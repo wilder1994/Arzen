@@ -81,12 +81,13 @@ function footerDoc(string $name): string
     return "## Control del documento\n\n"
         . "| Versión | Fecha | Elaboró | Aprobó | Cambios |\n"
         . "|---------|--------|---------|--------|----------|\n"
-        . "| 3.0 | [fecha] | [nombre] | [nombre] | Procedimientos paso a paso en todas las funciones |\n\n"
+        . "| 3.0 | [fecha] | [nombre] | [nombre] | Procedimientos paso a paso en todas las funciones |\n"
+        . "| 3.1 | 2026-10-24 | [nombre] | [nombre] | Ajustes, matriz de módulos, instalaciones, puestos y Mi empresa con mapa |\n\n"
         . "---\n\n*Fin del {$name}.*\n";
 }
 
 // --- ADMIN ---
-$admin = headerDoc('Manual de usuario — Administrador (rol ADMIN)', 'rol **ADMIN**');
+$admin = headerDoc('Manual de usuario — Administrador (rol ADMIN)', 'rol **ADMIN**', '3.1');
 $admin .= accessBlock('Administrador inicial de la instalación (`admin@arzen.com`); véase **§2.1**. Sí aplica cambio obligatorio en el primer ingreso.');
 $admin .= chapter('2', 'Tipos de cuenta administrador');
 $admin .= proc(
@@ -105,7 +106,7 @@ $admin .= proc(
     'Dashboard **Inicio** con menú completo de ADMIN. Complete después **Mi empresa** (§16).',
     [['id' => '2.1', 'title' => 'Login admin seed', 'file' => 'fig-02-01-login-seed.png', 'refs' => ['①' => 'Correo', '②' => 'Contraseña', '③' => 'Ingresar']]],
     null,
-    ['Tras el despliegue, cambie la contraseña desde **Perfil** (§17) o cree admins nuevos con contraseña temporal.']
+    ['Tras el despliegue, cambie la contraseña desde **Perfil** (§15.3) o cree admins nuevos con contraseña temporal.']
 );
 $admin .= proc(
     '2.2 Administrador creado por otro ADMIN',
@@ -127,10 +128,10 @@ $admin .= proc(
 $admin .= chapter('3', 'Usuarios del sistema');
 $admin .= proc(
     '3.1 Abrir el listado de usuarios',
-    ['Menú' => '**Usuarios**', 'Ruta' => '`/users`', 'Objetivo' => 'Ver y gestionar cuentas'],
+    ['Menú' => '**Ajustes** → **Usuarios**', 'Ruta' => '`/users`', 'Objetivo' => 'Ver y gestionar cuentas'],
     [
-        'Con sesión iniciada, clic en **Usuarios** en la barra superior.',
-        'Espere a que cargue la tabla con columnas: nombre, correo, rol, nivel (si aplica), estado.',
+        'Con sesión iniciada, abra el módulo **Ajustes** y la pestaña **Usuarios**.',
+        'Espere a que cargue la tabla con columnas: nombre, correo, rol, cargo y estado.',
         'Use la barra de búsqueda o filtros si están visibles para localizar un usuario.',
     ],
     'Listado de usuarios con acciones por fila.',
@@ -138,32 +139,33 @@ $admin .= proc(
 );
 $admin .= proc(
     '3.2 Crear un usuario',
-    ['Menú' => '**Usuarios** → **Crear usuario**', 'Ruta' => '`/users/create`', 'Objetivo' => 'Alta de cuenta con contraseña temporal'],
+    ['Menú' => '**Ajustes** → **Usuarios** → **Crear usuario**', 'Ruta' => '`/users/create`', 'Objetivo' => 'Alta de cuenta con contraseña temporal, cartera y matriz'],
     [
-        'En `/users`, clic **Crear usuario** (o enlace equivalente).',
+        'En **Ajustes → Usuarios**, clic **Crear usuario**.',
         'En **Nombre**, escriba el nombre completo.',
         'En **Correo electrónico**, escriba un correo válido (será el login).',
-        'En **Rol**, elija **ADMIN**, **RESPONSABLE** o **AUDITOR**.',
-        'Si el rol es **RESPONSABLE**, seleccione **Nivel** (1 = gestión, 2 = solo lectura).',
-        'Complete **Cargo**, **Centro de costo** y marque **Activo** según política interna.',
-        'Pulse **Guardar**.',
+        'En **Rol**, elija **ADMIN**, **RESPONSABLE**, **AUDITOR** o **ALMACEN**. Al cambiar el rol se cargan los permisos por defecto en la matriz.',
+        'En **Cargo**, elija un cargo de **Ajustes → Cargos** (opcional).',
+        'Si el rol no es **ADMIN**, marque los **clientes** de su cartera. El súper administrador ve todos los clientes.',
+        'En la **matriz de módulos**, elija por cada módulo **Nada**, **Ver** o **Gestionar**.',
+        'Marque **Activo** según política interna y pulse **Guardar**.',
         'Lea el **mensaje o banner** con la **contraseña temporal** — cópiela de inmediato; **no se vuelve a mostrar**.',
         'Entregue correo + temporal al usuario por canal seguro.',
     ],
-    'Usuario creado; el nuevo usuario deberá completar **§1.4** en su primer ingreso.',
+    'Usuario creado con cartera y permisos; deberá completar **§1.4** en su primer ingreso.',
     [
-        ['id' => '3.2a', 'title' => 'Formulario crear', 'file' => 'fig-03-02-users-create.png', 'refs' => ['①' => 'Correo', '②' => 'Rol', '③' => 'Nivel', '④' => 'Guardar']],
+        ['id' => '3.2a', 'title' => 'Formulario crear', 'file' => 'fig-03-02-users-create.png', 'refs' => ['①' => 'Correo', '②' => 'Rol', '③' => 'Matriz Nada / Ver / Gestionar', '④' => 'Guardar']],
         ['id' => '3.2b', 'title' => 'Banner contraseña temporal', 'file' => 'fig-03-03-password-banner.png', 'refs' => ['①' => 'Texto temporal (difuminar en impresión)']],
     ],
     [['No guardó la temporal', 'Use §3.4 **Enviar** para generar una nueva']]
 );
 $admin .= proc(
     '3.3 Editar un usuario',
-    ['Menú' => '**Usuarios**', 'Ruta' => '`/users/{id}/edit`', 'Objetivo' => 'Modificar datos o regenerar temporal'],
+    ['Menú' => '**Ajustes** → **Usuarios**', 'Ruta' => '`/users/{id}/edit`', 'Objetivo' => 'Modificar datos, cartera o matriz'],
     [
         'En el listado, localice la fila del usuario.',
         'Clic **Editar**.',
-        'Modifique los campos permitidos (nombre, rol, nivel, estado, etc.).',
+        'Modifique nombre, rol, cargo, clientes de la cartera o la matriz **Nada / Ver / Gestionar**.',
         'Si necesita nueva contraseña temporal, marque la opción **Generar contraseña temporal** (si aparece) o use **Enviar** desde el listado (§3.4).',
         'Pulse **Guardar**.',
     ],
@@ -172,7 +174,7 @@ $admin .= proc(
 );
 $admin .= proc(
     '3.4 Enviar credenciales de acceso',
-    ['Menú' => '**Usuarios**', 'Objetivo' => 'Reenviar correo y nueva temporal'],
+    ['Menú' => '**Ajustes** → **Usuarios**', 'Objetivo' => 'Reenviar correo y nueva temporal'],
     [
         'En el listado, localice al usuario.',
         'Clic **Enviar** (reenvío de credenciales).',
@@ -189,7 +191,7 @@ $admin .= proc(
 );
 $admin .= proc(
     '3.5 Activar o inactivar usuario',
-    ['Menú' => '**Usuarios**', 'Objetivo' => 'Bloquear acceso sin borrar historial'],
+    ['Menú' => '**Ajustes** → **Usuarios**', 'Objetivo' => 'Bloquear acceso sin borrar historial'],
     [
         'En la fila del usuario, use la acción de **cambio de estado** (activar/inactivar según etiqueta visible).',
         'Confirme en el modal si el sistema lo solicita.',
@@ -200,26 +202,28 @@ $admin .= proc(
 
 $admin .= chapter('4', 'Cartera operativa (Asignaciones)');
 $admin .= proc(
-    '4.1 Listar responsables y su cartera',
-    ['Menú' => '**Asignaciones**', 'Ruta' => '`/portfolios`', 'Objetivo' => 'Ver qué clientes tiene cada responsable'],
+    '4.1 Asignar clientes en el usuario',
+    ['Menú' => '**Ajustes** → **Usuarios**', 'Ruta' => '`/users/{id}/edit`', 'Objetivo' => 'Definir qué clientes opera cada usuario'],
     [
-        'Clic **Asignaciones** en el menú.',
-        'Revise la tabla de **responsables** y cantidad de clientes asignados.',
-    ],
-    'Listado listo para editar o transferir cartera.',
-    [['id' => '4.1', 'title' => 'Listado carteras', 'file' => 'fig-04-01-portfolios.png', 'refs' => ['①' => 'Responsable', '②' => 'Acción editar']]]
-);
-$admin .= proc(
-    '4.2 Asignar clientes a un responsable',
-    ['Ruta' => '`/portfolios/{user}/edit`', 'Objetivo' => 'Definir cartera del responsable'],
-    [
-        'En **Asignaciones**, clic **Editar** (o gestionar) en la fila del responsable.',
-        'Marque los **checkboxes** de los clientes que podrá ver y operar.',
+        'Abra **Ajustes → Usuarios** y **Editar** del usuario.',
+        'En el bloque de **clientes**, marque los que podrá ver y operar.',
         'Desmarque los que debe quitar de su cartera.',
         'Pulse **Guardar**.',
     ],
-    'Cartera guardada; el responsable solo verá armas/clientes de esos clientes.',
-    [['id' => '4.2', 'title' => 'Edición cartera', 'file' => 'fig-04-02-portfolio-edit.png', 'refs' => ['①' => 'Lista clientes', '②' => 'Guardar']]]
+    'Cartera guardada; el usuario solo ve armas y operación de esos clientes. El **ADMIN** ve todos.',
+    [['id' => '4.1', 'title' => 'Clientes en el usuario', 'file' => 'fig-04-01-user-clients.png', 'refs' => ['①' => 'Lista de clientes', '②' => 'Guardar']]],
+    null,
+    ['Asignar un arma a un **cliente** solo lo hace el súper administrador. La asignación interna (puesto y trabajador) la hacen quienes tienen ese cliente y esas armas en su cartera.']
+);
+$admin .= proc(
+    '4.2 Listar responsables y su cartera',
+    ['Menú' => '**Asignaciones**', 'Ruta' => '`/portfolios`', 'Objetivo' => 'Ver qué clientes tiene cada responsable'],
+    [
+        'Abra **Asignaciones**.',
+        'Revise la tabla de **responsables** y la cantidad de clientes asignados.',
+    ],
+    'Listado listo para consultar o transferir cartera.',
+    [['id' => '4.2', 'title' => 'Listado carteras', 'file' => 'fig-04-02-portfolios.png', 'refs' => ['①' => 'Responsable', '②' => 'Acción editar']]]
 );
 $admin .= proc(
     '4.3 Transferir clientes entre responsables',
@@ -231,7 +235,9 @@ $admin .= proc(
         'Confirme la operación.',
     ],
     'Clientes reasignados; revise armas y asignaciones operativas afectadas.',
-    [['id' => '4.3', 'title' => 'Transferir cartera', 'file' => 'fig-04-03-portfolio-transfer.png', 'refs' => []]]
+    [['id' => '4.3', 'title' => 'Transferir cartera', 'file' => 'fig-04-03-portfolio-transfer.png', 'refs' => []]],
+    null,
+    ['La edición diaria de la cartera se hace en **Ajustes → Usuarios**. Esta pantalla sirve para mover varios clientes de un responsable a otro.']
 );
 
 // Continue with more sections - clients, weapons, etc.
@@ -245,14 +251,14 @@ $admin .= proc(
 );
 $admin .= proc(
     '5.2 Crear cliente',
-    ['Ruta' => '`/clients/create`', 'Objetivo' => 'Alta de cliente con ubicación'],
+    ['Ruta' => '`/clients/create`', 'Objetivo' => 'Alta de cliente con ubicación e instalación principal'],
     [
         'Clic **Nuevo cliente**.',
-        'Complete datos de identificación, contacto y dirección.',
-        'Si la pantalla incluye **mapa**, puede buscar dirección o marcar coordenadas (opcional).',
+        'Complete identificación, contacto y tipo de persona (natural o jurídica), alineados al formato de Zentra.',
+        'En la ubicación, use el icono de **mapa** para fijar la sede (dirección, departamento, municipio y coordenadas).',
         'Pulse **Guardar**.',
     ],
-    'Cliente creado y visible en listado.',
+    'Cliente creado. El sistema genera su **instalación principal** con la misma ubicación.',
     [
         ['id' => '5.2a', 'title' => 'Formulario cliente', 'file' => 'fig-05-02-client-create.png', 'refs' => []],
         ['id' => '5.2b', 'title' => 'Mapa en cliente', 'file' => 'fig-05-03-client-map.png', 'refs' => []],
@@ -267,33 +273,49 @@ $admin .= proc(
         'Para archivo, use la acción **Archivar** / estado inactivo según botón visible.',
         'Guarde cambios.',
     ],
-    'Cliente actualizado o archivado según acción.',
+    'Cliente actualizado o archivado según acción. La instalación principal se sincroniza con la ubicación del cliente.',
     [['id' => '5.3', 'title' => 'Editar cliente', 'file' => 'fig-05-04-client-edit.png', 'refs' => []]]
+);
+$admin .= proc(
+    '5.4 Instalaciones del cliente',
+    ['Menú' => '**Clientes** → ficha o edición', 'Ruta' => '`/clients/{id}/installations/create`', 'Objetivo' => 'Agregar sedes distintas de la principal'],
+    [
+        'Abra el cliente y localice el bloque **Instalaciones**.',
+        'La instalación marcada como sede del cliente ya existe: es la principal.',
+        'Para otra sede, clic **Nueva instalación**.',
+        'Escriba el nombre. Si la sede es la misma del cliente, marque **Misma ubicación que el cliente**; si no, abra el mapa y fije otra dirección.',
+        'Pulse **Guardar**.',
+    ],
+    'La instalación queda bajo el cliente y podrá recibir puestos.',
+    [['id' => '5.4', 'title' => 'Instalaciones', 'file' => 'fig-05-05-installations.png', 'refs' => ['①' => 'Instalación principal', '②' => 'Nueva instalación']]],
+    null,
+    ['**Mi empresa** también es un cliente del sistema: su sede principal aloja el armerillo.']
 );
 
 $admin .= chapter('6', 'Puestos y trabajadores');
 $admin .= proc(
     '6.1 Gestionar puestos',
-    ['Menú' => '**Puestos**', 'Ruta' => '`/posts`', 'Objetivo' => 'CRUD de puestos operativos'],
+    ['Menú' => '**Puestos**', 'Ruta' => '`/posts`', 'Objetivo' => 'CRUD de puestos dentro de una instalación'],
     [
         'Clic **Puestos**.',
-        'Para crear: **Nuevo puesto** → complete datos → **Guardar**.',
-        'Para editar: **Editar** en la fila → modifique → **Guardar** (nota si aplica).',
-        'Para historial: use enlace **Historial** de la fila si está disponible.',
-        'Para reactivar archivo: acción **Restaurar** según listado.',
+        'Para crear: **Nuevo puesto** → elija **Cliente e instalación** → nombre y nota → **Guardar**.',
+        'El puesto toma la dirección y las coordenadas de esa instalación; no se georreferencia aparte.',
+        'Para editar: **Editar** en la fila → modifique → **Guardar** (la nota queda en el historial).',
+        'Para historial o archivo: use **Historial** o **Restaurar** de la fila.',
     ],
-    'Puestos actualizados en el sistema.',
+    'Puesto creado dentro de la instalación elegida.',
     [['id' => '6.1', 'title' => 'Puestos', 'file' => 'fig-06-01-posts.png', 'refs' => []]]
 );
 $admin .= proc(
     '6.2 Gestionar trabajadores',
-    ['Menú' => '**Trabajadores**', 'Ruta' => '`/workers`', 'Objetivo' => 'CRUD de trabajadores'],
+    ['Menú' => '**Trabajadores**', 'Ruta' => '`/workers`', 'Objetivo' => 'CRUD de trabajadores con cargo y un puesto activo'],
     [
-        'Clic **Trabajadores**.',
-        'Mismo flujo que puestos: **Nuevo**, **Editar**, **Historial**, **Restaurar**.',
-        'Revise el **total** en barra de filtros si aparece.',
+        'Clic **Trabajadores** → **Nuevo trabajador**.',
+        'Elija el **cliente**, el documento y el **cargo** (catálogo de **Ajustes → Cargos**).',
+        'Opcional: asigne **un puesto** de ese cliente. Un cambio de puesto queda en el historial.',
+        'Pulse **Guardar**. Use **Editar**, **Historial** o **Restaurar** desde el listado.',
     ],
-    'Trabajadores registrados para asignación interna de armas.',
+    'Trabajador listo para la asignación interna de armas.',
     [['id' => '6.2', 'title' => 'Trabajadores', 'file' => 'fig-06-02-workers.png', 'refs' => []]]
 );
 
@@ -704,39 +726,54 @@ $admin .= proc(
 $admin .= chapter('16', 'Mi empresa');
 $admin .= proc(
     '16.1 Datos de la empresa, logo y membrete',
-    ['Menú' => 'Sidebar → **Mi empresa** → **Datos de la empresa**', 'Ruta' => '`/empresa`', 'Objetivo' => 'Registrar la información que usan las cartas, los formatos y el logo del sistema'],
+    ['Menú' => 'Sidebar → **Mi empresa** → **Datos de la empresa**', 'Ruta' => '`/empresa`', 'Objetivo' => 'Registrar datos legales, sede, logo y membrete en una sola tarjeta'],
     [
-        'Complete **Razón social**, **NIT**, **Ciudad** y los datos del **Representante legal** (nombre, cédula y ciudad de expedición).',
-        'Si los trámites los hace otra persona, complete **Persona autorizada para trámites**; si lo deja vacío, la carta autoriza al representante legal.',
-        'En **Logo**, cargue la imagen de la empresa (PNG, JPG o WEBP, máximo 2 MB).',
-        'En **Membrete (Word)**, cargue el `.docx` con el membrete como imagen en el encabezado y en el pie.',
-        'Defina el **Prefijo** de los códigos internos de armas (por ejemplo `ACME-`).',
-        'Clic **Guardar cambios**.',
+        'Abra **Mi empresa**. El icono de ayuda del encabezado abre la guía del módulo.',
+        'Complete **Razón social**, **NIT** y los datos del **Representante legal**.',
+        'En la ubicación, abra el **mapa** y fije la sede (dirección, departamento y municipio). Esa sede es la instalación principal del cliente «Mi empresa» y aloja el armerillo.',
+        'En **Ciudad para la carta**, escriba el texto que debe salir en las cartas (puede diferir del municipio del mapa).',
+        'Si los trámites los hace otra persona, complete **Persona autorizada para trámites**.',
+        'En **Logo** y **Membrete**, use el recuadro: clic para elegir, arrastrar el archivo o pegar con Ctrl+V. No hay botón «Seleccionar archivo».',
+        'Defina el **Prefijo** de los códigos internos de armas y pulse **Guardar cambios**.',
     ],
-    'El logo aparece en el sidebar, el inicio de sesión y la revista mensual; las cartas de revalidación salen con el membrete y los datos de la empresa; las armas nuevas reciben el prefijo.',
+    'Logo en sidebar, login y revista; cartas con membrete y ciudad propia; la empresa queda como cliente con instalación principal.',
     [['id' => '16.1', 'title' => 'Datos de la empresa', 'file' => 'fig-16-01-company.png', 'refs' => [
-        '①' => 'Datos de la empresa y representante legal',
-        '②' => 'Logo y vista previa del membrete',
-        '③' => 'Prefijo de códigos internos',
+        '①' => 'Datos legales y mapa de la sede',
+        '②' => 'Ciudad para la carta',
+        '③' => 'Zonas de logo y membrete',
     ]]],
     [
         ['Alertas muestra «faltan datos en Mi empresa»', 'Complete los campos indicados y guarde.'],
         ['El Word se rechaza', 'Inserte el membrete como imagen dentro del encabezado del documento.'],
     ],
-    ['Cambiar el prefijo no modifica los códigos de armas ya registradas.']
+    ['Cambiar el prefijo no modifica los códigos de armas ya registradas. Los cargos y los tipos de novedad están en **Ajustes** (§17), no en esta pantalla.']
+);
+
+$admin .= chapter('17', 'Ajustes');
+$admin .= proc(
+    '17.1 Cargos',
+    ['Menú' => '**Ajustes** → **Cargos**', 'Ruta' => '`/ajustes?tab=cargos`', 'Objetivo' => 'Un solo catálogo de cargos para usuarios y trabajadores'],
+    [
+        'Abra **Ajustes** y la pestaña **Cargos**.',
+        'Escriba el nombre (escolta, guarda, mensajero, recaudador, etc.) y una descripción opcional → **Agregar**.',
+        'Edite y **Guardar**, o **Eliminar** si el cargo no está en uso.',
+    ],
+    'El cargo aparece en usuarios y en trabajadores.',
+    [['id' => '17.1', 'title' => 'Cargos', 'file' => 'fig-17-01-positions.png', 'refs' => []]]
 );
 $admin .= proc(
-    '16.2 Catálogos',
-    ['Menú' => 'Sidebar → **Mi empresa** → **Catálogos**', 'Ruta' => '`/empresa/catalogos`', 'Objetivo' => 'Mantener las listas de cargos, novedades y niveles'],
+    '17.2 Tipos de novedad',
+    ['Menú' => '**Ajustes** → **Tipos de novedad**', 'Ruta' => '`/ajustes?tab=novedades`', 'Objetivo' => 'Mantener los tipos y modalidades que usa el reporte de novedades'],
     [
-        'Pestaña **Cargos**: escriba el nombre (y descripción opcional) → **Agregar**. Edite y **Guardar**, o **Eliminar** si no está asignado a usuarios.',
-        'Pestaña **Tipos de novedad**: ajuste nombre, color, orden, horas de atención y si exige adjunto o nota de cierre → **Guardar tipo**. En los tipos con modalidades, agregue o edite modalidades.',
-        'Pestaña **Niveles de responsabilidad**: cambie el nombre o la descripción de los niveles 1 y 2 → **Guardar**.',
+        'Abra la pestaña **Tipos de novedad**. Hay una sola tabla. Mantenimiento y armerillo no aparecen.',
+        'Clic **Agregar**. Elija **Tipo** (nombre y color) o **Modalidad** (un tipo ya creado y el nombre) → **Guardar**.',
+        'En la fila, edite el nombre o el color, marque **Activo** y pulse **Guardar**. Las flechas suben o bajan el orden.',
+        '**Eliminar** solo está disponible si ninguna arma usa ese tipo o esa modalidad. Si ya está en uso, desactívelo: los reportes nuevos no lo ofrecen y el arma que ya lo tiene lo conserva.',
     ],
-    'Los formularios de usuarios y de novedades muestran las listas actualizadas.',
-    [['id' => '16.2', 'title' => 'Catálogos', 'file' => 'fig-16-02-catalogs.png', 'refs' => []]],
+    'El reporte de novedades ofrece los mismos tipos y modalidades activos.',
+    [['id' => '17.2', 'title' => 'Tipos de novedad', 'file' => 'fig-17-02-incident-types.png', 'refs' => []]],
     null,
-    ['Los tipos de novedad y los niveles son del sistema: no se crean ni se eliminan, porque el tablero, los reportes y los permisos dependen de ellos.']
+    ['El adjunto del reporte siempre es opcional. La nota de cierre siempre es obligatoria. Esas reglas no se configuran en esta pantalla.']
 );
 
 $admin .= footerDoc('manual de administrador');

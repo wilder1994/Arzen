@@ -55,7 +55,11 @@ class CompanySettingsTest extends TestCase
             ->put(route('company.update'), [
                 'legal_name' => 'Acme Seguridad LTDA',
                 'nit' => '900.000.000-1',
-                'city' => 'Bogotá',
+                'city' => 'BOGOTA D.C.',
+                'department' => 'BOGOTA D.C.',
+                'latitude' => '4.6097100',
+                'longitude' => '-74.0817500',
+                'letter_city' => 'Bogotá D.C.',
                 'legal_rep_name' => 'Ana Pérez',
                 'legal_rep_document' => '1.000.000',
                 'legal_rep_document_city' => 'Bogotá',
@@ -70,6 +74,12 @@ class CompanySettingsTest extends TestCase
         $this->assertSame('ACME-', $company->internal_code_prefix);
         $this->assertSame([], $company->missingLetterFields());
         $this->assertNotNull($company->logoFile);
+
+        $ownClient = \App\Models\Client::ownCompany();
+        $this->assertNotNull($ownClient);
+        $this->assertSame('Acme Seguridad LTDA', $ownClient->name);
+        $this->assertSame('BOGOTA D.C.', $ownClient->city);
+        $this->assertEqualsWithDelta(4.60971, (float) $ownClient->mainInstallation->latitude, 0.00001);
 
         $images = app(CompanyLetterheadService::class)->imagesFor($company);
         $this->assertNotNull($images['header']);

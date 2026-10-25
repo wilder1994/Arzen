@@ -13,6 +13,7 @@ class Post extends Model
 
     protected $fillable = [
         'client_id',
+        'installation_id',
         'custody_role',
         'owner_responsible_user_id',
         'name',
@@ -29,9 +30,47 @@ class Post extends Model
         'archived_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (Post $post) {
+            if (! $post->installation_id && $post->client_id) {
+                $post->installation_id = Installation::mainFor(Client::query()->findOrFail($post->client_id))->id;
+            }
+
+            if ($post->installation_id && ($post->isDirty('installation_id') || ! $post->exists)) {
+                $installation = Installation::query()->find($post->installation_id);
+
+                if ($installation) {
+                    $post->client_id = $installation->client_id;
+
+                    $keepOwnAddress = $post->custody_role === PostCustodyRole::ARMERO && filled($post->address);
+
+                    if (! $keepOwnAddress) {
+                        $post->address = $installation->address;
+                    }
+
+                    $post->city = $installation->city;
+                    $post->department = $installation->department;
+                    $post->latitude = $installation->latitude;
+                    $post->longitude = $installation->longitude;
+                }
+            }
+        });
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function installation()
+    {
+        return $this->belongsTo(Installation::class);
+    }
+
+    public function workers()
+    {
+        return $this->hasMany(Worker::class);
     }
 
     public function ownerResponsible()

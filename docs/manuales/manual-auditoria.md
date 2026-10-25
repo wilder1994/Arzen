@@ -628,6 +628,7 @@ Sesión cerrada o perfil actualizado.
 | Versión | Fecha | Elaboró | Aprobó | Cambios |
 |---------|--------|---------|--------|----------|
 | 3.0 | [fecha] | [nombre] | [nombre] | Procedimientos paso a paso en todas las funciones |
+| 3.1 | 2026-10-24 | [nombre] | [nombre] | Ajustes, matriz de módulos, instalaciones, puestos y Mi empresa con mapa |
 
 ---
 

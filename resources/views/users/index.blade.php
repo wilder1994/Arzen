@@ -92,9 +92,9 @@
                                 <tr>
                                     <th>{{ __('Nombre') }}</th>
                                     <th>{{ __('Correo electrónico') }}</th>
-                                    <th>{{ __('Responsable') }}</th>
+                                    <th>{{ __('Rol') }}</th>
                                     <th>{{ __('Cargo') }}</th>
-                                    <th>{{ __('Nivel de responsabilidad') }}</th>
+                                    <th>{{ __('Módulos') }}</th>
                                     <th>{{ __('Clientes asignados') }}</th>
                                     <th>{{ __('Estado activo') }}</th>
                                     <th>{{ __('Acciones') }}</th>
@@ -108,7 +108,12 @@
                                         <td class="px-3 py-2">{{ $roles[$user->role] ?? $user->role }}</td>
                                         <td class="px-3 py-2">{{ $user->position?->name ?? '-' }}</td>
                                         <td class="px-3 py-2">
-                                            {{ $user->responsibilityLevel?->level ? $user->responsibilityLevel->level . ' - ' . $user->responsibilityLevel->name : '-' }}
+                                            @if ($user->isAdmin())
+                                                {{ __('Acceso total') }}
+                                            @else
+                                                @php($moduleCounts = collect($user->moduleLevels())->countBy())
+                                                {{ __(':manage gestiona · :view consulta', ['manage' => $moduleCounts->get('manage', 0), 'view' => $moduleCounts->get('view', 0)]) }}
+                                            @endif
                                         </td>
                                         <td class="px-3 py-2">
                                             <button

@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Models\Worker;
 use App\Models\WeaponImportRow;
 use App\Services\Imports\VestImportProcessor;
-use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,8 +18,6 @@ class VestImportValidationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->seed(ResponsibilityLevelSeeder::class);
     }
 
     public function test_preview_marks_error_when_client_does_not_exist(): void
@@ -64,7 +61,7 @@ class VestImportValidationTest extends TestCase
             'client_id' => $clientB->id,
             'name' => 'Juan Remoto',
             'document' => '1234567890',
-            'role' => Worker::ROLE_GUARDA,
+            'position_id' => \App\Models\Position::resolveByName('Guarda')->id,
         ]);
 
         $processor = app(VestImportProcessor::class);
@@ -88,7 +85,7 @@ class VestImportValidationTest extends TestCase
             'client_id' => $client->id,
             'name' => 'Pedro Local',
             'document' => '99887766',
-            'role' => Worker::ROLE_GUARDA,
+            'position_id' => \App\Models\Position::resolveByName('Guarda')->id,
         ]);
 
         $processor = app(VestImportProcessor::class);
@@ -158,7 +155,6 @@ class VestImportValidationTest extends TestCase
     {
         $user = User::factory()->create([
             'role' => 'RESPONSABLE',
-            'responsibility_level_id' => 1,
         ]);
 
         $this->actingAs($user)

@@ -2,8 +2,13 @@
     <x-slot name="header">
         <div class="sj-section-header">
             <div class="sj-section-header__main">
-                <h2 class="sj-section-header__title">{{ __('Editar puesto') }}</h2>
-                <p class="sj-section-header__subtitle">{{ $post->name }}</p>
+                <div class="sj-section-header__title-row">
+                    <h2 class="sj-section-header__title">{{ __('Editar puesto') }}</h2>
+                    <x-help-drawer :title="__('Puestos')">
+                        @include('posts.partials.help')
+                    </x-help-drawer>
+                </div>
+                <p class="sj-section-header__subtitle">{{ $post->name }} · {{ $post->installation?->name }}</p>
             </div>
             <div class="sj-section-header__actions">
                 <a href="{{ route('posts.index') }}" class="sj-ui-btn sj-ui-btn--ghost">{{ __('Volver al listado') }}</a>
@@ -11,127 +16,22 @@
         </div>
     </x-slot>
 
-    <div class="py-8">
+    <div class="py-4">
         <div class="sj-page-shell sj-page-shell--wide">
-            <div class="sj-ui-card p-6">
-                    <form method="POST" action="{{ route('posts.update', $post) }}" class="sj-form-panel" data-location-form>
-                        <input type="hidden" name="coords_source" value="geocode" data-coords-source>
-                        @csrf
-                        @method('PUT')
+            <form method="POST" action="{{ route('posts.update', $post) }}">
+                @csrf
+                @method('PUT')
+                <section class="sj-ui-card">
+                    <div class="sj-ui-card__body p-6">
+                        @include('posts.partials.form', ['post' => $post])
 
-                        <section class="sj-form-section">
-                            <div class="sj-form-section__title">Datos del puesto</div>
-                            <div class="sj-form-grid sj-form-grid--two">
-                                <div>
-                                    <x-input-label for="client_id" :value="__('Cliente')" />
-                                    <select id="client_id" name="client_id" class="sj-ui-field__control mt-1 block w-full" required>
-                                        <option value="">{{ __('Seleccione') }}</option>
-                                        @foreach ($clients as $client)
-                                            <option value="{{ $client->id }}" @selected(old('client_id', $post->client_id) == $client->id)>
-                                                {{ $client->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <x-input-error :messages="$errors->get('client_id')" class="mt-2" />
-                                </div>
-
-                                <div>
-                                    <x-input-label for="name" :value="__('Nombre del puesto')" />
-                                    <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" value="{{ old('name', $post->name) }}" required />
-                                    <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                                </div>
-                            </div>
-                        </section>
-
-                        <section class="sj-form-section">
-                            <div class="sj-form-section__title">Ubicación</div>
-                            <div class="sj-form-grid sj-form-grid--two">
-                                <div class="md:col-span-2">
-                                    <x-input-label for="address" :value="__('Dirección')" />
-                                    <x-text-input id="address" name="address" data-address-input type="text" class="mt-1 block w-full" value="{{ old('address', $post->address) }}" placeholder="{{ __('Ej: Calle 10 # 25-30') }}" />
-                                    <p class="sj-form-help">{{ __('Completa dirección, municipio y departamento para calcular la ubicación.') }}</p>
-                                    <x-input-error :messages="$errors->get('address')" class="mt-2" />
-                                </div>
-
-                                <div>
-                                    <x-input-label for="department" :value="__('Departamento')" />
-                                    <select id="department" name="department" class="sj-ui-field__control mt-1 block w-full" data-department-select data-current="{{ old('department', $post->department) }}" required>
-                                        <option value="">{{ __('Seleccione') }}</option>
-                                    </select>
-                                    <x-input-error :messages="$errors->get('department')" class="mt-2" />
-                                </div>
-
-                                <div>
-                                    <x-input-label for="city" :value="__('Municipio')" />
-                                    <select id="city" name="city" class="sj-ui-field__control mt-1 block w-full" data-municipality-select data-current="{{ old('city', $post->city) }}" required>
-                                        <option value="">{{ __('Seleccione') }}</option>
-                                    </select>
-                                    <x-input-error :messages="$errors->get('city')" class="mt-2" />
-                                </div>
-
-                                <div>
-                                    <x-input-label for="latitude" :value="__('Latitud (auto)')" />
-                                    <x-text-input id="latitude" name="latitude" type="text" class="mt-1 block w-full bg-gray-50" value="{{ old('latitude', $post->latitude) }}" readonly data-latitude-input />
-                                </div>
-
-                                <div>
-                                    <x-input-label for="longitude" :value="__('Longitud (auto)')" />
-                                    <x-text-input id="longitude" name="longitude" type="text" class="mt-1 block w-full bg-gray-50" value="{{ old('longitude', $post->longitude) }}" readonly data-longitude-input />
-                                </div>
-
-                                <p class="hidden rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800" data-geocode-notice></p>
-
-                                <div class="flex items-end">
-                                    <button type="button" class="sj-map-trigger" data-map-trigger aria-label="{{ __('Seleccionar en el mapa') }}" title="{{ __('Seleccionar en el mapa') }}">
-                                        <img src="{{ asset('images/map/Mapa.jpg') }}" alt="" aria-hidden="true">
-                                    </button>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section class="sj-form-section">
-                            <div class="sj-form-section__title">{{ __('Nota del cambio (historial)') }}</div>
-                            <div>
-                                <x-input-label for="change_note" :value="__('Descripción del cambio')" />
-                                <textarea id="change_note" name="change_note" class="sj-ui-field__control mt-1 block w-full" rows="3" required>{{ old('change_note') }}</textarea>
-                                <p class="sj-form-help">{{ __('Obligatorio. Se guarda en el historial del puesto.') }}</p>
-                                <x-input-error :messages="$errors->get('change_note')" class="mt-2" />
-                            </div>
-                        </section>
-
-                        <section class="sj-form-section">
-                            <div class="sj-form-section__title">Notas</div>
-                            <div>
-                                <x-input-label for="notes" :value="__('Notas')" />
-                                <textarea id="notes" name="notes" class="sj-ui-field__control mt-1 block w-full" rows="3">{{ old('notes', $post->notes) }}</textarea>
-                                <x-input-error :messages="$errors->get('notes')" class="mt-2" />
-                            </div>
-                        </section>
-
-                        <div class="sj-form-actions">
+                        <div class="mt-6 flex justify-end gap-2">
                             <a href="{{ route('posts.index') }}" class="sj-ui-btn sj-ui-btn--ghost">{{ __('Cancelar') }}</a>
                             <button type="submit" class="sj-ui-btn sj-ui-btn--primary">{{ __('Guardar cambios') }}</button>
                         </div>
-                    </form>
-            </div>
+                    </div>
+                </section>
+            </form>
         </div>
     </div>
 </x-app-layout>
-
-@include('partials.google-maps')
-@vite('resources/js/location-picker.js')
-
-<div id="location-map-modal" class="fixed inset-0 z-[3000] hidden items-center justify-center bg-black/50 p-4">
-    <div class="w-full max-w-4xl rounded-lg bg-white p-4 shadow-lg">
-        <div class="flex items-center justify-between">
-            <h3 class="sj-type-section">{{ __('Seleccionar ubicación') }}</h3>
-            <button type="button" class="text-gray-500 hover:text-gray-700" data-map-close>&times;</button>
-        </div>
-        <div id="location-map" class="mt-4 h-96 w-full rounded border"></div>
-        <p class="mt-3 hidden text-sm text-red-600" data-map-error></p>
-        <div class="mt-4 flex justify-end gap-2">
-            <button type="button" class="sj-ui-btn sj-ui-btn--ghost" data-map-close>{{ __('Cancelar') }}</button>
-            <button type="button" class="sj-ui-btn sj-ui-btn--primary disabled:cursor-not-allowed disabled:opacity-60" data-map-accept disabled>{{ __('Aceptar') }}</button>
-        </div>
-    </div>
-</div>

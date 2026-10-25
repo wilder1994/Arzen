@@ -15,6 +15,7 @@ use App\Http\Controllers\Auth\ForcedPasswordChangeController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormatController;
+use App\Http\Controllers\InstallationController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\WeaponCustodyController;
 use App\Http\Controllers\WeaponCustodyReportController;
@@ -106,18 +107,37 @@ Route::middleware('auth')->group(function () {
         ->whereUuid('id')
         ->name('notifications.read');
 
-    Route::get('/posts/{post}/histories', [PostController::class, 'histories'])->name('posts.histories');
-    Route::patch('/posts/{post}/restore', [PostController::class, 'restore'])->name('posts.restore');
-    Route::resource('clients', ClientController::class)->except(['show']);
-    Route::resource('posts', PostController::class)->except(['show']);
-    Route::get('/workers/{worker}/histories', [WorkerController::class, 'histories'])->name('workers.histories');
-    Route::patch('/workers/{worker}/restore', [WorkerController::class, 'restore'])->name('workers.restore');
-    Route::resource('workers', WorkerController::class)->except(['show']);
-    Route::get('/vests/form-options', [VestController::class, 'formOptionsJson'])->name('vests.form-options');
-    Route::resource('vests', VestController::class);
-    Route::post('/vests/{vest}/photos', [VestPhotoController::class, 'store'])->name('vests.photos.store');
-    Route::patch('/vests/{vest}/photos/{photo}', [VestPhotoController::class, 'update'])->name('vests.photos.update');
-    Route::delete('/vests/{vest}/photos/{photo}', [VestPhotoController::class, 'destroy'])->name('vests.photos.destroy');
+    Route::middleware('module:clients')->group(function () {
+        Route::resource('clients', ClientController::class)->except(['show']);
+        Route::get('/clients/{client}/installations/create', [InstallationController::class, 'create'])->name('clients.installations.create');
+        Route::post('/clients/{client}/installations', [InstallationController::class, 'store'])->name('clients.installations.store');
+        Route::get('/installations/{installation}/edit', [InstallationController::class, 'edit'])->name('installations.edit');
+        Route::put('/installations/{installation}', [InstallationController::class, 'update'])->name('installations.update');
+        Route::patch('/installations/{installation}/archive', [InstallationController::class, 'archive'])->name('installations.archive');
+        Route::patch('/installations/{installation}/restore', [InstallationController::class, 'restore'])->name('installations.restore');
+    });
+
+    Route::middleware('module:posts')->group(function () {
+        Route::get('/posts/{post}/histories', [PostController::class, 'histories'])->name('posts.histories');
+        Route::patch('/posts/{post}/restore', [PostController::class, 'restore'])->name('posts.restore');
+        Route::resource('posts', PostController::class)->except(['show']);
+    });
+
+    Route::middleware('module:workers')->group(function () {
+        Route::get('/workers/{worker}/histories', [WorkerController::class, 'histories'])->name('workers.histories');
+        Route::patch('/workers/{worker}/restore', [WorkerController::class, 'restore'])->name('workers.restore');
+        Route::resource('workers', WorkerController::class)->except(['show']);
+    });
+
+    Route::middleware('module:vests')->group(function () {
+        Route::get('/vests/form-options', [VestController::class, 'formOptionsJson'])->name('vests.form-options');
+        Route::resource('vests', VestController::class);
+        Route::post('/vests/{vest}/photos', [VestPhotoController::class, 'store'])->name('vests.photos.store');
+        Route::patch('/vests/{vest}/photos/{photo}', [VestPhotoController::class, 'update'])->name('vests.photos.update');
+        Route::delete('/vests/{vest}/photos/{photo}', [VestPhotoController::class, 'destroy'])->name('vests.photos.destroy');
+    });
+
+    Route::middleware('module:imports,vests')->group(function () {
     Route::get('/subir-chalecos', [VestImportController::class, 'index'])->name('vest-imports.index');
     Route::get('/subir-chalecos/plantilla', [VestImportController::class, 'downloadTemplate'])->name('vest-imports.templates.vest');
     Route::post('/subir-chalecos/preview', [VestImportController::class, 'preview'])->name('vest-imports.preview');
@@ -127,17 +147,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/subir-chalecos/{vestImportBatch}/execute/status', [VestImportController::class, 'executionStatus'])->name('vest-imports.status');
     Route::post('/subir-chalecos/{vestImportBatch}/execute', [VestImportController::class, 'execute'])->name('vest-imports.execute');
     Route::post('/subir-chalecos/{vestImportBatch}/discard', [VestImportController::class, 'discard'])->name('vest-imports.discard');
-    Route::resource('users', UserController::class)->except(['show']);
-    Route::patch('/users/{user}/status', [UserController::class, 'updateStatus'])->name('users.status');
-    Route::post('/users/{user}/send-access-credentials', [UserController::class, 'sendAccessCredentials'])->name('users.send-access-credentials');
-    Route::get('/weapons/export-preview', [WeaponController::class, 'exportPreview'])->name('weapons.export.preview');
-    Route::get('/weapons/export', [WeaponController::class, 'export'])->name('weapons.export');
-    Route::post('/weapons/export-selected', [WeaponController::class, 'exportSelected'])->name('weapons.export.selected');
-    Route::get('/weapons/filter-options', [WeaponController::class, 'filterOptions'])->name('weapons.filter_options');
-    Route::resource('weapons', WeaponController::class);
     Route::get('/subir-armas', [WeaponImportController::class, 'index'])->name('weapon-imports.index');
     Route::get('/subir-armas/plantillas/armas', [WeaponImportController::class, 'downloadWeaponTemplate'])->name('weapon-imports.templates.weapon');
     Route::get('/subir-armas/plantillas/clientes', [WeaponImportController::class, 'downloadClientTemplate'])->name('weapon-imports.templates.client');
+    Route::get('/subir-armas/plantillas/trabajadores', [WeaponImportController::class, 'downloadWorkerTemplate'])->name('weapon-imports.templates.worker');
     Route::post('/subir-armas/preview', [WeaponImportController::class, 'preview'])->name('weapon-imports.preview');
     Route::get('/subir-armas/{weaponImportBatch}', [WeaponImportController::class, 'show'])->name('weapon-imports.show');
     Route::post('/subir-armas/{weaponImportBatch}/execute/start', [WeaponImportController::class, 'startExecution'])->name('weapon-imports.start');
@@ -145,6 +158,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/subir-armas/{weaponImportBatch}/execute/status', [WeaponImportController::class, 'executionStatus'])->name('weapon-imports.status');
     Route::post('/subir-armas/{weaponImportBatch}/execute', [WeaponImportController::class, 'execute'])->name('weapon-imports.execute');
     Route::post('/subir-armas/{weaponImportBatch}/discard', [WeaponImportController::class, 'discard'])->name('weapon-imports.discard');
+    Route::post('/weapon-imports/permit-authenticated/{permit_kind}', [WeaponImportController::class, 'updatePermitAuthenticated'])
+        ->whereIn('permit_kind', ['porte', 'tenencia'])
+        ->name('weapon-imports.permit-authenticated.update');
+    });
+
+    Route::middleware('module:users')->group(function () {
+        Route::resource('users', UserController::class)->except(['show']);
+        Route::patch('/users/{user}/status', [UserController::class, 'updateStatus'])->name('users.status');
+        Route::post('/users/{user}/send-access-credentials', [UserController::class, 'sendAccessCredentials'])->name('users.send-access-credentials');
+    });
+
+    Route::middleware('module:weapons')->group(function () {
+    Route::get('/weapons/export-preview', [WeaponController::class, 'exportPreview'])->name('weapons.export.preview');
+    Route::get('/weapons/export', [WeaponController::class, 'export'])->name('weapons.export');
+    Route::post('/weapons/export-selected', [WeaponController::class, 'exportSelected'])->name('weapons.export.selected');
+    Route::get('/weapons/filter-options', [WeaponController::class, 'filterOptions'])->name('weapons.filter_options');
+    Route::resource('weapons', WeaponController::class);
     Route::post('/weapons/{weapon}/client-assignments', [WeaponClientAssignmentController::class, 'store'])
         ->name('weapons.client_assignments.store');
     Route::get('/weapons/{weapon}/permit', [WeaponController::class, 'permitPhoto'])
@@ -154,10 +184,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/authenticated-permit-images/{permit_kind}', [AuthenticatedPermitImageController::class, 'show'])
         ->whereIn('permit_kind', ['porte', 'tenencia'])
         ->name('authenticated-permit-images.show');
-
-    Route::post('/weapon-imports/permit-authenticated/{permit_kind}', [WeaponImportController::class, 'updatePermitAuthenticated'])
-        ->whereIn('permit_kind', ['porte', 'tenencia'])
-        ->name('weapon-imports.permit-authenticated.update');
 
     Route::post('/weapons/{weapon}/photos', [WeaponPhotoController::class, 'store'])
         ->name('weapons.photos.store');
@@ -200,36 +226,52 @@ Route::middleware('auth')->group(function () {
         ->name('weapons.custody.armero_posts.store');
     Route::patch('/weapons/{weapon}/imprints', [WeaponController::class, 'toggleImprint'])
         ->name('weapons.imprints.toggle');
-    Route::get('/transfers', [WeaponTransferController::class, 'index'])->name('transfers.index');
-    Route::post('/transfers/bulk', [WeaponTransferController::class, 'bulkStore'])->name('transfers.bulk');
-    Route::patch('/transfers/{transfer}/accept', [WeaponTransferController::class, 'accept'])->name('transfers.accept');
-    Route::patch('/transfers/{transfer}/cancel', [WeaponTransferController::class, 'cancel'])->name('transfers.cancel');
+    });
 
-    Route::get('/mapa', [MapController::class, 'index'])->name('maps.index');
-    Route::get('/mapa/armas', [MapController::class, 'weapons'])->name('maps.weapons');
+    Route::middleware('module:transfers')->group(function () {
+        Route::get('/transfers', [WeaponTransferController::class, 'index'])->name('transfers.index');
+        Route::post('/transfers/bulk', [WeaponTransferController::class, 'bulkStore'])->name('transfers.bulk');
+        Route::patch('/transfers/{transfer}/accept', [WeaponTransferController::class, 'accept'])->name('transfers.accept');
+        Route::patch('/transfers/{transfer}/cancel', [WeaponTransferController::class, 'cancel'])->name('transfers.cancel');
+    });
 
-    Route::get('/portfolios', [ResponsiblePortfolioController::class, 'index'])->name('portfolios.index');
-    Route::get('/portfolios/{user}/edit', [ResponsiblePortfolioController::class, 'edit'])->name('portfolios.edit');
-    Route::put('/portfolios/{user}', [ResponsiblePortfolioController::class, 'update'])->name('portfolios.update');
-    Route::post('/portfolios/{user}/transfer', [ResponsiblePortfolioController::class, 'transfer'])->name('portfolios.transfer');
+    Route::middleware('module:map')->group(function () {
+        Route::get('/mapa', [MapController::class, 'index'])->name('maps.index');
+        Route::get('/mapa/armas', [MapController::class, 'weapons'])->name('maps.weapons');
+    });
 
+    Route::middleware('module:portfolios')->group(function () {
+        Route::get('/portfolios', [ResponsiblePortfolioController::class, 'index'])->name('portfolios.index');
+        Route::get('/portfolios/{user}/edit', [ResponsiblePortfolioController::class, 'edit'])->name('portfolios.edit');
+        Route::put('/portfolios/{user}', [ResponsiblePortfolioController::class, 'update'])->name('portfolios.update');
+        Route::post('/portfolios/{user}/transfer', [ResponsiblePortfolioController::class, 'transfer'])->name('portfolios.transfer');
+    });
+
+    Route::middleware('module:formats')->group(function () {
+        Route::get('/formatos', [FormatController::class, 'index'])->name('formatos.index');
+        Route::get('/formatos/revista-mensual/vacio', [FormatController::class, 'downloadEmptyMonthlyReview'])->name('formatos.revista-mensual.vacio');
+        Route::get('/formatos/revista-mensual/armas', [FormatController::class, 'monthlyReviewWeapons'])->name('formatos.revista-mensual.armas');
+        Route::get('/formatos/revista-mensual/opciones-columna', [FormatController::class, 'monthlyReviewColumnOptions'])->name('formatos.revista-mensual.column-options');
+        Route::post('/formatos/revista-mensual/vista-previa', [FormatController::class, 'previewMonthlyReview'])->name('formatos.revista-mensual.vista-previa');
+        Route::post('/formatos/revista-mensual/descargar', [FormatController::class, 'downloadMonthlyReview'])->name('formatos.revista-mensual.descargar');
+    });
+
+    Route::middleware('module:reports')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/formatos', [FormatController::class, 'index'])->name('formatos.index');
-    Route::get('/formatos/revista-mensual/vacio', [FormatController::class, 'downloadEmptyMonthlyReview'])->name('formatos.revista-mensual.vacio');
-    Route::get('/formatos/revista-mensual/armas', [FormatController::class, 'monthlyReviewWeapons'])->name('formatos.revista-mensual.armas');
-    Route::get('/formatos/revista-mensual/opciones-columna', [FormatController::class, 'monthlyReviewColumnOptions'])->name('formatos.revista-mensual.column-options');
-    Route::post('/formatos/revista-mensual/vista-previa', [FormatController::class, 'previewMonthlyReview'])->name('formatos.revista-mensual.vista-previa');
-    Route::post('/formatos/revista-mensual/descargar', [FormatController::class, 'downloadMonthlyReview'])->name('formatos.revista-mensual.descargar');
     Route::get('/reports/assignments', [ReportController::class, 'weaponsByClient'])->name('reports.assignments');
     Route::get('/reports/no-destination', [ReportController::class, 'weaponsWithoutDestination'])->name('reports.no_destination');
     Route::get('/reports/history', [ReportController::class, 'history'])->name('reports.history');
     Route::get('/reports/audit', [ReportController::class, 'audit'])->name('reports.audit');
-    Route::get('/reports/weapon-incidents/weapons/search', [WeaponIncidentReportController::class, 'searchWeapons'])->name('reports.weapon-incidents.weapons.search');
-    Route::get('/reports/weapon-incidents', [WeaponIncidentReportController::class, 'index'])->name('reports.weapon-incidents.index');
-    Route::get('/reports/weapon-incidents/{incidentType}', [WeaponIncidentReportController::class, 'show'])->name('reports.weapon-incidents.show');
-    Route::get('/reports/weapon-custody', [WeaponCustodyReportController::class, 'index'])->name('reports.weapon-custody.index');
+    });
 
-    Route::middleware('revista.staff')->prefix('revista-armas')->name('revista-armas.')->group(function () {
+    Route::middleware('module:reports,weapons')->group(function () {
+        Route::get('/reports/weapon-incidents/weapons/search', [WeaponIncidentReportController::class, 'searchWeapons'])->name('reports.weapon-incidents.weapons.search');
+        Route::get('/reports/weapon-incidents', [WeaponIncidentReportController::class, 'index'])->name('reports.weapon-incidents.index');
+        Route::get('/reports/weapon-incidents/{incidentType}', [WeaponIncidentReportController::class, 'show'])->name('reports.weapon-incidents.show');
+        Route::get('/reports/weapon-custody', [WeaponCustodyReportController::class, 'index'])->name('reports.weapon-custody.index');
+    });
+
+    Route::middleware(['revista.staff', 'module:revista'])->prefix('revista-armas')->name('revista-armas.')->group(function () {
         Route::get('/', [RevistaArmasController::class, 'index'])->name('index');
         Route::get('/armas/buscar', [RevistaArmasController::class, 'searchAssignableWeapons'])->name('weapons.search');
         Route::get('/armas/{weapon}/revision/{temporary_photo_user}', [RevistaArmasController::class, 'review'])->name('review');
@@ -244,26 +286,33 @@ Route::middleware('auth')->group(function () {
             ->names('temporary-users');
     });
 
-    Route::get('/empresa', [CompanySettingsController::class, 'edit'])->name('company.edit');
-    Route::put('/empresa', [CompanySettingsController::class, 'update'])->name('company.update');
-    Route::get('/empresa/membrete/{part}', [CompanySettingsController::class, 'letterheadImage'])
-        ->whereIn('part', ['header', 'footer'])
-        ->name('company.letterhead.image');
+    Route::middleware('module:company')->group(function () {
+        Route::get('/empresa', [CompanySettingsController::class, 'edit'])->name('company.edit');
+        Route::put('/empresa', [CompanySettingsController::class, 'update'])->name('company.update');
+        Route::get('/empresa/membrete/{part}', [CompanySettingsController::class, 'letterheadImage'])
+            ->whereIn('part', ['header', 'footer'])
+            ->name('company.letterhead.image');
+    });
 
-    Route::prefix('empresa/catalogos')->name('catalogs.')->group(function () {
+    Route::middleware('module:settings')->prefix('ajustes')->name('catalogs.')->group(function () {
         Route::get('/', [CatalogController::class, 'index'])->name('index');
         Route::post('/cargos', [CatalogController::class, 'storePosition'])->name('positions.store');
         Route::put('/cargos/{position}', [CatalogController::class, 'updatePosition'])->name('positions.update');
         Route::delete('/cargos/{position}', [CatalogController::class, 'destroyPosition'])->name('positions.destroy');
+        Route::post('/novedades', [CatalogController::class, 'storeIncident'])->name('incident-types.store');
         Route::put('/novedades/{incidentType}', [CatalogController::class, 'updateIncidentType'])->name('incident-types.update');
-        Route::post('/novedades/{incidentType}/modalidades', [CatalogController::class, 'storeModality'])->name('modalities.store');
+        Route::delete('/novedades/{incidentType}', [CatalogController::class, 'destroyIncidentType'])->name('incident-types.destroy');
+        Route::post('/novedades/{incidentType}/orden', [CatalogController::class, 'moveIncidentType'])->name('incident-types.move');
         Route::put('/modalidades/{incidentModality}', [CatalogController::class, 'updateModality'])->name('modalities.update');
-        Route::put('/niveles/{responsibilityLevel}', [CatalogController::class, 'updateLevel'])->name('levels.update');
+        Route::delete('/modalidades/{incidentModality}', [CatalogController::class, 'destroyModality'])->name('modalities.destroy');
+        Route::post('/modalidades/{incidentModality}/orden', [CatalogController::class, 'moveModality'])->name('modalities.move');
     });
 
-    Route::get('/alerts/documents', [AlertsController::class, 'documents'])->name('alerts.documents');
-    Route::post('/alerts/documents/preview', [AlertsController::class, 'previewBatch'])->name('alerts.documents.preview');
-    Route::post('/alerts/documents/download', [AlertsController::class, 'downloadBatch'])->name('alerts.documents.download');
+    Route::middleware('module:alerts')->group(function () {
+        Route::get('/alerts/documents', [AlertsController::class, 'documents'])->name('alerts.documents');
+        Route::post('/alerts/documents/preview', [AlertsController::class, 'previewBatch'])->name('alerts.documents.preview');
+        Route::post('/alerts/documents/download', [AlertsController::class, 'downloadBatch'])->name('alerts.documents.download');
+    });
 });
 
 require __DIR__.'/auth.php';

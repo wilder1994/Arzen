@@ -145,17 +145,18 @@ file_put_contents($dir . '/manual-auditoria.md', $aud);
 echo 'Wrote manual-auditoria.md (' . strlen($aud) . " bytes)\n";
 
 // --- RESPONSABLE ---
-$resp = headerDoc('Manual de usuario — Responsable (rol RESPONSABLE)', '**RESPONSABLE** — **Nivel 1** (gestión) o **Nivel 2** (solo lectura)');
+$resp = headerDoc('Manual de usuario — Responsable (rol RESPONSABLE)', '**RESPONSABLE** — permisos por matriz **Nada / Ver / Gestionar**', '3.1');
 $resp .= accessBlock('Casi siempre aplica **§1.4** en el primer ingreso (contraseña temporal).');
-$resp .= chapter('2', 'Nivel 1 vs Nivel 2');
-$resp .= "| Acción | Nivel 1 | Nivel 2 |\n|--------|---------|----------|\n";
-$resp .= "| Ver armas de cartera | Sí | Sí |\n| Asignar, fotos, transferencias, Revista | Sí | No (consulta) |\n| Editar datos maestros arma | No | No |\n\n---\n\n";
+$resp .= chapter('2', 'Ver y gestionar');
+$resp .= "El administrador define el acceso en **Ajustes → Usuarios**. Ya no hay niveles 1 y 2: **Ver** equivale a consulta y **Gestionar** a crear y modificar.\n\n";
+$resp .= "| Acción | Armas: Gestionar | Armas: Ver |\n|--------|------------------|------------|\n";
+$resp .= "| Ver armas de cartera | Sí | Sí |\n| Asignación interna, fotos, transferencias, Revista | Sí | No (consulta) |\n| Asignar el arma a otro cliente | No (solo ADMIN) | No |\n| Editar datos maestros arma | No | No |\n\n---\n\n";
 $resp .= proc(
     '3.1 Menú del responsable',
     ['Objetivo' => 'Confirmar módulos'],
     [
-        'Tras §1, verifique menú típico Nivel 1: **Inicio**, **Armamento**, **Revista armas**, **Clientes**, **Puestos**, **Trabajadores**, **Mapa**, **Transferencias**.',
-        'No verá **Usuarios**, **Asignaciones**, **Cargas masivas**, **Reportes**, **Alertas** (salvo cambio de política).',
+        'Tras §1, verifique el menú que le dejó la matriz: lo habitual con **Gestionar** en armas es **Inicio**, **Armamento**, **Revista armas**, **Clientes**, **Puestos**, **Trabajadores**, **Mapa**, **Transferencias**.',
+        'No verá **Ajustes**, **Asignaciones**, **Cargas masivas**, **Reportes** ni **Alertas** si esos módulos están en **Nada**.',
     ],
     'Menú acorde a nivel.',
     [['id' => '3.1', 'title' => 'Menú responsable', 'file' => 'fig-03-01-menu-resp.png', 'refs' => []]]
@@ -171,18 +172,19 @@ $resp .= proc(
     [['id' => '4.1', 'title' => 'Listado cartera', 'file' => 'fig-04-01-weapons.png', 'refs' => ['①' => 'Filtro cliente']]]
 );
 $resp .= proc(
-    '4.2 Asignar destino operativo (Nivel 1)',
-    ['Pantalla' => 'Ficha — destino', 'Objetivo' => 'Cliente y responsable'],
+    '4.2 Destino del arma (solo consulta)',
+    ['Pantalla' => 'Ficha — destino', 'Objetivo' => 'Ver el cliente asignado'],
     [
-        'Abra ficha.', 'Verifique aviso de **transferencia pendiente** si aparece.',
-        'Clic **Asignar a cliente**.', 'Seleccione cliente de **su cartera**.', 'Confirme.',
+        'Abra la ficha.', 'Verifique el aviso de **transferencia pendiente** si aparece.',
+        'El cambio de **cliente** del arma lo hace el súper administrador.',
+        'Si el arma no está en su cartera, no la verá.',
     ],
-    'Destino actualizado.',
+    'Destino visible, sin cambio de cliente.',
     [['id' => '4.2', 'title' => 'Destino', 'file' => 'fig-04-02-destino.png', 'refs' => []]],
     [['No ve el arma', 'Fuera de cartera — contacte ADMIN']]
 );
 $resp .= proc(
-    '4.3 Asignación interna (Nivel 1)',
+    '4.3 Asignación interna (Armas: Gestionar)',
     ['Pantalla' => 'Ficha', 'Objetivo' => 'Puesto/trabajador'],
     [
         'Con cliente operativo activo, elija **puesto** y/o **trabajador**.', 'Pulse **Asignar**.',
@@ -191,7 +193,7 @@ $resp .= proc(
     [['id' => '4.3', 'title' => 'Interna', 'file' => 'fig-04-03-interna.png', 'refs' => []]]
 );
 $resp .= proc(
-    '4.4 Custodia (Nivel 1)',
+    '4.4 Custodia (Armas: Gestionar)',
     ['Pantalla' => 'Ficha', 'Objetivo' => 'Armerillo / mantenimiento / armero'],
     [
         'Use **Enviar a mi armerillo**, **Para mantenimiento** o **Enviar a armero**.', 'Complete modal.', 'Confirme.',
@@ -200,7 +202,7 @@ $resp .= proc(
     [['id' => '4.4', 'title' => 'Custodia', 'file' => 'fig-04-04-custody.png', 'refs' => []]]
 );
 $resp .= proc(
-    '4.5 Documentos en ficha (Nivel 1)',
+    '4.5 Documentos en ficha (Armas: Gestionar)',
     ['Pantalla' => 'Documentos', 'Objetivo' => 'Cargar soportes'],
     [
         'Suba archivos con **Agregar**.', 'Descargue **permiso**.', 'No verá **Revalidación**.',
@@ -209,7 +211,7 @@ $resp .= proc(
     [['id' => '4.5', 'title' => 'Documentos', 'file' => 'fig-04-05-docs.png', 'refs' => []]]
 );
 $resp .= proc(
-    '4.6 Fotos del arma (Nivel 1) — paso a paso',
+    '4.6 Fotos del arma (Armas: Gestionar) — paso a paso',
     ['Pantalla' => 'Franja Fotos', 'Objetivo' => 'Subir fotos oficiales'],
     [
         'Active toggle **Editar** (rojo).',
@@ -227,7 +229,7 @@ $resp .= proc(
     ]
 );
 $resp .= proc(
-    '4.7 Novedad operativa (Nivel 1)',
+    '4.7 Novedad operativa (Armas: Gestionar)',
     ['Objetivo' => 'Hurto, pérdida, etc.'],
     [
         'Desde ficha o módulo novedades, elija tipo reportable.', 'Complete formulario.', 'Guarde.',
@@ -235,7 +237,7 @@ $resp .= proc(
     'Novedad registrada.',
     [['id' => '4.7', 'title' => 'Novedad', 'file' => 'fig-04-08-incident.png', 'refs' => []]]
 );
-$resp .= chapter('5', 'Transferencias (Nivel 1)');
+$resp .= chapter('5', 'Transferencias (Armas: Gestionar)');
 $resp .= proc(
     '5.1 Enviar transferencia',
     ['Menú' => '**Transferencias**', 'Ruta' => '`/transfers`', 'Objetivo' => 'Enviar armas'],
@@ -261,7 +263,7 @@ $resp .= proc(
     'Cancelada.',
     [['id' => '5.3', 'title' => 'Cancelar', 'file' => 'fig-05-03-cancel.png', 'refs' => []]]
 );
-$resp .= chapter('6', 'Revista armas (Nivel 1)');
+$resp .= chapter('6', 'Revista armas (Armas: Gestionar)');
 $resp .= "Procedimiento detallado en **manual-revista-armas.md** (Parte A).\n\n";
 $resp .= proc(
     '6.1 Resumen Revista para responsable',
@@ -274,7 +276,7 @@ $resp .= proc(
     'Fotos oficiales tras aprobar.',
     [['id' => '6.1', 'title' => 'Revista', 'file' => 'fig-06-01-revista.png', 'refs' => []]]
 );
-$resp .= chapter('7', 'Nivel 2 (solo lectura)');
+$resp .= chapter('7', 'Armas en solo lectura (Ver)');
 $resp .= proc(
     '7.1 Consultar sin editar',
     ['Objetivo' => 'Solo lectura'],
@@ -298,7 +300,7 @@ file_put_contents($dir . '/manual-responsable.md', $resp);
 echo 'Wrote manual-responsable.md (' . strlen($resp) . " bytes)\n";
 
 // --- REVISTA ARMAS ---
-$rev = headerDoc('Manual de usuario — Revista armas', '**Staff** (ADMIN / RESPONSABLE niv. 1) y **colaborador temporal**');
+$rev = headerDoc('Manual de usuario — Revista armas', '**Staff** (ADMIN o RESPONSABLE con Revista en Gestionar) y **colaborador temporal**', '3.1');
 $rev .= accessBlock('Solo **staff** (Parte A). Colaboradores: salte a **§12** (ingreso con código).');
 $rev .= chapter('2', 'Objetivo y alcance');
 $rev .= "Colaborador sube **4 fotos técnicas** (derecho, izquierdo, cañón/marca, serie) a **staging**. Staff revisa y **Actualizar** copia a fotos oficiales.\n\n---\n\n";

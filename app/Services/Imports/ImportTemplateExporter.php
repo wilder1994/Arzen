@@ -29,12 +29,26 @@ class ImportTemplateExporter
     {
         return $this->spreadsheetExporter->streamTwoSheet(
             filename: 'formato-carga-clientes.xlsx',
-            dataSheetName: 'Datos',
+            dataSheetName: 'Clientes',
             dataHeaders: ClientImportProcessor::templateHeaders(),
-            instructionSheetName: 'Instructivo',
+            instructionSheetName: 'Instrucciones',
             instructionHeaders: self::instructionHeaders(),
             instructionRows: ClientImportProcessor::templateInstructions(),
-            dataColumnWidths: [18, 32, 28, 36, 18],
+            dataColumnWidths: [16, 28, 28, 14, 18, 26, 16, 26, 26, 18, 30, 18, 18, 10, 12],
+            instructionColumnWidths: [32, 12, 14, 72],
+        );
+    }
+
+    public function streamWorkerTemplate(): StreamedResponse
+    {
+        return $this->spreadsheetExporter->streamTwoSheet(
+            filename: 'formato-carga-trabajadores.xlsx',
+            dataSheetName: 'Empleados',
+            dataHeaders: WorkerImportProcessor::templateHeaders(),
+            instructionSheetName: 'Instrucciones',
+            instructionHeaders: self::instructionHeaders(),
+            instructionRows: WorkerImportProcessor::templateInstructions(),
+            dataColumnWidths: [18, 20, 16, 16, 22, 30, 22, 22, 20],
             instructionColumnWidths: [32, 12, 14, 72],
         );
     }

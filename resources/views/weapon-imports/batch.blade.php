@@ -84,10 +84,10 @@
                                     <tr>
                                         <th>Fila</th>
                                         <th>Accion</th>
-                                        <th>NIT./CC</th>
-                                        <th>Razon social</th>
-                                        <th>Representante legal</th>
-                                        <th>Direccion principal</th>
+                                        <th>Documento</th>
+                                        <th>Nombre comercial</th>
+                                        <th>Representante</th>
+                                        <th>Dirección</th>
                                         <th>Ciudad</th>
                                         <th>Observacion</th>
                                     </tr>
@@ -106,6 +106,43 @@
                                             <td class="px-3 py-2">{{ $normalized['legal_representative'] ?? $raw['legal_representative'] ?? '-' }}</td>
                                             <td class="px-3 py-2">{{ $normalized['address'] ?? $raw['address'] ?? '-' }}</td>
                                             <td class="px-3 py-2">{{ $normalized['city'] ?? $raw['city'] ?? '-' }}</td>
+                                            <td class="px-3 py-2 text-gray-700">
+                                                <div>{{ $row->summary ?: '-' }}</div>
+                                                @if (!empty($row->errors))
+                                                    <div class="mt-1 text-xs text-rose-700">{{ implode(' ', $row->errors) }}</div>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @elseif ($selectedBatch->isWorkerImport())
+                            <table class="sj-table sj-table--align-left min-w-full text-sm min-w-[980px]">
+                                <thead>
+                                    <tr>
+                                        <th>Fila</th>
+                                        <th>Acción</th>
+                                        <th>Documento</th>
+                                        <th>Trabajador</th>
+                                        <th>Cliente</th>
+                                        <th>Instalación</th>
+                                        <th>Puesto</th>
+                                        <th>Cargo</th>
+                                        <th>Observación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($selectedBatch->rows as $row)
+                                        @php($normalized = $row->normalized_payload ?? [])
+                                        <tr class="{{ $row->action === 'error' ? 'bg-rose-50' : ($row->action === 'create' ? 'bg-blue-50' : ($row->action === 'update' ? 'bg-amber-50' : 'bg-green-50')) }}">
+                                            <td class="px-3 py-2 font-medium text-gray-800">{{ $row->row_number }}</td>
+                                            <td class="px-3 py-2">{{ $row->actionLabel() }}</td>
+                                            <td class="px-3 py-2">{{ trim(($normalized['document_type'] ?? '').' '.($normalized['document'] ?? '')) ?: '-' }}</td>
+                                            <td class="px-3 py-2">{{ $normalized['name'] ?? '-' }}</td>
+                                            <td class="px-3 py-2">{{ $normalized['client_name'] ?? '-' }}</td>
+                                            <td class="px-3 py-2">{{ $normalized['installation'] ?? __('Principal') }}</td>
+                                            <td class="px-3 py-2">{{ $normalized['post'] ?? '-' }}</td>
+                                            <td class="px-3 py-2">{{ $normalized['position'] ?? '-' }}</td>
                                             <td class="px-3 py-2 text-gray-700">
                                                 <div>{{ $row->summary ?: '-' }}</div>
                                                 @if (!empty($row->errors))

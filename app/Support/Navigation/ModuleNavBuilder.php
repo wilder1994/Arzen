@@ -19,6 +19,7 @@ class ModuleNavBuilder
             $this->dotacion($user),
             $this->plataforma($user),
             $this->empresa($user),
+            $this->ajustes($user),
         ]));
 
         $activeModule = collect($modules)->first(
@@ -26,7 +27,7 @@ class ModuleNavBuilder
         ) ?? $modules[0] ?? null;
 
         return [
-            'home_url' => $user->isAlmacen() ? route('vests.index') : route('dashboard'),
+            'home_url' => $this->homeUrl($user, $modules),
             'active_module' => $activeModule['label'] ?? '',
             'active_module_key' => $activeModule['key'] ?? null,
             'tabs' => $activeModule['items'] ?? [],
@@ -41,56 +42,56 @@ class ModuleNavBuilder
                 'inicio',
                 __('Inicio'),
                 route('dashboard'),
-                ! $user->isAlmacen(),
+                ! $user->isAlmacen() && $user->canViewModule('dashboard'),
                 request()->routeIs('dashboard'),
             ),
             $this->link(
                 'armas',
                 __('Armas'),
                 route('weapons.index'),
-                Gate::forUser($user)->allows('viewAny', Weapon::class),
+                Gate::forUser($user)->allows('viewAny', Weapon::class) && $user->canViewModule('weapons'),
                 request()->routeIs('weapons.*'),
             ),
             $this->link(
                 'revista',
                 __('Revista de armas'),
                 route('revista-armas.index'),
-                $user->isAdmin() || $user->isResponsibleLevelOne(),
+                ($user->isAdmin() || $user->isResponsibleLevelOne()) && $user->canViewModule('revista'),
                 request()->routeIs('revista-armas.*'),
             ),
             $this->link(
                 'mapa',
                 __('Mapa'),
                 route('maps.index'),
-                $user->isAdmin() || $user->isResponsible() || $user->isAuditor(),
+                ($user->isAdmin() || $user->isResponsible() || $user->isAuditor()) && $user->canViewModule('map'),
                 request()->routeIs('maps.*'),
             ),
             $this->link(
                 'transferencias',
                 __('Transferencias'),
                 route('transfers.index'),
-                $user->isAdmin() || $user->isResponsible() || $user->isAuditor(),
+                ($user->isAdmin() || $user->isResponsible() || $user->isAuditor()) && $user->canViewModule('transfers'),
                 request()->routeIs('transfers.*'),
             ),
             $this->link(
                 'asignaciones',
                 __('Asignaciones'),
                 route('portfolios.index'),
-                $user->isAdmin(),
+                $user->canViewModule('portfolios'),
                 request()->routeIs('portfolios.*'),
             ),
             $this->link(
                 'reportes',
                 __('Reportes'),
                 route('reports.index'),
-                $user->isAdmin() || $user->isAuditor(),
+                $user->canViewModule('reports'),
                 request()->routeIs('reports.*'),
             ),
             $this->link(
                 'alertas',
                 __('Alertas'),
                 route('alerts.documents'),
-                $user->isAdmin() || $user->isAuditor(),
+                $user->canViewModule('alerts'),
                 request()->routeIs('alerts.*'),
             ),
         ]);
@@ -103,7 +104,7 @@ class ModuleNavBuilder
                 'chalecos',
                 __('Chalecos'),
                 route('vests.index'),
-                Gate::forUser($user)->allows('viewAny', Vest::class),
+                Gate::forUser($user)->allows('viewAny', Vest::class) && $user->canViewModule('vests'),
                 request()->routeIs('vests.*'),
             ),
         ]);
@@ -120,42 +121,35 @@ class ModuleNavBuilder
                 'clientes',
                 __('Clientes'),
                 route('clients.index'),
-                $canSeeCatalog,
-                request()->routeIs('clients.*'),
+                $canSeeCatalog && $user->canViewModule('clients'),
+                request()->routeIs('clients.*') || request()->routeIs('installations.*'),
             ),
             $this->link(
                 'puestos',
                 __('Puestos'),
                 route('posts.index'),
-                Gate::forUser($user)->allows('viewAny', Post::class),
+                Gate::forUser($user)->allows('viewAny', Post::class) && $user->canViewModule('posts'),
                 request()->routeIs('posts.*'),
             ),
             $this->link(
                 'trabajadores',
                 __('Trabajadores'),
                 route('workers.index'),
-                Gate::forUser($user)->allows('viewAny', Worker::class),
+                Gate::forUser($user)->allows('viewAny', Worker::class) && $user->canViewModule('workers'),
                 request()->routeIs('workers.*'),
-            ),
-            $this->link(
-                'usuarios',
-                __('Usuarios'),
-                route('users.index'),
-                $user->isAdmin(),
-                request()->routeIs('users.*'),
             ),
             $this->link(
                 'cargas',
                 __('Cargas masivas'),
-                $user->isAdmin() ? route('weapon-imports.index') : route('vest-imports.index'),
-                $user->isAdmin() || $canImportVests,
+                $user->canViewModule('imports') ? route('weapon-imports.index') : route('vest-imports.index'),
+                $user->canViewModule('imports') || $canImportVests,
                 request()->routeIs('weapon-imports.*') || request()->routeIs('vest-imports.*'),
             ),
             $this->link(
                 'formatos',
                 __('Formatos'),
                 route('formatos.index'),
-                $canSeeFormats,
+                $canSeeFormats && $user->canViewModule('formats'),
                 request()->routeIs('formatos.*'),
             ),
         ]);
@@ -168,17 +162,57 @@ class ModuleNavBuilder
                 'datos-empresa',
                 __('Datos de la empresa'),
                 route('company.edit'),
-                $user->isAdmin(),
+                $user->canViewModule('company'),
                 request()->routeIs('company.*'),
             ),
+        ]);
+    }
+
+    private function ajustes(User $user): ?array
+    {
+        $catalogTab = request()->routeIs('catalogs.*') ? (string) request()->query('tab', 'cargos') : null;
+
+        return $this->module('ajustes', __('Ajustes'), [
             $this->link(
-                'catalogos',
-                __('Catálogos'),
-                route('catalogs.index'),
-                $user->isAdmin(),
-                request()->routeIs('catalogs.*'),
+                'usuarios',
+                __('Usuarios'),
+                route('users.index'),
+                $user->canViewModule('users'),
+                request()->routeIs('users.*'),
+            ),
+            $this->link(
+                'cargos',
+                __('Cargos'),
+                route('catalogs.index', ['tab' => 'cargos']),
+                $user->canViewModule('settings'),
+                $catalogTab === 'cargos',
+            ),
+            $this->link(
+                'novedades',
+                __('Tipos de novedad'),
+                route('catalogs.index', ['tab' => 'novedades']),
+                $user->canViewModule('settings'),
+                $catalogTab === 'novedades',
             ),
         ]);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $modules
+     */
+    private function homeUrl(User $user, array $modules): string
+    {
+        if (! $user->isAlmacen() && $user->canViewModule('dashboard')) {
+            return route('dashboard');
+        }
+
+        foreach ($modules as $module) {
+            if (is_string($module['entry_url'] ?? null)) {
+                return $module['entry_url'];
+            }
+        }
+
+        return route('profile.edit');
     }
 
     /**

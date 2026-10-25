@@ -70,11 +70,11 @@
                                 </select>
                             </div>
                             <div class="sj-ui-field w-32 shrink-0">
-                                <label for="workers-filter-role" class="sj-ui-field__label">{{ __('Rol') }}</label>
-                                <select id="workers-filter-role" name="role" class="sj-ui-field__control">
+                                <label for="workers-filter-position" class="sj-ui-field__label">{{ __('Cargo') }}</label>
+                                <select id="workers-filter-position" name="position_id" class="sj-ui-field__control">
                                     <option value="">{{ __('Todos') }}</option>
-                                    @foreach ($roles as $value => $label)
-                                        <option value="{{ $value }}" @selected($role == $value)>{{ $label }}</option>
+                                    @foreach ($positions as $position)
+                                        <option value="{{ $position->id }}" @selected($positionId == $position->id)>{{ $position->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -119,7 +119,8 @@
                             <tr>
                                 <th>{{ __('Nombre') }}</th>
                                 <th>{{ __('Cédula') }}</th>
-                                <th>{{ __('Rol') }}</th>
+                                <th>{{ __('Cargo') }}</th>
+                                <th>{{ __('Puesto') }}</th>
                                 <th>{{ __('Cliente') }}</th>
                                 <th>{{ __('Responsable') }}</th>
                                 <th>{{ __('Estado') }}</th>
@@ -127,7 +128,7 @@
                             </tr>
                         </thead>
                         <tbody id="workers-tbody">
-                            @include('workers.partials.index_rows', ['workers' => $workers, 'roles' => $roles])
+                            @include('workers.partials.index_rows', ['workers' => $workers])
                         </tbody>
                     </table>
                     </div>

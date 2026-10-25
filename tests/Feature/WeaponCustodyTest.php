@@ -10,10 +10,8 @@ use App\Models\WeaponClientAssignment;
 use App\Models\WeaponIncident;
 use App\Services\WeaponIncidentReportService;
 use App\Support\PostCustodyRole;
-use App\Models\ResponsibilityLevel;
 use Database\Seeders\IncidentModalitySeeder;
 use Database\Seeders\IncidentTypeSeeder;
-use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -28,7 +26,6 @@ class WeaponCustodyTest extends TestCase
         $this->seed([
             IncidentTypeSeeder::class,
             IncidentModalitySeeder::class,
-            ResponsibilityLevelSeeder::class,
         ]);
     }
 
@@ -79,9 +76,7 @@ class WeaponCustodyTest extends TestCase
     public function test_level_two_responsible_cannot_use_custody(): void
     {
         [$weapon, $responsible] = $this->createWeaponContext('SER-CUST-L2');
-        $responsible->update([
-            'responsibility_level_id' => ResponsibilityLevel::query()->where('level', 2)->value('id'),
-        ]);
+        $responsible->syncModuleLevels(['weapons' => 'view']);
 
         $this->actingAs($responsible->refresh())
             ->post(route('weapons.custody.armerillo', $weapon))
@@ -266,10 +261,6 @@ class WeaponCustodyTest extends TestCase
         bool $attachClientToPortfolio = true,
     ): array {
         $attributes = ['role' => $responsibleRole];
-        if ($responsibleRole === 'RESPONSABLE') {
-            $levelOneId = ResponsibilityLevel::query()->where('level', 1)->value('id');
-            $attributes['responsibility_level_id'] = $levelOneId;
-        }
 
         $responsible = User::factory()->create($attributes);
         $client = Client::query()->create([

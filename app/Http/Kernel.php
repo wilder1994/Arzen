@@ -68,6 +68,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'revista.staff' => \App\Http\Middleware\EnsureRevistaStaff::class,
+        'module' => \App\Http\Middleware\EnsureModuleAccess::class,
         'revista.guest' => \App\Http\Middleware\EnsureRevistaGuestSession::class,
         'revista.guest.guest' => \App\Http\Middleware\RedirectIfRevistaGuestAuthenticated::class,
     ];

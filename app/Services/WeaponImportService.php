@@ -10,6 +10,7 @@ use App\Services\Imports\ClientImportProcessor;
 use App\Services\Imports\Contracts\ImportBatchProcessor;
 use App\Services\Imports\VestImportProcessor;
 use App\Services\Imports\WeaponImportProcessor;
+use App\Services\Imports\WorkerImportProcessor;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class WeaponImportService
         private readonly WeaponImportProcessor $weaponProcessor,
         private readonly ClientImportProcessor $clientProcessor,
         private readonly VestImportProcessor $vestProcessor,
+        private readonly WorkerImportProcessor $workerProcessor,
     ) {
     }
 
@@ -342,6 +344,7 @@ class WeaponImportService
             WeaponImportBatch::TYPE_WEAPON => $this->weaponProcessor,
             WeaponImportBatch::TYPE_CLIENT => $this->clientProcessor,
             WeaponImportBatch::TYPE_VEST => $this->vestProcessor,
+            WeaponImportBatch::TYPE_WORKER => $this->workerProcessor,
             default => throw new RuntimeException('Tipo de importacion no soportado.'),
         };
     }

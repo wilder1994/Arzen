@@ -76,9 +76,14 @@
             dropzone: 'Arrastra el documento aqui',
         },
         client: {
-            title: 'Subir documento de clientes',
-            copy: 'Carga el archivo base de clientes para crear o actualizar el registro minimo.',
-            dropzone: 'Arrastra el documento aqui',
+            title: 'Subir clientes',
+            copy: 'Acepta el Excel de clientes descargado de Zentra o la plantilla de Arzen. Crea o actualiza el cliente con su instalación principal.',
+            dropzone: 'Arrastra el documento aquí',
+        },
+        worker: {
+            title: 'Subir trabajadores',
+            copy: 'Acepta la plantilla de empleados de Zentra. Crea instalaciones, puestos y cargos que falten y deja a cada trabajador en su puesto.',
+            dropzone: 'Arrastra el documento aquí',
         },
     };
 
@@ -158,7 +163,7 @@
             window.dispatchEvent(new CustomEvent('open-modal', { detail: 'permit-authenticated-upload' }));
             return;
         }
-        if (intent === 'weapon' || intent === 'client') {
+        if (intent === 'weapon' || intent === 'client' || intent === 'worker') {
             applyType(intent);
             window.dispatchEvent(new CustomEvent('open-modal', { detail: 'mass-import-upload' }));
         }
@@ -567,6 +572,12 @@
                 </button>
                 <button type="button" data-import-trigger data-import-type="client" x-data="" x-on:click.prevent="$dispatch('open-modal', 'mass-import-upload')" class="sj-ui-btn sj-ui-btn--ghost">
                     {{ __('Subir clientes') }}
+                </button>
+                <a href="{{ route('weapon-imports.templates.worker') }}" class="sj-ui-btn sj-ui-btn--ghost">
+                    {{ __('Descargar formato trabajadores') }}
+                </a>
+                <button type="button" data-import-trigger data-import-type="worker" x-data="" x-on:click.prevent="$dispatch('open-modal', 'mass-import-upload')" class="sj-ui-btn sj-ui-btn--ghost">
+                    {{ __('Subir trabajadores') }}
                 </button>
             </div>
         </div>

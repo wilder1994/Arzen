@@ -31,6 +31,10 @@
                                     <span class="sj-client-toggle__caret" aria-hidden="true"></span>
                                 </button>
                                 <span class="sj-client-primary sj-client-primary--truncate">{{ $client->name }}</span>
+                                @if ($client->is_own_company)
+                                    <span class="sj-chip">{{ __('Mi empresa') }}</span>
+                                @endif
+                                <span class="sj-chip">{{ trans_choice(':count instalación|:count instalaciones', $client->installations_count ?? 0, ['count' => $client->installations_count ?? 0]) }}</span>
                             </div>
                         </td>
                         <td class="sj-client-cell">

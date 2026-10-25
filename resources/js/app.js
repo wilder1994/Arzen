@@ -25,6 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (document.querySelector('[data-file-drop]')) {
+        import('./file-drop.js').then(({ initFileDrops }) => {
+            initFileDrops();
+        });
+    }
+
     const alertsPage = document.querySelector('[data-alerts-page]');
     if (alertsPage) {
         import('./alerts-documents-modal.js').then(({ initAlertsDocumentsPage }) => {

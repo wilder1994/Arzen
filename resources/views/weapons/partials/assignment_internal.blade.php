@@ -128,7 +128,7 @@
                             <option value="">{{ __('Seleccione') }}</option>
                             @foreach ($workers as $worker)
                                 @php
-                                    $workerRoleLabel = \App\Models\Worker::roleLabels()[$worker->role] ?? $worker->role;
+                                    $workerRoleLabel = $worker->positionLabel();
                                     $workerSearchText = trim(implode(' ', array_filter([
                                         $worker->name,
                                         $worker->document,

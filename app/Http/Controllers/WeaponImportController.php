@@ -21,7 +21,7 @@ class WeaponImportController extends Controller
     public function __construct()
     {
         $this->middleware(function (Request $request, $next) {
-            abort_unless($request->user()?->isAdmin(), 403);
+            abort_unless($request->user()?->canViewModule('imports'), 403);
 
             return $next($request);
         });
@@ -35,6 +35,11 @@ class WeaponImportController extends Controller
     public function downloadClientTemplate(ImportTemplateExporter $templateExporter): StreamedResponse
     {
         return $templateExporter->streamClientTemplate();
+    }
+
+    public function downloadWorkerTemplate(ImportTemplateExporter $templateExporter): StreamedResponse
+    {
+        return $templateExporter->streamWorkerTemplate();
     }
 
     public function index()
@@ -261,7 +266,7 @@ class WeaponImportController extends Controller
 
     private function resolveImportType(?string $type): string
     {
-        return in_array($type, [WeaponImportBatch::TYPE_CLIENT, WeaponImportBatch::TYPE_WEAPON], true)
+        return in_array($type, [WeaponImportBatch::TYPE_CLIENT, WeaponImportBatch::TYPE_WEAPON, WeaponImportBatch::TYPE_WORKER], true)
             ? $type
             : WeaponImportBatch::TYPE_WEAPON;
     }

@@ -12,7 +12,6 @@ use App\Models\WeaponClientAssignment;
 use App\Models\WeaponHistory;
 use App\Models\WeaponPhotoStaging;
 use App\Support\RevistaWeaponPhotoSlots;
-use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -25,13 +24,10 @@ class RevistaArmasTest extends TestCase
 
     protected bool $seed = true;
 
-    protected string $seeder = ResponsibilityLevelSeeder::class;
-
     private function createResponsibleWithWeapon(): array
     {
         $responsible = User::factory()->create([
             'role' => 'RESPONSABLE',
-            'responsibility_level_id' => 1,
         ]);
 
         $client = Client::create([

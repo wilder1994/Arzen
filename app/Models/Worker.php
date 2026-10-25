@@ -10,33 +10,13 @@ class Worker extends Model
 {
     use HasFactory;
 
-    public const ROLE_ESCOLTA = 'ESCOLTA';
-    public const ROLE_SUPERVISOR = 'SUPERVISOR';
-    public const ROLE_GUARDA = 'GUARDA';
-    public const ROLE_MOTORIZADO = 'MOTORIZADO';
-    public const ROLE_GUARDA_INFRAESTRUCTURA = 'GUARDA_INFRAESTRUCTURA';
-
-    /**
-     * Valores guardados en workers.role y etiquetas para formularios y listados.
-     *
-     * @return array<string, string>
-     */
-    public static function roleLabels(): array
-    {
-        return [
-            self::ROLE_ESCOLTA => 'Escolta',
-            self::ROLE_SUPERVISOR => 'Supervisor',
-            self::ROLE_GUARDA => 'Guarda',
-            self::ROLE_MOTORIZADO => 'Motorizado',
-            self::ROLE_GUARDA_INFRAESTRUCTURA => 'Guarda de infraestructura',
-        ];
-    }
-
     protected $fillable = [
         'client_id',
+        'post_id',
         'name',
+        'document_type',
         'document',
-        'role',
+        'position_id',
         'responsible_user_id',
         'notes',
         'archived_at',
@@ -49,6 +29,16 @@ class Worker extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function post()
+    {
+        return $this->belongsTo(Post::class);
+    }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class);
     }
 
     public function responsible()
@@ -64,6 +54,11 @@ class Worker extends Model
     public function histories()
     {
         return $this->hasMany(WorkerHistory::class);
+    }
+
+    public function positionLabel(): string
+    {
+        return $this->position?->name ?? __('Sin cargo');
     }
 
     public function isArchived(): bool

@@ -184,7 +184,7 @@ class ReportController extends Controller
 
     private function authorizeAdmin(): void
     {
-        if (! request()->user()?->isAdmin() && ! request()->user()?->isAuditor()) {
+        if (! request()->user()?->canViewModule('reports')) {
             abort(403);
         }
     }

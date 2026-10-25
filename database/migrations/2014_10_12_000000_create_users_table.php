@@ -19,8 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->boolean('must_change_password')->default(false);
             $table->enum('role', ['ADMIN', 'RESPONSABLE', 'AUDITOR', 'ALMACEN'])->default('ADMIN');
-            $table->foreignId('position_id')->nullable()->constrained('positions');
-            $table->foreignId('responsibility_level_id')->nullable()->constrained('responsibility_levels');
+            $table->foreignId('position_id')->nullable()->constrained('positions')->nullOnDelete();
             $table->boolean('is_active')->default(true);
             $table->string('cost_center', 100)->nullable();
             $table->rememberToken();

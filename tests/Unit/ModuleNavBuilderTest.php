@@ -2,10 +2,8 @@
 
 namespace Tests\Unit;
 
-use App\Models\ResponsibilityLevel;
 use App\Models\User;
 use App\Support\Navigation\ModuleNavBuilder;
-use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Tests\TestCase;
@@ -17,8 +15,6 @@ class ModuleNavBuilderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->seed(ResponsibilityLevelSeeder::class);
         $this->app->instance('request', Request::create('/dashboard', 'GET'));
         $this->app['request']->setRouteResolver(function () {
             $route = new \Illuminate\Routing\Route('GET', '/dashboard', fn () => null);
@@ -33,9 +29,10 @@ class ModuleNavBuilderTest extends TestCase
         $nav = $this->builder()->forUser($this->user(User::ROLE_ADMIN));
         $keys = $this->itemKeys($nav);
 
-        $this->assertSame(['armamento', 'dotacion', 'plataforma', 'empresa'], $this->moduleKeys($nav));
+        $this->assertSame(['armamento', 'dotacion', 'plataforma', 'empresa', 'ajustes'], $this->moduleKeys($nav));
         $this->assertContains('datos-empresa', $keys);
-        $this->assertContains('catalogos', $keys);
+        $this->assertContains('cargos', $keys);
+        $this->assertContains('novedades', $keys);
         $this->assertContains('usuarios', $keys);
         $this->assertContains('asignaciones', $keys);
         $this->assertContains('cargas', $keys);
@@ -47,8 +44,9 @@ class ModuleNavBuilderTest extends TestCase
 
     public function test_responsible_keeps_authorized_items_and_hides_admin_tools(): void
     {
-        $levelTwo = ResponsibilityLevel::query()->where('level', 2)->firstOrFail();
-        $nav = $this->builder()->forUser($this->user(User::ROLE_RESPONSABLE, $levelTwo->id));
+        $user = $this->user(User::ROLE_RESPONSABLE);
+        $user->syncModuleLevels(['dashboard' => 'view', 'weapons' => 'view', 'map' => 'view', 'formats' => 'view']);
+        $nav = $this->builder()->forUser($user->refresh());
         $keys = $this->itemKeys($nav);
 
         $this->assertContains('inicio', $keys);
@@ -65,8 +63,7 @@ class ModuleNavBuilderTest extends TestCase
 
     public function test_responsible_level_one_sees_revista_and_vest_import(): void
     {
-        $levelOne = ResponsibilityLevel::query()->where('level', 1)->firstOrFail();
-        $nav = $this->builder()->forUser($this->user(User::ROLE_RESPONSABLE, $levelOne->id));
+        $nav = $this->builder()->forUser($this->user(User::ROLE_RESPONSABLE));
         $keys = $this->itemKeys($nav);
 
         $this->assertContains('revista', $keys);
@@ -95,12 +92,9 @@ class ModuleNavBuilderTest extends TestCase
         return new ModuleNavBuilder();
     }
 
-    private function user(string $role, ?int $responsibilityLevelId = null): User
+    private function user(string $role): User
     {
-        return User::factory()->create([
-            'role' => $role,
-            'responsibility_level_id' => $responsibilityLevelId,
-        ]);
+        return User::factory()->create(['role' => $role]);
     }
 
     /**

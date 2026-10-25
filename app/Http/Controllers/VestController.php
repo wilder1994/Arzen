@@ -178,7 +178,7 @@ class VestController extends Controller
 
         $clientId = old('client_id', $vest?->client_id);
         $workers = $clientId
-            ? Worker::query()->active()->where('client_id', $clientId)->orderBy('name')->get(['id', 'name', 'document', 'role'])
+            ? Worker::query()->active()->where('client_id', $clientId)->with('position:id,name')->orderBy('name')->get(['id', 'name', 'document', 'position_id'])
             : collect();
         $posts = $clientId
             ? Post::query()->where('client_id', $clientId)->whereNull('archived_at')->orderBy('name')->get(['id', 'name', 'address'])
@@ -234,9 +234,10 @@ class VestController extends Controller
             ->active()
             ->where('client_id', $clientId)
             ->orderBy('name')
-            ->get(['id', 'name', 'document', 'role'])
+            ->with('position:id,name')
+            ->get(['id', 'name', 'document', 'position_id'])
             ->map(function (Worker $worker) {
-                $roleLabel = Worker::roleLabels()[$worker->role] ?? $worker->role;
+                $roleLabel = $worker->positionLabel();
 
                 return [
                     'id' => $worker->id,

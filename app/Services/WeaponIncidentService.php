@@ -27,7 +27,7 @@ class WeaponIncidentService
     {
         $type = IncidentType::query()->findOrFail($data['incident_type_id']);
 
-        if (! $type->is_reportable) {
+        if (! $type->is_reportable || ! $type->is_active) {
             throw new InvalidArgumentException(__('Este tipo ya no se registra como novedad operativa. Use custodia y puestos en la ficha del arma.'));
         }
 
@@ -252,7 +252,7 @@ class WeaponIncidentService
         $resolutionNote = trim((string) Arr::get($data, 'resolution_note', ''));
         $closureOutcome = Arr::get($data, 'closure_outcome');
 
-        if ($incident->type?->requires_resolution_note && $resolutionNote === '') {
+        if ($resolutionNote === '') {
             throw new InvalidArgumentException('Esta novedad exige una nota de cierre para conservar la trazabilidad.');
         }
 
@@ -316,6 +316,10 @@ class WeaponIncidentService
 
         if (!$modality) {
             throw new InvalidArgumentException('La modalidad seleccionada no pertenece al tipo de novedad.');
+        }
+
+        if (! $modality->is_active) {
+            throw new InvalidArgumentException('La modalidad no está disponible para nuevos reportes.');
         }
 
         return $modality;

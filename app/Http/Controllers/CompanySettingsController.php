@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\CompanySetting;
 use App\Models\File;
 use App\Services\CompanyLetterheadService;
+use App\Services\OwnCompanyClientService;
+use App\Support\MapCoordinates;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +31,7 @@ class CompanySettingsController extends Controller
         ]);
     }
 
-    public function update(Request $request, CompanyLetterheadService $letterhead)
+    public function update(Request $request, CompanyLetterheadService $letterhead, OwnCompanyClientService $ownClient)
     {
         $this->authorizeAdmin($request);
 
@@ -37,7 +39,13 @@ class CompanySettingsController extends Controller
             'legal_name' => ['nullable', 'string', 'max:255'],
             'nit' => ['nullable', 'string', 'max:40'],
             'address' => ['nullable', 'string', 'max:255'],
+            'neighborhood' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:120'],
+            'department' => ['nullable', 'string', 'max:120'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'coords_source' => ['nullable', 'string', 'max:20'],
+            'letter_city' => ['nullable', 'string', 'max:120'],
             'phone' => ['nullable', 'string', 'max:60'],
             'email' => ['nullable', 'email', 'max:255'],
             'website' => ['nullable', 'string', 'max:255'],
@@ -67,11 +75,11 @@ class CompanySettingsController extends Controller
         $filesToDelete = [];
 
         try {
-            DB::transaction(function () use ($request, $data, $company, &$storedPaths, &$filesToDelete) {
-                $attributes = collect($data)
+            DB::transaction(function () use ($request, $data, $company, $ownClient, &$storedPaths, &$filesToDelete) {
+                $attributes = MapCoordinates::apply(collect($data)
                     ->except(['logo', 'letterhead', 'remove_logo', 'remove_letterhead'])
                     ->map(fn ($value) => is_string($value) ? trim($value) : $value)
-                    ->all();
+                    ->all());
                 $attributes['internal_code_prefix'] = strtoupper((string) ($attributes['internal_code_prefix'] ?? ''));
                 $attributes['updated_by'] = $request->user()->id;
 
@@ -94,6 +102,7 @@ class CompanySettingsController extends Controller
                 }
 
                 $company->update($attributes);
+                $ownClient->sync($company);
             });
         } catch (Throwable $exception) {
             foreach ($storedPaths as $path) {
@@ -156,6 +165,6 @@ class CompanySettingsController extends Controller
 
     private function authorizeAdmin(Request $request): void
     {
-        abort_unless($request->user()?->isAdmin(), 403);
+        abort_unless($request->user()?->canViewModule('company'), 403);
     }
 }

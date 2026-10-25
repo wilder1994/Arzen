@@ -2,8 +2,8 @@
 
 **Empresa:** WCodex  
 **Sistema:** Arzen  
-**Perfil:** **RESPONSABLE** — **Nivel 1** (gestión) o **Nivel 2** (solo lectura)  
-**Versión del manual:** 3.0  
+**Perfil:** **RESPONSABLE** — permisos por matriz **Nada / Ver / Gestionar**  
+**Versión del manual:** 3.1  
 **Fecha:** [Completar]
 
 ---
@@ -216,12 +216,15 @@ URL del sistema (/)
 ```
 
 ---
-## 2. Nivel 1 vs Nivel 2
+## 2. Ver y gestionar
 
-| Acción | Nivel 1 | Nivel 2 |
-|--------|---------|----------|
+El administrador define el acceso en **Ajustes → Usuarios**. Ya no hay niveles 1 y 2: **Ver** equivale a consulta y **Gestionar** a crear y modificar.
+
+| Acción | Armas: Gestionar | Armas: Ver |
+|--------|------------------|------------|
 | Ver armas de cartera | Sí | Sí |
-| Asignar, fotos, transferencias, Revista | Sí | No (consulta) |
+| Asignación interna, fotos, transferencias, Revista | Sí | No (consulta) |
+| Asignar el arma a otro cliente | No (solo ADMIN) | No |
 | Editar datos maestros arma | No | No |
 
 ---
@@ -234,8 +237,8 @@ URL del sistema (/)
 
 #### Qué hacer
 
-1. Tras §1, verifique menú típico Nivel 1: **Inicio**, **Armamento**, **Revista armas**, **Clientes**, **Puestos**, **Trabajadores**, **Mapa**, **Transferencias**.
-2. No verá **Usuarios**, **Asignaciones**, **Cargas masivas**, **Reportes**, **Alertas** (salvo cambio de política).
+1. Tras §1, verifique el menú que le dejó la matriz: lo habitual con **Gestionar** en armas es **Inicio**, **Armamento**, **Revista armas**, **Clientes**, **Puestos**, **Trabajadores**, **Mapa**, **Transferencias**.
+2. No verá **Ajustes**, **Asignaciones**, **Cargas masivas**, **Reportes** ni **Alertas** si esos módulos están en **Nada**.
 
 #### Resultado esperado
 
@@ -277,24 +280,23 @@ Solo armas autorizadas.
 
 ---
 
-### 4.2 Asignar destino operativo (Nivel 1)
+### 4.2 Destino del arma (solo consulta)
 
 | | |
 |---|---|
 | **Pantalla** | Ficha — destino |
-| **Objetivo** | Cliente y responsable |
+| **Objetivo** | Ver el cliente asignado |
 
 #### Qué hacer
 
-1. Abra ficha.
-2. Verifique aviso de **transferencia pendiente** si aparece.
-3. Clic **Asignar a cliente**.
-4. Seleccione cliente de **su cartera**.
-5. Confirme.
+1. Abra la ficha.
+2. Verifique el aviso de **transferencia pendiente** si aparece.
+3. El cambio de **cliente** del arma lo hace el súper administrador.
+4. Si el arma no está en su cartera, no la verá.
 
 #### Resultado esperado
 
-Destino actualizado.
+Destino visible, sin cambio de cliente.
 
 #### Figura 4.2 — Destino
 
@@ -308,7 +310,7 @@ Destino actualizado.
 
 ---
 
-### 4.3 Asignación interna (Nivel 1)
+### 4.3 Asignación interna (Armas: Gestionar)
 
 | | |
 |---|---|
@@ -330,7 +332,7 @@ Interna vigente.
 
 ---
 
-### 4.4 Custodia (Nivel 1)
+### 4.4 Custodia (Armas: Gestionar)
 
 | | |
 |---|---|
@@ -353,7 +355,7 @@ Estado custodia actualizado.
 
 ---
 
-### 4.5 Documentos en ficha (Nivel 1)
+### 4.5 Documentos en ficha (Armas: Gestionar)
 
 | | |
 |---|---|
@@ -376,7 +378,7 @@ Documentos actualizados.
 
 ---
 
-### 4.6 Fotos del arma (Nivel 1) — paso a paso
+### 4.6 Fotos del arma (Armas: Gestionar) — paso a paso
 
 | | |
 |---|---|
@@ -407,7 +409,7 @@ Fotos oficiales guardadas.
 
 ---
 
-### 4.7 Novedad operativa (Nivel 1)
+### 4.7 Novedad operativa (Armas: Gestionar)
 
 | | |
 |---|---|
@@ -429,7 +431,7 @@ Novedad registrada.
 
 ---
 
-## 5. Transferencias (Nivel 1)
+## 5. Transferencias (Armas: Gestionar)
 
 ### 5.1 Enviar transferencia
 
@@ -498,7 +500,7 @@ Cancelada.
 
 ---
 
-## 6. Revista armas (Nivel 1)
+## 6. Revista armas (Armas: Gestionar)
 
 Procedimiento detallado en **manual-revista-armas.md** (Parte A).
 
@@ -526,7 +528,7 @@ Fotos oficiales tras aprobar.
 
 ---
 
-## 7. Nivel 2 (solo lectura)
+## 7. Armas en solo lectura (Ver)
 
 ### 7.1 Consultar sin editar
 
@@ -602,6 +604,7 @@ Listo.
 | Versión | Fecha | Elaboró | Aprobó | Cambios |
 |---------|--------|---------|--------|----------|
 | 3.0 | [fecha] | [nombre] | [nombre] | Procedimientos paso a paso en todas las funciones |
+| 3.1 | 2026-10-24 | [nombre] | [nombre] | Ajustes, matriz de módulos, instalaciones, puestos y Mi empresa con mapa |
 
 ---
 

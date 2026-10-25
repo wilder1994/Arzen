@@ -2,47 +2,50 @@
     <x-slot name="header">
         <div class="sj-section-header">
             <div class="sj-section-header__main">
-                <h2 class="sj-section-header__title">{{ __('Datos de la empresa') }}</h2>
+                <div class="sj-section-header__title-row">
+                    <h2 class="sj-section-header__title">{{ __('Datos de la empresa') }}</h2>
+                    <x-help-drawer :title="__('Datos de la empresa')">
+                        @include('company.partials.help')
+                    </x-help-drawer>
+                </div>
                 <p class="sj-section-header__subtitle">{{ __('Esta información aparece en las cartas de revalidación, los formatos y el logo del sistema.') }}</p>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-8">
-        <div class="sj-page-shell space-y-6">
+    <div class="py-4">
+        <div class="sj-page-shell space-y-3">
             @if (session('status'))
-                <div class="rounded bg-green-50 p-3 text-sm text-green-700">{{ session('status') }}</div>
+                <x-ui-alert type="success">{{ session('status') }}</x-ui-alert>
             @endif
 
             @if ($missingLetterFields !== [])
-                <div class="rounded bg-amber-50 p-3 text-sm text-amber-800" role="status">
+                <x-ui-alert type="warning">
                     {{ __('Para generar cartas de revalidación faltan: :fields.', ['fields' => implode(', ', $missingLetterFields)]) }}
-                </div>
+                </x-ui-alert>
             @endif
 
             @if ($errors->any())
-                <div class="rounded bg-red-50 p-3 text-sm text-red-700" role="alert">
-                    <ul class="list-disc pl-5">
+                <x-ui-alert type="danger">
+                    <ul class="list-disc pl-4">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
-                </div>
+                </x-ui-alert>
             @endif
 
-            <form method="POST" action="{{ route('company.update') }}" enctype="multipart/form-data" class="space-y-6">
+            <form method="POST" action="{{ route('company.update') }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
                 <section class="sj-ui-card">
-                    <div class="sj-ui-card__body space-y-4 p-6">
-                        <h3 class="sj-company__section-title">{{ __('Empresa') }}</h3>
+                    <div class="sj-ui-card__body p-6">
+                        <h3 class="sj-form-section__title">{{ __('Empresa') }}</h3>
                         <div class="sj-company__grid">
                             @foreach ([
                                 'legal_name' => __('Razón social'),
                                 'nit' => __('NIT'),
-                                'address' => __('Dirección'),
-                                'city' => __('Ciudad'),
                                 'phone' => __('Teléfono'),
                                 'email' => __('Correo'),
                                 'website' => __('Sitio web'),
@@ -52,14 +55,26 @@
                                     <input id="company-{{ $field }}" name="{{ $field }}" type="{{ $field === 'email' ? 'email' : 'text' }}" value="{{ old($field, $company->{$field}) }}" class="sj-ui-field__control">
                                 </div>
                             @endforeach
+                            <div class="sj-ui-field">
+                                <div class="sj-ui-field__label-row">
+                                    <label for="company-internal_code_prefix" class="sj-ui-field__label">{{ __('Prefijo de códigos internos') }}</label>
+                                    <x-help-tip :text="__('Las armas nuevas reciben el prefijo seguido de un consecutivo, por ejemplo :example. Cambiarlo no modifica los códigos ya asignados.', ['example' => ($company->internal_code_prefix ?: '').'0001'])" />
+                                </div>
+                                <input id="company-internal_code_prefix" name="internal_code_prefix" type="text" maxlength="10" value="{{ old('internal_code_prefix', $company->internal_code_prefix) }}" class="sj-ui-field__control">
+                            </div>
                         </div>
-                        <p class="sj-company__hint">{{ __('La ciudad se usa en la fecha de las cartas (por ejemplo: "Santiago de Cali, 7 de octubre de 2026").') }}</p>
-                    </div>
-                </section>
 
-                <section class="sj-ui-card">
-                    <div class="sj-ui-card__body space-y-4 p-6">
-                        <h3 class="sj-company__section-title">{{ __('Representante legal') }}</h3>
+                        <hr class="sj-ui-divider">
+
+                        <div class="sj-form-section__title sj-ui-field__label-row">
+                            <h3>{{ __('Ubicación') }}</h3>
+                            <x-help-tip :text="__('Sede principal de la empresa. Es la ubicación de su armerillo e instalación principal en el mapa.')" />
+                        </div>
+                        <x-location-fields :model="$company" :required="false" letter-city />
+
+                        <hr class="sj-ui-divider">
+
+                        <h3 class="sj-form-section__title">{{ __('Representante legal') }}</h3>
                         <div class="sj-company__grid">
                             <div class="sj-ui-field">
                                 <label for="company-legal_rep_name" class="sj-ui-field__label">{{ __('Nombre completo') }}</label>
@@ -75,8 +90,12 @@
                             </div>
                         </div>
 
-                        <h3 class="sj-company__section-title pt-2">{{ __('Persona autorizada para trámites') }}</h3>
-                        <p class="sj-company__hint">{{ __('Opcional. Si se deja vacío, la carta autoriza al mismo representante legal.') }}</p>
+                        <hr class="sj-ui-divider">
+
+                        <div class="sj-form-section__title sj-ui-field__label-row">
+                            <h3>{{ __('Persona autorizada para trámites') }} <span class="sj-form-section__optional">{{ __('(opcional)') }}</span></h3>
+                            <x-help-tip :text="__('Si se deja vacío, la carta autoriza al representante legal. Si escribe un nombre, la cédula y la ciudad de expedición son obligatorias.')" />
+                        </div>
                         <div class="sj-company__grid">
                             <div class="sj-ui-field">
                                 <label for="company-agent_name" class="sj-ui-field__label">{{ __('Nombre completo') }}</label>
@@ -91,67 +110,73 @@
                                 <input id="company-agent_document_city" name="agent_document_city" type="text" value="{{ old('agent_document_city', $company->agent_document_city) }}" class="sj-ui-field__control">
                             </div>
                         </div>
-                    </div>
-                </section>
 
-                <section class="sj-ui-card">
-                    <div class="sj-ui-card__body space-y-4 p-6">
-                        <h3 class="sj-company__section-title">{{ __('Logo y membrete') }}</h3>
+                        <hr class="sj-ui-divider">
+
+                        <h3 class="sj-form-section__title">{{ __('Logo y membrete') }}</h3>
                         <div class="sj-company__media">
-                            <div class="space-y-3">
-                                <p class="sj-ui-field__label">{{ __('Logo') }}</p>
-                                <div class="sj-company__preview sj-company__preview--logo">
-                                    <img src="{{ $company->logoUrl() }}" alt="{{ __('Logo') }}">
-                                </div>
-                                <input name="logo" type="file" accept=".png,.jpg,.jpeg,.webp" class="sj-company__file">
-                                <p class="sj-company__hint">{{ __('PNG, JPG o WEBP, máximo 2 MB. Se muestra en el sidebar, el inicio de sesión y la revista mensual.') }}</p>
-                                @if ($company->logo_file_id)
-                                    <label class="sj-company__check"><input type="checkbox" name="remove_logo" value="1" class="sj-ui-check rounded"> {{ __('Quitar logo y volver al predeterminado') }}</label>
-                                @endif
-                            </div>
-
-                            <div class="space-y-3">
-                                <p class="sj-ui-field__label">{{ __('Membrete (Word)') }}</p>
-                                <div class="sj-company__preview sj-company__preview--letterhead">
-                                    @if ($hasLetterheadHeader)
-                                        <img src="{{ route('company.letterhead.image', ['part' => 'header', 'v' => $company->letterhead_file_id]) }}" alt="{{ __('Encabezado') }}">
-                                    @endif
-                                    <div class="sj-company__preview-page">
-                                        {{ $company->letterhead_file_id ? __('Cuerpo de la carta') : __('Sin membrete cargado') }}
-                                    </div>
-                                    @if ($hasLetterheadFooter)
-                                        <img src="{{ route('company.letterhead.image', ['part' => 'footer', 'v' => $company->letterhead_file_id]) }}" alt="{{ __('Pie de página') }}">
-                                    @endif
-                                </div>
-                                @if ($company->letterheadFile)
-                                    <p class="sj-company__hint">{{ __('Archivo actual: :name', ['name' => $company->letterheadFile->original_name]) }}</p>
-                                @endif
-                                <input name="letterhead" type="file" accept=".docx" class="sj-company__file">
-                                <p class="sj-company__hint">{{ __('Documento .docx con el membrete como imagen en el encabezado y en el pie. Se aplica a todas las páginas de las cartas de revalidación.') }}</p>
-                                @if ($company->letterhead_file_id)
-                                    <label class="sj-company__check"><input type="checkbox" name="remove_letterhead" value="1" class="sj-ui-check rounded"> {{ __('Quitar membrete') }}</label>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="sj-ui-card">
-                    <div class="sj-ui-card__body space-y-4 p-6">
-                        <h3 class="sj-company__section-title">{{ __('Códigos internos de armas') }}</h3>
-                        <div class="sj-company__grid">
                             <div class="sj-ui-field">
-                                <label for="company-internal_code_prefix" class="sj-ui-field__label">{{ __('Prefijo') }}</label>
-                                <input id="company-internal_code_prefix" name="internal_code_prefix" type="text" maxlength="10" value="{{ old('internal_code_prefix', $company->internal_code_prefix) }}" class="sj-ui-field__control">
+                                <div class="sj-ui-field__label-row">
+                                    <span class="sj-ui-field__label">{{ __('Logo') }}</span>
+                                    <x-help-tip :text="__('PNG, JPG o WEBP de hasta 2 MB. Se muestra en el menú lateral, el inicio de sesión y la revista mensual.')" />
+                                </div>
+                                <x-file-drop
+                                    name="logo"
+                                    accept=".png,.jpg,.jpeg,.webp"
+                                    :label="__('Logo')"
+                                    :image-url="$company->logoUrl()"
+                                    :invalid-message="__('El logo debe ser una imagen PNG, JPG o WEBP.')"
+                                >
+                                    <x-slot name="meta">
+                                        <span class="sj-file-drop__meta-name">{{ $company->logo_file_id ? __('Logo de la empresa') : __('Logo predeterminado de Arzen') }}</span>
+                                        @if ($company->logo_file_id)
+                                            <label class="sj-company__check"><input type="checkbox" name="remove_logo" value="1" class="sj-ui-check rounded" data-file-drop-remove> {{ __('Quitar logo') }}</label>
+                                        @endif
+                                    </x-slot>
+                                </x-file-drop>
+                            </div>
+
+                            <div class="sj-ui-field">
+                                <div class="sj-ui-field__label-row">
+                                    <span class="sj-ui-field__label">{{ __('Membrete (Word)') }}</span>
+                                    <x-help-tip :text="__('Archivo .docx de hasta 10 MB con el membrete como imagen en el encabezado y, si aplica, en el pie. Se aplica a todas las páginas de las cartas.')" />
+                                </div>
+                                <x-file-drop
+                                    name="letterhead"
+                                    accept=".docx"
+                                    kind="document"
+                                    :label="__('Membrete (Word)')"
+                                    :invalid-message="__('El membrete debe ser un documento de Word (.docx).')"
+                                >
+                                    @if ($company->letterhead_file_id)
+                                        <div class="sj-company__letterhead-page">
+                                            @if ($hasLetterheadHeader)
+                                                <img src="{{ route('company.letterhead.image', ['part' => 'header', 'v' => $company->letterhead_file_id]) }}" alt="{{ __('Encabezado') }}">
+                                            @endif
+                                            <div class="sj-company__letterhead-body">{{ __('Cuerpo de la carta') }}</div>
+                                            @if ($hasLetterheadFooter)
+                                                <img src="{{ route('company.letterhead.image', ['part' => 'footer', 'v' => $company->letterhead_file_id]) }}" alt="{{ __('Pie de página') }}">
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="sj-file-drop__empty">{{ __('Sin membrete cargado') }}</span>
+                                    @endif
+
+                                    <x-slot name="meta">
+                                        <span class="sj-file-drop__meta-name">{{ $company->letterheadFile?->original_name ?? __('Ningún archivo') }}</span>
+                                        @if ($company->letterhead_file_id)
+                                            <label class="sj-company__check"><input type="checkbox" name="remove_letterhead" value="1" class="sj-ui-check rounded" data-file-drop-remove> {{ __('Quitar membrete') }}</label>
+                                        @endif
+                                    </x-slot>
+                                </x-file-drop>
                             </div>
                         </div>
-                        <p class="sj-company__hint">{{ __('Las armas nuevas reciben el prefijo seguido de un consecutivo, por ejemplo :example. Cambiarlo no modifica los códigos ya asignados.', ['example' => ($company->internal_code_prefix ?: '').'0001']) }}</p>
+
+                        <div class="mt-6 flex justify-end">
+                            <button type="submit" class="sj-ui-btn sj-ui-btn--primary">{{ __('Guardar cambios') }}</button>
+                        </div>
                     </div>
                 </section>
-
-                <div class="flex justify-end">
-                    <button type="submit" class="sj-ui-btn sj-ui-btn--primary">{{ __('Guardar cambios') }}</button>
-                </div>
             </form>
         </div>
     </div>

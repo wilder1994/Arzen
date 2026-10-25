@@ -8,43 +8,47 @@ use App\Models\User;
 use App\Models\WeaponImportBatch;
 use App\Models\WeaponImportRow;
 use App\Services\Imports\Contracts\ImportBatchProcessor;
+use App\Support\Imports\ZentraClientSchema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
+/**
+ * Carga de clientes con el mismo Excel que exporta e importa Zentra.
+ */
 class ClientImportProcessor implements ImportBatchProcessor
 {
-    private const REQUIRED_COLUMNS = [
-        'nit',
+    private const REQUIRED_COLUMNS = ['name', 'nit'];
+
+    private const IMPORTABLE_FIELDS = [
+        'party_type',
         'name',
+        'legal_name',
+        'document_type',
+        'nit',
+        'email',
+        'phone',
         'legal_representative',
+        'representative_email',
         'address',
         'city',
+        'department',
     ];
 
     private const FIELD_LABELS = [
-        'nit' => 'NIT./CC',
-        'name' => 'Razón social',
-        'legal_representative' => 'Representante legal',
-        'address' => 'Dirección principal',
+        'party_type' => 'Tipo de cliente',
+        'name' => 'Nombre comercial',
+        'legal_name' => 'Razón social',
+        'document_type' => 'Tipo documento',
+        'nit' => 'Número documento',
+        'email' => 'Email',
+        'phone' => 'Teléfono',
+        'legal_representative' => 'Representante',
+        'representative_email' => 'Email representante',
+        'address' => 'Dirección',
         'city' => 'Ciudad',
-    ];
-
-    /**
-     * @var array<string, string>
-     */
-    private const HEADER_ALIASES = [
-        'nit cc' => 'nit',
-        'nit' => 'nit',
-        'cc' => 'nit',
-        'razon social' => 'name',
-        'nombre rep legal' => 'legal_representative',
-        'nombre representante legal' => 'legal_representative',
-        'representante legal' => 'legal_representative',
-        'direccion principal' => 'address',
-        'direccion' => 'address',
-        'ciudad' => 'city',
+        'department' => 'Departamento',
     ];
 
     public function type(): string
@@ -57,13 +61,7 @@ class ClientImportProcessor implements ImportBatchProcessor
      */
     public static function templateHeaders(): array
     {
-        return [
-            'NIT./CC',
-            'RAZON SOCIAL',
-            'NOMBRE REP. LEGAL',
-            'DIRECCION PRINCIPAL',
-            'CIUDAD',
-        ];
+        return ZentraClientSchema::headers();
     }
 
     /**
@@ -72,11 +70,21 @@ class ClientImportProcessor implements ImportBatchProcessor
     public static function templateInstructions(): array
     {
         return [
-            ['NIT./CC', 'Sí', 'Texto', 'Clave principal del lote. Si el NIT ya existe, se actualiza; si no, se crea el cliente.'],
-            ['RAZON SOCIAL', 'Sí', 'Texto', 'Nombre o razón social del cliente.'],
-            ['NOMBRE REP. LEGAL', 'No', 'Texto', 'Columna requerida en el archivo; el valor puede quedar vacío.'],
-            ['DIRECCION PRINCIPAL', 'No', 'Texto', 'Columna requerida en el archivo; el valor puede quedar vacío.'],
-            ['CIUDAD', 'No', 'Texto', 'Columna requerida en el archivo; el valor puede quedar vacío.'],
+            ['Tipo de cliente', 'No', 'Texto', 'Jurídica o Natural. Vacío = Jurídica.'],
+            ['Nombre comercial', 'Sí', 'Texto', 'Nombre que se ve en listados, mapa y reportes.'],
+            ['Razón social', 'No', 'Texto', 'Nombre legal del RUT. Vacío = el nombre comercial.'],
+            ['Tipo documento', 'No', 'Texto', 'NIT, CC, CE, PA o PPT. Vacío = NIT.'],
+            ['Número documento', 'Sí', 'Texto', 'Clave del cliente: si ya existe se actualiza, si no se crea.'],
+            ['Email', 'No', 'Correo', 'Correo de contacto del cliente.'],
+            ['Teléfono', 'No', 'Texto', 'Teléfono de contacto.'],
+            ['Representante', 'No', 'Texto', 'Representante legal.'],
+            ['Email representante', 'No', 'Correo', 'Correo del representante legal.'],
+            ['Tipo de estructura', 'No', 'Texto', 'Solo lo usa Zentra; Arzen lo ignora.'],
+            ['Dirección', 'No', 'Texto', 'Dirección principal. Crea o actualiza la instalación principal.'],
+            ['Ciudad', 'No', 'Texto', 'Municipio.'],
+            ['Departamento', 'No', 'Texto', 'Departamento.'],
+            ['Accesos', 'No', 'SI / NO', 'Solo lo usa Zentra; Arzen lo ignora.'],
+            ['Supervisión', 'No', 'SI / NO', 'Solo lo usa Zentra; Arzen lo ignora.'],
         ];
     }
 
@@ -86,8 +94,7 @@ class ClientImportProcessor implements ImportBatchProcessor
         $nitFrequency = [];
 
         foreach ($rows as $row) {
-            $nitValue = $this->extractCell($row['cells'], $columnMap, 'nit');
-            $normalizedNit = $this->normalizeNitCompareValue($nitValue);
+            $normalizedNit = $this->normalizeNitCompareValue($this->extractCell($row['cells'], $columnMap, 'nit'));
 
             if ($normalizedNit !== '') {
                 $nitFrequency[$normalizedNit] = ($nitFrequency[$normalizedNit] ?? 0) + 1;
@@ -109,26 +116,11 @@ class ClientImportProcessor implements ImportBatchProcessor
 
         foreach ($rows as $row) {
             $rawPayload = $this->buildRawPayload($row['cells'], $columnMap);
-            $normalizedPayload = [
-                'nit' => $this->normalizeRequiredString($rawPayload['nit'] ?? ''),
-                'name' => $this->normalizeRequiredString($rawPayload['name'] ?? ''),
-                'legal_representative' => $this->normalizeOptionalString($rawPayload['legal_representative'] ?? ''),
-                'address' => $this->normalizeOptionalString($rawPayload['address'] ?? ''),
-                'city' => $this->normalizeOptionalString($rawPayload['city'] ?? ''),
-            ];
-            $errors = [];
-
-            if (($normalizedPayload['nit'] ?? null) === null) {
-                $errors[] = 'El NIT./CC es obligatorio.';
-            }
-
-            if (($normalizedPayload['name'] ?? null) === null) {
-                $errors[] = 'La razón social es obligatoria.';
-            }
+            [$normalizedPayload, $errors] = $this->normalizePayload($rawPayload);
 
             $normalizedNit = $this->normalizeNitCompareValue((string) ($normalizedPayload['nit'] ?? ''));
             if ($normalizedNit !== '' && ($nitFrequency[$normalizedNit] ?? 0) > 1) {
-                $errors[] = 'El NIT./CC está repetido dentro del archivo.';
+                $errors[] = 'El número de documento está repetido dentro del archivo.';
             }
 
             $matchingClients = $normalizedNit !== '' ? ($existingClientsByNit->get($normalizedNit) ?? collect()) : collect();
@@ -136,7 +128,11 @@ class ClientImportProcessor implements ImportBatchProcessor
             $beforePayload = $client ? $this->clientSnapshot($client) : null;
 
             if ($matchingClients->count() > 1) {
-                $errors[] = 'Ya existen varios clientes con el mismo NIT./CC en el sistema.';
+                $errors[] = 'Ya existen varios clientes con el mismo número de documento.';
+            }
+
+            if ($client?->is_own_company) {
+                $errors[] = 'Ese documento es el de su propia empresa; edítela en Mi empresa.';
             }
 
             if ($errors !== []) {
@@ -144,7 +140,7 @@ class ClientImportProcessor implements ImportBatchProcessor
                 $summary = implode(' ', array_unique($errors));
             } elseif (! $client) {
                 $action = WeaponImportRow::ACTION_CREATE;
-                $summary = 'NIT nuevo. Se creará el cliente base.';
+                $summary = 'Documento nuevo. Se creará el cliente con su instalación principal.';
             } else {
                 $changedFields = $this->detectChangedFields($client, $normalizedPayload);
 
@@ -153,7 +149,7 @@ class ClientImportProcessor implements ImportBatchProcessor
                     $summary = 'La información importable ya coincide con el sistema.';
                 } else {
                     $action = WeaponImportRow::ACTION_UPDATE;
-                    $summary = 'Actualiza: ' . implode(', ', array_map(
+                    $summary = 'Actualiza: '.implode(', ', array_map(
                         fn (string $field) => self::FIELD_LABELS[$field] ?? $field,
                         $changedFields
                     ));
@@ -193,10 +189,10 @@ class ClientImportProcessor implements ImportBatchProcessor
                 'execution_error' => null,
             ]);
 
+            $payload = $row->normalized_payload ?? [];
+
             if ($row->action === WeaponImportRow::ACTION_NO_CHANGE) {
-                $client = $row->client ?: Client::query()
-                    ->where('nit', $row->normalized_payload['nit'] ?? null)
-                    ->first();
+                $client = $row->client ?: $this->findClientByNit($payload['nit'] ?? null);
 
                 $row->update([
                     'client_id' => $client?->id,
@@ -207,8 +203,6 @@ class ClientImportProcessor implements ImportBatchProcessor
 
                 return;
             }
-
-            $payload = $row->normalized_payload ?? [];
 
             if ($row->action === WeaponImportRow::ACTION_CREATE) {
                 $client = Client::create($this->buildCreatePayload($payload));
@@ -233,9 +227,7 @@ class ClientImportProcessor implements ImportBatchProcessor
                 return;
             }
 
-            $client = $row->client ?: Client::query()
-                ->where('nit', $payload['nit'] ?? null)
-                ->first();
+            $client = $row->client ?: $this->findClientByNit($payload['nit'] ?? null);
 
             if (! $client) {
                 throw new RuntimeException(sprintf(
@@ -275,29 +267,30 @@ class ClientImportProcessor implements ImportBatchProcessor
      */
     private function resolveColumnMap(array $headers): array
     {
+        $normalizedHeaders = [];
+        foreach ($headers as $index => $header) {
+            $normalized = $this->normalizeHeader((string) $header);
+            if ($normalized !== '' && ! isset($normalizedHeaders[$normalized])) {
+                $normalizedHeaders[$normalized] = $index;
+            }
+        }
+
+        $hasCommercialName = isset($normalizedHeaders['nombre comercial']);
         $columnMap = [];
 
-        foreach ($headers as $index => $header) {
-            $normalizedHeader = $this->normalizeHeader($header);
-            if ($normalizedHeader === '') {
-                continue;
+        foreach (ZentraClientSchema::aliases($hasCommercialName) as $alias => $field) {
+            if (isset($normalizedHeaders[$alias]) && ! isset($columnMap[$field])) {
+                $columnMap[$field] = $normalizedHeaders[$alias];
             }
-
-            $field = self::HEADER_ALIASES[$normalizedHeader] ?? null;
-            if (! $field || isset($columnMap[$field])) {
-                continue;
-            }
-
-            $columnMap[$field] = $index;
         }
 
         $missingColumns = array_values(array_diff(self::REQUIRED_COLUMNS, array_keys($columnMap)));
         if ($missingColumns !== []) {
             throw ValidationException::withMessages([
-                'document' => 'Faltan columnas obligatorias: ' . implode(', ', array_map(
+                'document' => 'Faltan columnas obligatorias: '.implode(', ', array_map(
                     fn (string $field) => self::FIELD_LABELS[$field] ?? $field,
                     $missingColumns
-                )) . '.',
+                )).'. Use el Excel de clientes de Zentra o la plantilla de Arzen.',
             ]);
         }
 
@@ -313,11 +306,62 @@ class ClientImportProcessor implements ImportBatchProcessor
     {
         $payload = [];
 
-        foreach (self::REQUIRED_COLUMNS as $field) {
+        foreach (self::IMPORTABLE_FIELDS as $field) {
             $payload[$field] = $this->extractCell($cells, $columnMap, $field);
         }
 
         return $payload;
+    }
+
+    /**
+     * @param  array<string, string>  $raw
+     * @return array{0: array<string, mixed>, 1: list<string>}
+     */
+    private function normalizePayload(array $raw): array
+    {
+        $errors = [];
+        $value = fn (string $field) => ($trimmed = trim((string) ($raw[$field] ?? ''))) === '' ? null : $trimmed;
+
+        $partyType = ZentraClientSchema::partyType($raw['party_type'] ?? '');
+        if ($partyType === null) {
+            $errors[] = 'Tipo de cliente: jurídica o natural.';
+        }
+
+        $documentType = ZentraClientSchema::documentType($raw['document_type'] ?? '');
+        if ($documentType === null) {
+            $errors[] = 'Tipo de documento no válido (NIT, CC, CE, PA o PPT).';
+        }
+
+        $payload = [
+            'party_type' => $partyType ?? Client::PARTY_LEGAL,
+            'name' => $value('name'),
+            'legal_name' => $value('legal_name'),
+            'document_type' => $documentType ?? 'NIT',
+            'nit' => $value('nit'),
+            'email' => $value('email'),
+            'phone' => $value('phone'),
+            'legal_representative' => $value('legal_representative'),
+            'representative_email' => $value('representative_email'),
+            'address' => $value('address'),
+            'city' => $value('city'),
+            'department' => $value('department'),
+        ];
+
+        if ($payload['nit'] === null) {
+            $errors[] = 'El número de documento es obligatorio.';
+        }
+
+        if ($payload['name'] === null) {
+            $errors[] = 'El nombre comercial es obligatorio.';
+        }
+
+        foreach (['email' => 'Email', 'representative_email' => 'Email representante'] as $field => $label) {
+            if ($payload[$field] !== null && ! filter_var($payload[$field], FILTER_VALIDATE_EMAIL)) {
+                $errors[] = $label.' no es un correo válido.';
+            }
+        }
+
+        return [$payload, $errors];
     }
 
     /**
@@ -327,50 +371,26 @@ class ClientImportProcessor implements ImportBatchProcessor
     private function extractCell(array $cells, array $columnMap, string $field): string
     {
         $index = $columnMap[$field] ?? null;
-        if ($index === null) {
-            return '';
-        }
 
-        return trim((string) ($cells[$index] ?? ''));
-    }
-
-    private function normalizeRequiredString(string $value): ?string
-    {
-        $value = trim($value);
-
-        return $value === '' ? null : $value;
-    }
-
-    private function normalizeOptionalString(string $value): ?string
-    {
-        $value = trim($value);
-
-        return $value === '' ? null : $value;
+        return $index === null ? '' : trim((string) ($cells[$index] ?? ''));
     }
 
     /**
+     * @param  array<string, mixed>  $normalizedPayload
      * @return array<int, string>
      */
     private function detectChangedFields(Client $client, array $normalizedPayload): array
     {
         $changedFields = [];
 
-        if (! $this->normalizedNitMatches($client->nit, $normalizedPayload['nit'] ?? null)) {
-            $changedFields[] = 'nit';
-        }
-
         if (! $this->valuesMatch($client->name, $normalizedPayload['name'] ?? null)) {
             $changedFields[] = 'name';
         }
 
-        foreach (['legal_representative', 'address', 'city'] as $field) {
+        foreach (array_diff(self::IMPORTABLE_FIELDS, ['name', 'nit']) as $field) {
             $incomingValue = $normalizedPayload[$field] ?? null;
 
-            if ($incomingValue === null) {
-                continue;
-            }
-
-            if (! $this->valuesMatch($client->{$field}, $incomingValue)) {
+            if ($incomingValue !== null && ! $this->valuesMatch($client->{$field}, $incomingValue)) {
                 $changedFields[] = $field;
             }
         }
@@ -383,19 +403,7 @@ class ClientImportProcessor implements ImportBatchProcessor
      */
     private function clientSnapshot(Client $client): array
     {
-        return [
-            'nit' => $client->nit,
-            'name' => $client->name,
-            'legal_representative' => $client->legal_representative,
-            'address' => $client->address,
-            'city' => $client->city,
-            'contact_name' => $client->contact_name,
-            'email' => $client->email,
-            'neighborhood' => $client->neighborhood,
-            'department' => $client->department,
-            'latitude' => $client->latitude,
-            'longitude' => $client->longitude,
-        ];
+        return $client->only(array_merge(self::IMPORTABLE_FIELDS, ['contact_name', 'neighborhood', 'latitude', 'longitude']));
     }
 
     /**
@@ -404,19 +412,14 @@ class ClientImportProcessor implements ImportBatchProcessor
      */
     private function buildCreatePayload(array $payload): array
     {
-        return [
-            'nit' => $payload['nit'] ?? null,
-            'name' => $payload['name'] ?? null,
-            'legal_representative' => $payload['legal_representative'] ?? null,
-            'address' => $payload['address'] ?? null,
-            'city' => $payload['city'] ?? null,
-            'contact_name' => null,
-            'email' => null,
-            'neighborhood' => null,
-            'department' => null,
-            'latitude' => null,
-            'longitude' => null,
-        ];
+        $attributes = array_merge(
+            array_fill_keys(self::IMPORTABLE_FIELDS, null),
+            collect($payload)->only(self::IMPORTABLE_FIELDS)->all(),
+        );
+        $attributes['party_type'] ??= Client::PARTY_LEGAL;
+        $attributes['document_type'] ??= 'NIT';
+
+        return $attributes;
     }
 
     /**
@@ -425,11 +428,9 @@ class ClientImportProcessor implements ImportBatchProcessor
      */
     private function buildUpdatePayload(array $payload): array
     {
-        $updatePayload = [
-            'name' => $payload['name'] ?? null,
-        ];
+        $updatePayload = ['name' => $payload['name'] ?? null];
 
-        foreach (['legal_representative', 'address', 'city'] as $field) {
+        foreach (array_diff(self::IMPORTABLE_FIELDS, ['name', 'nit']) as $field) {
             if (($payload[$field] ?? null) !== null) {
                 $updatePayload[$field] = $payload[$field];
             }
@@ -438,9 +439,15 @@ class ClientImportProcessor implements ImportBatchProcessor
         return $updatePayload;
     }
 
-    private function normalizedNitMatches(?string $currentValue, mixed $incomingValue): bool
+    private function findClientByNit(mixed $nit): ?Client
     {
-        return $this->normalizeNitCompareValue($currentValue) === $this->normalizeNitCompareValue((string) ($incomingValue ?? ''));
+        $target = $this->normalizeNitCompareValue((string) ($nit ?? ''));
+
+        if ($target === '') {
+            return null;
+        }
+
+        return Client::query()->get()->first(fn (Client $client) => $this->normalizeNitCompareValue($client->nit) === $target);
     }
 
     private function valuesMatch(mixed $currentValue, mixed $incomingValue): bool
@@ -454,19 +461,13 @@ class ClientImportProcessor implements ImportBatchProcessor
 
     private function normalizeHeader(string $value): string
     {
-        $value = Str::ascii($value);
-        $value = strtolower($value);
-        $value = preg_replace('/[^a-z0-9]+/', ' ', $value) ?? '';
-
-        return trim(preg_replace('/\s+/', ' ', $value) ?? '');
+        return ZentraClientSchema::normalizeHeader($value);
     }
 
     private function normalizeNitCompareValue(?string $value): string
     {
-        $value = Str::ascii((string) $value);
-        $value = strtoupper($value);
+        $value = strtoupper(Str::ascii((string) $value));
 
         return preg_replace('/[^A-Z0-9]+/', '', $value) ?? '';
     }
 }
-

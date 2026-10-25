@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Support\Realtime;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Queue\SerializesModels;
 
@@ -21,7 +22,7 @@ abstract class DomainBroadcastEvent
 
     public function broadcastWhen(): bool
     {
-        return (bool) config('broadcasting.enabled', true);
+        return Realtime::available();
     }
 
     public function broadcastAs(): string

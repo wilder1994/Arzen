@@ -8,7 +8,6 @@ use App\Models\TemporaryPhotoUser;
 use App\Models\User;
 use App\Models\Weapon;
 use App\Models\WeaponClientAssignment;
-use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,13 +17,10 @@ class RevistaSharedTemporaryUserTest extends TestCase
 
     protected bool $seed = true;
 
-    protected string $seeder = ResponsibilityLevelSeeder::class;
-
     private function createResponsibleWithWeapon(string $serial, string $suffix): array
     {
         $responsible = User::factory()->create([
             'role' => 'RESPONSABLE',
-            'responsibility_level_id' => 1,
             'email' => "resp-{$suffix}@example.com",
         ]);
 

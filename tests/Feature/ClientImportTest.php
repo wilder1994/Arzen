@@ -196,7 +196,100 @@ class ClientImportTest extends TestCase
 
         $this->assertSame(1, $counts[WeaponImportRow::ACTION_ERROR]);
         $this->assertSame(WeaponImportRow::ACTION_ERROR, $rows[0]['action']);
-        $this->assertContains('Ya existen varios clientes con el mismo NIT./CC en el sistema.', $rows[0]['errors']);
+        $this->assertContains('Ya existen varios clientes con el mismo número de documento.', $rows[0]['errors']);
+    }
+
+    public function test_client_import_accepts_the_zentra_client_export(): void
+    {
+        $user = User::factory()->create(['role' => 'ADMIN']);
+        $processor = app(ClientImportProcessor::class);
+
+        [$rows, $counts] = $processor->prepareRows(\App\Support\Imports\ZentraClientSchema::headers(), [
+            [
+                'row_number' => 2,
+                'cells' => ['Jurídica', 'Residencial Norte', 'Residencial Norte PH', 'NIT', '901888777-6', 'norte@cliente.test', '3000000000', 'Ana Import', 'ana@cliente.test', 'ph', 'Calle 1 # 2-3', 'Cali', 'Valle del Cauca', 'NO', 'SI'],
+            ],
+            [
+                'row_number' => 3,
+                'cells' => ['Natural', 'Pedro Gómez', '', 'CC', '1098000111', '', '', '', '', 'casa', '', 'Bogotá', 'Bogotá D.C.', 'NO', 'NO'],
+            ],
+        ]);
+
+        $this->assertSame(2, $counts[WeaponImportRow::ACTION_CREATE]);
+        $this->assertSame('Residencial Norte PH', $rows[0]['normalized_payload']['legal_name']);
+        $this->assertSame(Client::PARTY_NATURAL, $rows[1]['normalized_payload']['party_type']);
+        $this->assertSame('CC', $rows[1]['normalized_payload']['document_type']);
+
+        $batch = WeaponImportBatch::query()->create([
+            'status' => 'draft',
+            'type' => WeaponImportBatch::TYPE_CLIENT,
+            'source_name' => 'clientes-zentra.xlsx',
+            'total_rows' => 1,
+            'create_count' => 1,
+            'update_count' => 0,
+            'no_change_count' => 0,
+            'error_count' => 0,
+        ]);
+        $row = WeaponImportRow::query()->create(array_merge($rows[0], ['batch_id' => $batch->id]));
+
+        $processor->executeRow($row, $user);
+
+        $client = Client::query()->where('nit', '901888777-6')->firstOrFail();
+        $this->assertSame('Residencial Norte', $client->name);
+        $this->assertSame('ana@cliente.test', $client->representative_email);
+        $this->assertSame('Residencial Norte', $client->mainInstallation->name);
+        $this->assertSame('Calle 1 # 2-3', $client->mainInstallation->address);
+    }
+
+    public function test_worker_import_builds_installation_post_and_position_from_zentra_employees(): void
+    {
+        $user = User::factory()->create(['role' => 'ADMIN']);
+        $client = Client::query()->create([
+            'name' => 'Palmas',
+            'legal_name' => 'Palmas del Ingenio PH',
+            'nit' => '900555666-1',
+            'city' => 'CALI',
+            'department' => 'VALLE DEL CAUCA',
+        ]);
+        $processor = app(\App\Services\Imports\WorkerImportProcessor::class);
+        $zentraHeaders = ['Tipo Documento de Identidad', 'Nro. Documento de Identidad', 'Ap. Paterno', 'Ap. Materno', 'Nombres', 'Sexo', 'Edad', 'Tipo Colaborador', 'Razón Social Cliente Final', 'Instalaciones', 'Sector (Ciudad)', 'Puesto', 'Cargo', 'EPS'];
+
+        [$rows, $counts] = $processor->prepareRows($zentraHeaders, [
+            [
+                'row_number' => 2,
+                'cells' => ['CC', '1098000111', 'Pérez', 'Gómez', 'Ana', 'Mujer', '34', 'OPERATIVO', 'Palmas del Ingenio PH', 'Torre norte', 'Cali', 'Portería', 'Escolta', 'SURA'],
+            ],
+            [
+                'row_number' => 3,
+                'cells' => ['CC', '1098000222', 'Ruiz', '', 'Luis', 'Hombre', '40', 'OPERATIVO', 'Cliente inexistente', '', '', '', 'Guarda', ''],
+            ],
+        ]);
+
+        $this->assertSame(1, $counts[WeaponImportRow::ACTION_CREATE]);
+        $this->assertSame(1, $counts[WeaponImportRow::ACTION_ERROR]);
+        $this->assertSame($client->id, $rows[0]['client_id']);
+
+        $batch = WeaponImportBatch::query()->create([
+            'status' => 'draft',
+            'type' => WeaponImportBatch::TYPE_WORKER,
+            'source_name' => 'empleados-zentra.xlsx',
+            'total_rows' => 2,
+            'create_count' => 1,
+            'update_count' => 0,
+            'no_change_count' => 0,
+            'error_count' => 1,
+        ]);
+        $row = WeaponImportRow::query()->create(array_merge($rows[0], ['batch_id' => $batch->id]));
+
+        $processor->executeRow($row, $user);
+
+        $worker = \App\Models\Worker::query()->where('document', '1098000111')->firstOrFail();
+        $this->assertSame('Ana Pérez Gómez', $worker->name);
+        $this->assertSame('Escolta', $worker->position->name);
+        $this->assertSame('Portería', $worker->post->name);
+        $this->assertSame('Torre norte', $worker->post->installation->name);
+        $this->assertSame($client->id, $worker->post->installation->client_id);
+        $this->assertSame('CALI', $worker->post->city);
     }
 }
 

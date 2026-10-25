@@ -4,6 +4,7 @@ namespace App\Services\Imports;
 
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\Position;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Vest;
@@ -85,18 +86,6 @@ class VestImportProcessor implements ImportBatchProcessor
         'fecha vencimiento' => 'expires_at',
         'vence' => 'expires_at',
         'talla' => 'size',
-    ];
-
-    /**
-     * @var array<string, string>
-     */
-    private const WORKER_ROLE_MAP = [
-        'escolta' => Worker::ROLE_ESCOLTA,
-        'supervisor' => Worker::ROLE_SUPERVISOR,
-        'guarda' => Worker::ROLE_GUARDA,
-        'motorizado' => Worker::ROLE_MOTORIZADO,
-        'guarda infraestructura' => Worker::ROLE_GUARDA_INFRAESTRUCTURA,
-        'guarda de infraestructura' => Worker::ROLE_GUARDA_INFRAESTRUCTURA,
     ];
 
     public function type(): string
@@ -540,7 +529,7 @@ class VestImportProcessor implements ImportBatchProcessor
                 'client_id' => $client->id,
                 'name' => $name,
                 'document' => $document !== '' ? $document : null,
-                'role' => $role,
+                'position_id' => Position::resolveByName($role)?->id,
                 'responsible_user_id' => $responsibleId,
             ]);
 
@@ -763,9 +752,9 @@ class VestImportProcessor implements ImportBatchProcessor
 
     private function normalizeWorkerRole(string $value): ?string
     {
-        $key = $this->normalizeHeader($value);
+        $value = trim($value);
 
-        return self::WORKER_ROLE_MAP[$key] ?? null;
+        return $value !== '' ? $value : null;
     }
 
     private function isUnassignedWorker(?string $name, ?string $document): bool

@@ -2,7 +2,12 @@
     <tr>
         <td class="px-3 py-2">{{ $post->name }}</td>
         <td class="px-3 py-2">{{ $post->client?->name }}</td>
-        <td class="px-3 py-2">{{ $post->address }}</td>
+        <td class="px-3 py-2">
+            {{ $post->installation?->name ?? '—' }}
+            @if ($post->address)
+                <span class="block text-xs text-gray-500">{{ $post->address }}</span>
+            @endif
+        </td>
         <td class="px-3 py-2">
             @if ($post->isArchived())
                 <span class="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700">{{ __('Archivado') }}</span>

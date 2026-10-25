@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\Navigation\ModuleNavBuilder;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -22,11 +23,11 @@ class RouteServiceProvider extends ServiceProvider
 
     public static function homeFor(?User $user): string
     {
-        if ($user?->isAlmacen()) {
-            return '/vests';
+        if (! $user) {
+            return self::HOME;
         }
 
-        return self::HOME;
+        return parse_url(app(ModuleNavBuilder::class)->forUser($user)['home_url'], PHP_URL_PATH) ?: self::HOME;
     }
 
     /**

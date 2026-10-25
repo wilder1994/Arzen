@@ -27,7 +27,7 @@ class WeaponIncidentController extends Controller
             'weapon_id' => ['required', 'exists:weapons,id'],
             'incident_type_id' => [
                 'required',
-                Rule::exists('incident_types', 'id')->where(fn ($query) => $query->where('is_reportable', true)),
+                Rule::exists('incident_types', 'id')->where(fn ($query) => $query->where('is_reportable', true)->where('is_active', true)),
             ],
             'incident_modality_id' => ['nullable', 'exists:incident_modalities,id'],
             'status' => ['nullable', Rule::in(array_keys(WeaponIncident::initialStatusOptions()))],
@@ -53,6 +53,15 @@ class WeaponIncidentController extends Controller
 
             if (!$modalityBelongs) {
                 return back()->withErrors(['incident_modality_id' => 'La modalidad no pertenece al tipo seleccionado.'])->withInput();
+            }
+
+            $modalityIsActive = IncidentModality::query()
+                ->whereKey($data['incident_modality_id'])
+                ->where('is_active', true)
+                ->exists();
+
+            if (! $modalityIsActive) {
+                return back()->withErrors(['incident_modality_id' => 'La modalidad no está disponible para nuevos reportes.'])->withInput();
             }
         }
 

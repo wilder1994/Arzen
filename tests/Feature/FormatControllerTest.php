@@ -6,7 +6,6 @@ use App\Models\Client;
 use App\Models\User;
 use App\Models\Weapon;
 use App\Models\WeaponClientAssignment;
-use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,8 +14,6 @@ class FormatControllerTest extends TestCase
     use RefreshDatabase;
 
     protected bool $seed = true;
-
-    protected string $seeder = ResponsibilityLevelSeeder::class;
 
     private function createWeaponWithAssignment(User $responsible, string $serial = 'FMT-001'): Weapon
     {
@@ -63,7 +60,7 @@ class FormatControllerTest extends TestCase
     public function test_monthly_review_weapons_returns_paginated_table_rows(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
-        $responsible = User::factory()->create(['role' => 'RESPONSABLE', 'responsibility_level_id' => 1]);
+        $responsible = User::factory()->create(['role' => 'RESPONSABLE']);
         $weapon = $this->createWeaponWithAssignment($responsible, 'FMT-TABLE-001');
 
         $response = $this->actingAs($admin)
@@ -80,7 +77,7 @@ class FormatControllerTest extends TestCase
     public function test_preview_monthly_review_requires_selected_weapon_ids(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
-        $responsible = User::factory()->create(['role' => 'RESPONSABLE', 'responsibility_level_id' => 1]);
+        $responsible = User::factory()->create(['role' => 'RESPONSABLE']);
         $weapon = $this->createWeaponWithAssignment($responsible, 'FMT-PREV-001');
 
         $this->actingAs($admin)
@@ -98,7 +95,7 @@ class FormatControllerTest extends TestCase
     public function test_download_monthly_review_exports_only_selected_weapons(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
-        $responsible = User::factory()->create(['role' => 'RESPONSABLE', 'responsibility_level_id' => 1]);
+        $responsible = User::factory()->create(['role' => 'RESPONSABLE']);
         $selected = $this->createWeaponWithAssignment($responsible, 'FMT-DL-001');
         $this->createWeaponWithAssignment($responsible, 'FMT-DL-002');
 
@@ -116,8 +113,8 @@ class FormatControllerTest extends TestCase
 
     public function test_responsible_only_sees_weapons_in_their_scope(): void
     {
-        $responsibleA = User::factory()->create(['role' => 'RESPONSABLE', 'responsibility_level_id' => 1]);
-        $responsibleB = User::factory()->create(['role' => 'RESPONSABLE', 'responsibility_level_id' => 1]);
+        $responsibleA = User::factory()->create(['role' => 'RESPONSABLE']);
+        $responsibleB = User::factory()->create(['role' => 'RESPONSABLE']);
         $weaponA = $this->createWeaponWithAssignment($responsibleA, 'FMT-SCOPE-A');
         $this->createWeaponWithAssignment($responsibleB, 'FMT-SCOPE-B');
 
@@ -131,7 +128,7 @@ class FormatControllerTest extends TestCase
     public function test_column_options_respect_active_filters(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
-        $responsible = User::factory()->create(['role' => 'RESPONSABLE', 'responsibility_level_id' => 1]);
+        $responsible = User::factory()->create(['role' => 'RESPONSABLE']);
         $this->createWeaponWithAssignment($responsible, 'FMT-COL-001');
 
         $this->actingAs($admin)

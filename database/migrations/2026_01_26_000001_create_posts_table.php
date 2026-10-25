@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('installation_id')->constrained()->cascadeOnDelete();
             $table->string('custody_role', 40)->nullable();
             $table->foreignId('owner_responsible_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('name');

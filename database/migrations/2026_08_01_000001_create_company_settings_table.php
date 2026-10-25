@@ -13,7 +13,12 @@ return new class extends Migration
             $table->string('legal_name')->nullable();
             $table->string('nit', 40)->nullable();
             $table->string('address')->nullable();
+            $table->string('neighborhood')->nullable();
             $table->string('city', 120)->nullable();
+            $table->string('department', 120)->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->string('letter_city', 120)->nullable();
             $table->string('phone', 60)->nullable();
             $table->string('email')->nullable();
             $table->string('website')->nullable();

@@ -9,16 +9,58 @@ const t = {
     noResults: locale === 'en' ? 'No matches found.' : 'No se encontraron resultados.',
     incompleteAddress: locale === 'en'
         ? 'Address or municipality could not be completed. Adjust it manually if needed.'
-        : 'No se pudo completar la direcciÃ³n o el municipio. Ajusta manualmente si es necesario.',
+        : 'No se pudo completar la dirección o el municipio. Ajusta manualmente si es necesario.',
     geocodeFailed: locale === 'en'
         ? 'Location could not be obtained. Try again or complete the data manually.'
-        : 'No se pudo obtener la ubicaciÃ³n. Intenta nuevamente o completa los datos manualmente.',
+        : 'No se pudo obtener la ubicación. Intenta nuevamente o completa los datos manualmente.',
     manualAddressInvalid: locale === 'en'
         ? 'Address not recognized. You can save it as is or choose the location on the map.'
-        : 'DirecciÃ³n no reconocida. Puedes guardarla asÃ­ o seleccionar la ubicaciÃ³n en el mapa.',
+        : 'Dirección no reconocida. Puedes guardarla así o seleccionar la ubicación en el mapa.',
     missingKey: locale === 'en'
         ? 'Google Maps is not configured. Add GOOGLE_MAPS_API_KEY in the environment file.'
-        : 'Google Maps no estÃ¡ configurado. Agrega GOOGLE_MAPS_API_KEY en el archivo de entorno.',
+        : 'Google Maps no está configurado. Agrega GOOGLE_MAPS_API_KEY en el archivo de entorno.',
+};
+
+const lowercaseWords = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'el']);
+
+const formatLetterCity = (value) => (value || '')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word, index) => (index > 0 && lowercaseWords.has(word) ? word : word.charAt(0).toUpperCase() + word.slice(1)))
+    .join(' ');
+
+const syncCoordsDisplay = (form) => {
+    const display = form?.querySelector('[data-coords-display]');
+    if (!display) {
+        return;
+    }
+    const lat = form.querySelector('[data-latitude-input]')?.value;
+    const lng = form.querySelector('[data-longitude-input]')?.value;
+    display.textContent = lat && lng ? `${lat}, ${lng}` : (display.dataset.emptyLabel || '');
+};
+
+const syncLetterCity = (form) => {
+    const input = form?.querySelector('[data-letter-city-input]');
+    const municipality = form?.querySelector('[data-municipality-select]');
+    if (!input || !municipality?.value || input.dataset.autofill === 'off') {
+        return;
+    }
+    input.value = formatLetterCity(municipality.value);
+};
+
+const initLetterCity = () => {
+    document.addEventListener('input', (event) => {
+        const input = event.target.closest?.('[data-letter-city-input]');
+        if (input) {
+            input.dataset.autofill = input.value.trim() === '' ? 'on' : 'off';
+        }
+    });
+    document.addEventListener('change', (event) => {
+        if (event.target.matches?.('[data-municipality-select]')) {
+            syncLetterCity(event.target.closest('[data-location-form]'));
+        }
+    });
 };
 
 const buildOption = (value, label) => {
@@ -281,6 +323,7 @@ const initMapPicker = () => {
         if (coordsSourceInput) {
             coordsSourceInput.value = source;
         }
+        syncCoordsDisplay(form);
     };
 
     const clearCoordinates = (form, source = 'geocode') => {
@@ -294,6 +337,7 @@ const initMapPicker = () => {
         if (coordsSourceInput) {
             coordsSourceInput.value = source;
         }
+        syncCoordsDisplay(form);
     };
 
     const collectLocationData = (form) => {
@@ -677,6 +721,7 @@ const initMapPicker = () => {
                 if (coordsSourceInput) {
                     coordsSourceInput.value = 'map';
                 }
+                syncLetterCity(activeForm);
                 setNotice(activeForm, '');
 
                 if (!addressValue || !normalizedDepartment || !normalizedMunicipality) {
@@ -712,6 +757,7 @@ const initMapPicker = () => {
 
 const init = () => {
     initLocationSelects();
+    initLetterCity();
     initMapPicker();
 };
 

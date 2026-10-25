@@ -25,17 +25,12 @@ class WeaponPolicy
         return $user->isAuditor();
     }
 
+    /**
+     * La asignación a cliente la hace solo el súper administrador; entre responsables se usa Transferencias.
+     */
     public function assignToClient(User $user, Weapon $weapon): bool
     {
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        if ($user->isResponsibleLevelOne()) {
-            return $weapon->activeClientAssignment?->responsible_user_id === $user->id;
-        }
-
-        return false;
+        return $user->isAdmin();
     }
 
     public function create(User $user): bool

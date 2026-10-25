@@ -10,11 +10,17 @@ return new class extends Migration
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
+            $table->string('party_type', 20)->default('legal_entity');
             $table->string('name');
+            $table->string('legal_name')->nullable();
+            $table->string('document_type', 20)->default('NIT');
             $table->string('nit');
             $table->string('legal_representative')->nullable();
+            $table->string('representative_email')->nullable();
             $table->string('contact_name')->nullable();
             $table->string('email')->nullable();
+            $table->string('phone', 60)->nullable();
+            $table->boolean('is_own_company')->default(false);
             $table->string('address')->nullable();
             $table->string('neighborhood')->nullable();
             $table->string('city')->nullable();

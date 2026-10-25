@@ -28,7 +28,11 @@ Sistema web para **gestión de armamento**, **dotación (chalecos)**, **asignaci
 - ✅ **Reportes — Custodia y taller** (`/reports/weapon-custody`): armas en puestos de armerillo, armerillo para mantenimiento o armero por responsable.
 - ✅ **Custodia en ficha del arma**: acciones **Enviar a mi armerillo** (operativa), **Para mantenimiento** y **Enviar a armero** (no operativas, sin novedad); un armerillo y armeros por responsable, ubicación inicial del cliente. Al mover custodia se cierran novedades legadas abiertas (`en_mantenimiento`, `para_mantenimiento`, `en_armerillo`) y el listado muestra **Estado** alineado con el puesto de custodia (`WeaponListStatusResolver`).
 - ✅ **Formatos** (`/formatos`): catálogo en **tarjetas** (`sj-ui-card`, grid 1/2/4 columnas); **Revista mensual de armamento** (FO-OP-03) con descarga vacía o con relación de armas (tabla con filtros por columna, selección por checkbox y exportación solo de las marcadas); **plantilla carga masiva de chalecos** (tarjeta visible con permiso `import` en `Vest`); archivos en `resources/templates/`; revista usa `phpoffice/phpspreadsheet` (requiere `composer install` con PHP 8.2+). Pestaña **Formatos** en el módulo **Plataforma** (no es un menú desplegable).
-- ✅ **Mi empresa** (solo ADMIN): datos legales, logo, membrete en Word, prefijo de códigos internos y Catálogos (cargos, tipos y modalidades de novedad, niveles). Ver **§14.1**.
+- ✅ **Mi empresa**: datos legales, **ubicación con mapa** (sede principal), ciudad para la carta, logo, membrete en Word y prefijo de códigos internos. La propia empresa existe también como **cliente** (`clients.is_own_company`, `OwnCompanyClientService`) con instalaciones, puestos, armerillo y trabajadores. Ver **§14.1**.
+- ✅ **Estructura operativa** (octubre 2026): **Cliente → Instalaciones → Puestos**; los trabajadores pertenecen al cliente, tienen **cargo** (catálogo de Ajustes) y **un puesto activo** con historial. Al crear un cliente se crea su **instalación principal** (`is_client_site`) con la misma ubicación; los puestos toman la ubicación de su instalación. El armerillo de cada responsable vive en la instalación principal del cliente.
+- ✅ **Ajustes**: Usuarios (rol, cargo, clientes y matriz Nada/Ver/Gestionar por módulo), Cargos y Tipos de novedad. Ver «Matriz de permisos por módulo».
+- ✅ **Compatibilidad con Zentra**: el Excel de clientes y el de empleados que exporta Zentra se suben en Cargas masivas sin modificarlos.
+- ✅ **Ayuda en pantalla**: ícono «?» en el header de cada vista renovada (panel lateral con el manual de la vista) e íconos (i) en los campos.
 - ✅ **Shell de navegación**: sidebar con **Armamento**, **Dotación**, **Plataforma** y **Mi empresa**; pestañas del módulo activo en la barra superior; el sidebar se oculta con el botón lateral (`localStorage`). **Mapa** vive en Armamento. **Cargas masivas** abre `/subir-armas` (ADMIN) o `/subir-chalecos` (quien solo importa chalecos). Árbol filtrado por rol en `App\Support\Navigation\ModuleNavBuilder`.
 - ✅ **Kit UI global** (`sj-ui-*` en `resources/css/app.css`): interfaz unificada en listados, formularios, reportes, cargas masivas, auth guest, dashboard y detalle de armas/chalecos — headers (`sj-section-header`), tarjetas (`sj-ui-card`), KPIs (`sj-ui-kpi` / `sj-kpi-card`), filtros (`sj-ui-filter-bar`), botones (`sj-ui-btn` vía componentes Blade y vistas), enlaces de tabla (`sj-ui-link`). Tras cambios en `app.css`: `npm run build`.
 - ✅ **Tipografía unificada** (tokens `.sj-type-*` / `--sj-type-*` en `app.css`): eyebrow, título de página, subtítulo, sección, cuerpo, meta y KPI (números con peso **600**); los encabezados `sj-section-header__*` y héroes/KPIs del dashboard consumen los mismos tamaños fijos (sin `clamp` en títulos de página). Jerarquía única en todas las vistas: título de página 22px/600 → sección 15px/600 (`sj-type-section`, `sj-form-section__title`) → etiqueta de campo 13px/500 (`sj-ui-field__label`, sin mayúsculas) → meta 12px → eyebrow 11px en mayúsculas. Escala `--sj-fs-*` (11–24px) espejada en `tailwind.config.js`. Controles compactos: `--sj-ui-control-height` 36px (`-sm` 32px, `-xs` 28px). La prueba `tests/Unit/ViewTypographyConsistencyTest.php` falla si un `h1–h4` usa tamaños/pesos Tailwind sueltos o si un campo usa bordes grises en lugar de `sj-ui-field__control`.
@@ -103,7 +107,7 @@ php artisan migrate
 
 En **producción** (`APP_ENV=production`): `php artisan migrate --force`. Antes, **respaldo de la BD** y **`git pull`** en el servidor para que los archivos en `database/migrations/` coincidan con el repo.
 
-**Migraciones unificadas (octubre 2026):** cada tabla se crea en **una sola migración** con todas sus columnas, índices y llaves foráneas finales (34 archivos). Se eliminaron las migraciones que alteraban tablas existentes (`add_*`, `fix_*`, rol `ALMACEN` vía `ALTER ... ENUM`, FK de `permit_authenticated_file_id`, etc.) y los parches propios de MySQL; por eso la suite de pruebas corre en SQLite. Orden relevante: `positions` y `responsibility_levels` van antes de `users` (FK directas) y `vests` antes de `weapon_import_rows`.
+**Migraciones unificadas (octubre 2026):** cada tabla se crea en **una sola migración** con todas sus columnas, índices y llaves foráneas finales (34 archivos). Se eliminaron las migraciones que alteraban tablas existentes (`add_*`, `fix_*`, rol `ALMACEN` vía `ALTER ... ENUM`, FK de `permit_authenticated_file_id`, etc.) y los parches propios de MySQL; por eso la suite de pruebas corre en SQLite. Orden relevante: `positions` va antes de `users` (FK directa), `user_module_grants` después de `users`, `installations` después de `clients` y antes de `posts`, y `vests` antes de `weapon_import_rows`.
 
 > Una base creada con las migraciones anteriores **no** se actualiza con `migrate`: requiere instalación limpia (`migrate:fresh --seed`) o migrar los datos aparte. Instalaciones nuevas: `php artisan migrate --seed`.
 
@@ -196,12 +200,16 @@ composer reverb
   - Acceso **exclusivo al módulo Chalecos** (`/vests`, `/subir-chalecos`): inventario global (todos los clientes), alta, edición, fotos e importación Excel.
   - Sin acceso a dashboard, armas, clientes, reportes ni demás módulos (middleware `RestrictAlmacenToVestModule`).
   - Tras login redirige a `/vests` (`RouteServiceProvider::homeFor()`). Solo un **ADMIN** puede crear usuarios con este rol.
-  - Rol y **cargo** (`positions`) son campos independientes; los cargos los crea cada empresa en **Mi empresa → Catálogos**.
+  - Rol y **cargo** (`positions`) son campos independientes; los cargos los crea cada empresa en **Ajustes → Cargos** (mismo catálogo para usuarios y trabajadores).
 
-### 🧩 Niveles de responsabilidad (`responsibility_levels.level`)
+### 🧩 Matriz de permisos por módulo (octubre 2026, igual que Zentra)
 
-- **Nivel 1**: responsable operativo con gestión.
-- **Nivel 2**: responsable solo lectura.
+- Tabla `user_module_grants` (`user_id`, `module`, `level` = `view` | `manage`). Catálogo de módulos y permisos por defecto de cada rol en `App\Support\Access\ModuleAccess`.
+- **Nada / Ver / Gestionar** por módulo: Inicio, Armas, Revista, Mapa, Transferencias, Asignaciones, Reportes, Alertas, Chalecos, Clientes e instalaciones, Puestos, Trabajadores, Cargas masivas, Formatos, Mi empresa, Ajustes y Usuarios.
+- El **súper administrador** (`ADMIN`) tiene acceso total y no usa matriz. Si un usuario no tiene matriz guardada, rige la del rol (`ModuleAccess::defaultsForRole`); el formulario de usuario siempre guarda la matriz completa.
+- Aplicación: middleware `module:<clave>` (`EnsureModuleAccess`) en cada grupo de rutas — *Ver* permite GET; *Gestionar* además POST/PUT/PATCH/DELETE y las pantallas `.create` / `.edit`. El menú (`ModuleNavBuilder`) oculta los módulos en *Nada*.
+- **Los antiguos niveles de responsabilidad se eliminaron** (`responsibility_levels`): *nivel 1* equivale a **Armas: Gestionar** y *nivel 2* a **Armas: Ver** (`User::responsibilityLevelNumber()` se deriva de la matriz). Las menciones a "nivel 1/2" de este documento se leen así.
+- Solo un súper administrador crea o edita a otro súper administrador. La cartera de clientes (`user_clients`) se edita en el mismo formulario del usuario (**Ajustes → Usuarios**).
 
 ### 🔐 Reglas clave (extracto)
 
@@ -211,7 +219,7 @@ composer reverb
     - ADMIN: ✅
     - RESPONSABLE: ✅ solo si es responsable activo del arma
     - AUDITOR: ✅
-  - `assignToClient`: ADMIN o RESPONSABLE Nivel 1 (condicionado al arma)
+  - `assignToClient`: **solo ADMIN** (súper administrador). Entre responsables se usa Transferencias; la asignación interna (puesto/trabajador) la hace quien tenga el cliente y el arma en su cartera, o el ADMIN.
   - `update` (información del arma, edición general): solo ADMIN
   - `updatePhotos` (fotos técnicas + foto del permiso):
     - ADMIN: ✅
@@ -543,22 +551,18 @@ Flujo actual de clientes:
 
 - Mismo ciclo de lote (`draft` → preview → `processing` → `executed` / `failed`) que armas.
 - Modal **Subir clientes** con `type=client` en el preview.
-- La llave principal de comparacion es `nit`.
-- Si el NIT no existe: crea el cliente.
-- Si el NIT existe y hay cambios en campos importables: actualiza.
-- Si coincide: marca `no_change`.
-- Columnas soportadas:
-  - `NIT./CC`
-  - `RAZON SOCIAL`
-  - `NOMBRE REP. LEGAL`
-  - `DIRECCION PRINCIPAL`
-  - `CIUDAD`
-- Campos que se crean o actualizan por importacion:
-  - `nit`
-  - `name`
-  - `legal_representative`
-  - `address`
-  - `city`
+- La llave principal de comparacion es el **número de documento** (`nit`).
+- Si no existe: crea el cliente **con su instalación principal**. Si existe y hay cambios: actualiza. Si coincide: `no_change`.
+- **Formato compatible con Zentra** (`App\Support\Imports\ZentraClientSchema`): mismas columnas del Excel de clientes de Zentra — `Tipo de cliente`, `Nombre comercial`, `Razón social`, `Tipo documento`, `Número documento`, `Email`, `Teléfono`, `Representante`, `Email representante`, `Tipo de estructura`, `Dirección`, `Ciudad`, `Departamento`, `Accesos`, `Supervisión`. Las columnas propias de Zentra (estructura, accesos, supervisión) se ignoran. Obligatorias: `Nombre comercial` y `Número documento`.
+- Sigue aceptando la plantilla anterior de Arzen (`NIT./CC`, `RAZON SOCIAL`, `NOMBRE REP. LEGAL`, `DIRECCION PRINCIPAL`, `CIUDAD`).
+- En Zentra: **Clientes → Exportar** descarga los clientes registrados en ese mismo formato; el archivo se sube aquí sin modificarlo.
+
+Flujo de trabajadores (`type=worker`, `WorkerImportProcessor`):
+
+- Lee la **plantilla de empleados de Zentra** (o la de Arzen, que es un subconjunto con los mismos encabezados): `Tipo Documento de Identidad`, `Nro. Documento de Identidad`, `Ap. Paterno`, `Ap. Materno`, `Nombres`, `Razón Social Cliente Final`, `Instalaciones`, `Puesto`, `Cargo`. Las columnas de nómina (EPS, ARL, contrato…) se ignoran.
+- El cliente debe existir (por nombre comercial o razón social). Si la instalación o el puesto no existen, se crean (la instalación con la ubicación del cliente); el cargo se crea en Ajustes si falta.
+- Llave: documento dentro del cliente. Un documento de otro cliente es error. Cada cambio de puesto queda en el historial del trabajador.
+- En Zentra: **Empleados → Exportar** descarga los empleados activos con su cliente, instalación y puesto.
 - Los clientes creados por carga masiva pueden quedar sin coordenadas hasta completar ubicacion en la ficha del cliente (bloquea asignacion interna solo-trabajador en mapa; ver §5.3).
 
 Notas de ampliacion:

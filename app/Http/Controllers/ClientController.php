@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Events\ClientChanged;
 use App\Events\MapDataChanged;
-use App\Models\Client;
 use App\Models\AuditLog;
+use App\Models\Client;
 use App\Models\WeaponClientAssignment;
 use App\Support\MapCoordinates;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
@@ -33,6 +34,7 @@ class ClientController extends Controller
             $query->where(function ($builder) use ($search) {
                 $builder
                     ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('legal_name', 'like', '%' . $search . '%')
                     ->orWhere('nit', 'like', '%' . $search . '%')
                     ->orWhere('contact_name', 'like', '%' . $search . '%')
                     ->orWhere('email', 'like', '%' . $search . '%')
@@ -42,6 +44,8 @@ class ClientController extends Controller
         }
 
         $clients = $query
+            ->withCount(['installations' => fn ($builder) => $builder->active()])
+            ->orderByDesc('is_own_company')
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
@@ -63,22 +67,7 @@ class ClientController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'nit' => ['required', 'string', 'max:50'],
-            'legal_representative' => ['nullable', 'string', 'max:255'],
-            'contact_name' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'neighborhood' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
-            'department' => ['required', 'string', 'max:255'],
-            'latitude' => ['nullable', 'numeric'],
-            'longitude' => ['nullable', 'numeric'],
-            'coords_source' => ['nullable', 'string', 'max:20'],
-        ]);
-
-        $data = MapCoordinates::apply($data);
+        $data = MapCoordinates::apply($this->validated($request));
 
         $client = Client::create($data);
 
@@ -94,7 +83,7 @@ class ClientController extends Controller
         event(new ClientChanged('created', $client->id));
         event(new MapDataChanged('updated', $client->id));
 
-        return redirect()->route('clients.index')->with('status', 'Cliente creado.');
+        return redirect()->route('clients.edit', $client)->with('status', __('Cliente creado con su instalación principal.'));
     }
 
     public function edit(Client $client)
@@ -104,22 +93,11 @@ class ClientController extends Controller
 
     public function update(Request $request, Client $client)
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'nit' => ['required', 'string', 'max:50'],
-            'legal_representative' => ['nullable', 'string', 'max:255'],
-            'contact_name' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'neighborhood' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
-            'department' => ['required', 'string', 'max:255'],
-            'latitude' => ['nullable', 'numeric'],
-            'longitude' => ['nullable', 'numeric'],
-            'coords_source' => ['nullable', 'string', 'max:20'],
-        ]);
+        if ($client->is_own_company) {
+            return redirect()->route('company.edit');
+        }
 
-        $data = MapCoordinates::apply($data);
+        $data = MapCoordinates::apply($this->validated($request));
 
         $before = $client->only(['name', 'nit', 'city', 'department', 'email', 'contact_name']);
 
@@ -137,7 +115,7 @@ class ClientController extends Controller
         event(new ClientChanged('updated', $client->id));
         event(new MapDataChanged('updated', $client->id));
 
-        return redirect()->route('clients.index')->with('status', 'Cliente actualizado.');
+        return redirect()->route('clients.edit', $client)->with('status', __('Cliente actualizado.'));
     }
 
     public function destroy(Client $client)
@@ -170,6 +148,32 @@ class ClientController extends Controller
         $client->delete();
 
         return redirect()->route('clients.index')->with('status', 'Cliente eliminado.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'party_type' => ['required', Rule::in(array_keys(Client::partyTypeLabels()))],
+            'name' => ['required', 'string', 'max:255'],
+            'legal_name' => ['nullable', 'string', 'max:255'],
+            'document_type' => ['required', Rule::in(array_keys(Client::documentTypeLabels()))],
+            'nit' => ['required', 'string', 'max:50'],
+            'legal_representative' => ['nullable', 'string', 'max:255'],
+            'representative_email' => ['nullable', 'email', 'max:255'],
+            'contact_name' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:60'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'neighborhood' => ['nullable', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:255'],
+            'department' => ['required', 'string', 'max:255'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'coords_source' => ['nullable', 'string', 'max:20'],
+        ]);
     }
 
     private function clientCountLabel(LengthAwarePaginator $clients): string

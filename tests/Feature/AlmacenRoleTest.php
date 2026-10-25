@@ -6,7 +6,6 @@ use App\Models\Client;
 use App\Models\User;
 use App\Models\Vest;
 use App\Providers\RouteServiceProvider;
-use Database\Seeders\ResponsibilityLevelSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,8 +16,6 @@ class AlmacenRoleTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->seed(ResponsibilityLevelSeeder::class);
     }
 
     public function test_almacen_user_is_redirected_to_vests_after_login(): void

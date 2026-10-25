@@ -89,7 +89,7 @@ class WeaponIncidentReportService
                 'code' => $type->code,
                 'label' => $type->name,
                 'value' => $incidents->where('incident_type_id', $type->id)->count(),
-                'color' => $typePalette[$type->code] ?? $type->color ?? '#475569',
+                'color' => $type->color ?: ($typePalette[$type->code] ?? '#475569'),
                 'selected' => $selectedTypeId === $type->id,
             ];
         })->values();

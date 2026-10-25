@@ -6,6 +6,8 @@ use App\Events\AssignmentChanged;
 use App\Events\WorkerChanged;
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\Position;
+use App\Models\Post;
 use App\Models\User;
 use App\Models\Weapon;
 use App\Models\WeaponWorkerAssignment;
@@ -52,7 +54,7 @@ class WorkerController extends Controller
         $user = $request->user();
         $search = trim((string) $request->input('q', ''));
         $clientId = $request->integer('client_id');
-        $role = $request->input('role');
+        $positionId = $request->integer('position_id');
         $showResponsibleFilter = ! ($user?->isResponsible() && ! $user?->isAdmin());
         $responsibleId = $showResponsibleFilter ? $request->integer('responsible_user_id') : 0;
         $archiveFilter = $request->input('archive', 'active');
@@ -66,7 +68,7 @@ class WorkerController extends Controller
         }
 
         $workersGlobalTotal = (clone $scopedQuery)->count();
-        $query = (clone $scopedQuery)->with(['client', 'responsible']);
+        $query = (clone $scopedQuery)->with(['client', 'responsible', 'position', 'post.installation']);
 
         if ($archiveFilter === 'archived') {
             $query->archived();
@@ -82,8 +84,8 @@ class WorkerController extends Controller
             $query->where('client_id', $clientId);
         }
 
-        if ($role) {
-            $query->where('role', $role);
+        if ($positionId) {
+            $query->where('position_id', $positionId);
         }
 
         if ($responsibleId) {
@@ -101,11 +103,11 @@ class WorkerController extends Controller
             $clients = Client::orderBy('name')->get();
             $responsibles = User::where('role', 'RESPONSABLE')->orderBy('name')->get();
         }
-        $roles = $this->roleOptions();
+        $positions = $this->positionOptions();
 
         if ($request->ajax()) {
             return response()->json([
-                'tbody' => view('workers.partials.index_rows', compact('workers', 'roles'))->render(),
+                'tbody' => view('workers.partials.index_rows', compact('workers'))->render(),
                 'pagination' => view('workers.partials.index_pagination', compact('workers'))->render(),
                 'total_global' => $workersGlobalTotal,
             ])
@@ -120,10 +122,10 @@ class WorkerController extends Controller
                 'workers',
                 'clients',
                 'responsibles',
-                'roles',
+                'positions',
                 'search',
                 'clientId',
-                'role',
+                'positionId',
                 'responsibleId',
                 'archiveFilter',
                 'showResponsibleFilter',
@@ -169,9 +171,10 @@ class WorkerController extends Controller
         $responsibles = $lockResponsible
             ? collect([$user])
             : User::where('role', 'RESPONSABLE')->orderBy('name')->get();
-        $roles = $this->roleOptions();
+        $positions = $this->positionOptions();
+        $posts = $this->postsForForm($request);
 
-        return view('workers.create', compact('clients', 'responsibles', 'roles', 'lockResponsible'));
+        return view('workers.create', compact('clients', 'responsibles', 'positions', 'posts', 'lockResponsible'));
     }
 
     public function store(Request $request)
@@ -185,7 +188,9 @@ class WorkerController extends Controller
             'client_id' => $this->clientIdValidationRules($request),
             'name' => ['required', 'string', 'max:255'],
             'document' => ['nullable', 'string', 'max:50'],
-            'role' => ['required', 'in:' . implode(',', array_keys($this->roleOptions()))],
+            'position_id' => ['nullable', Rule::exists('positions', 'id')],
+            'post_id' => $this->postValidationRules($request),
+            'document_type' => ['required', Rule::in(array_keys(Client::documentTypeLabels()))],
             'responsible_user_id' => ['nullable', 'exists:users,id'],
             'notes' => ['nullable', 'string'],
         ]);
@@ -201,7 +206,7 @@ class WorkerController extends Controller
         WorkerHistory::create([
             'worker_id' => $worker->id,
             'user_id' => $request->user()?->id,
-            'body' => $this->initialHistoryBody($request->user()?->name, $data['notes'] ?? null),
+            'body' => collect([$this->initialHistoryBody($request->user()?->name, $data['notes'] ?? null), $this->postChangeLine(null, $worker->post_id ? (int) $worker->post_id : null)])->filter()->implode("\n"),
         ]);
 
         AuditLog::create([
@@ -210,7 +215,7 @@ class WorkerController extends Controller
             'auditable_type' => Worker::class,
             'auditable_id' => $worker->id,
             'before' => null,
-            'after' => $worker->only(['client_id', 'name', 'document', 'role', 'responsible_user_id']),
+            'after' => $worker->only(['client_id', 'post_id', 'name', 'document', 'position_id', 'responsible_user_id']),
         ]);
 
         event(new WorkerChanged('created', $worker->id, ['client_id' => $worker->client_id]));
@@ -247,9 +252,10 @@ class WorkerController extends Controller
         $responsibles = $lockResponsible
             ? collect([$user])
             : User::where('role', 'RESPONSABLE')->orderBy('name')->get();
-        $roles = $this->roleOptions();
+        $positions = $this->positionOptions();
+        $posts = $this->postsForForm($request);
 
-        return view('workers.edit', compact('worker', 'clients', 'responsibles', 'roles', 'lockResponsible'));
+        return view('workers.edit', compact('worker', 'clients', 'responsibles', 'positions', 'posts', 'lockResponsible'));
     }
 
     public function update(Request $request, Worker $worker)
@@ -263,7 +269,9 @@ class WorkerController extends Controller
             'client_id' => $this->clientIdValidationRules($request),
             'name' => ['required', 'string', 'max:255'],
             'document' => ['nullable', 'string', 'max:50'],
-            'role' => ['required', 'in:' . implode(',', array_keys($this->roleOptions()))],
+            'position_id' => ['nullable', Rule::exists('positions', 'id')],
+            'post_id' => $this->postValidationRules($request),
+            'document_type' => ['required', Rule::in(array_keys(Client::documentTypeLabels()))],
             'responsible_user_id' => ['nullable', 'exists:users,id'],
             'notes' => ['nullable', 'string'],
             'change_note' => ['required', 'string', 'min:3', 'max:5000'],
@@ -276,13 +284,13 @@ class WorkerController extends Controller
         $changeNote = trim((string) ($data['change_note'] ?? ''));
         unset($data['change_note']);
 
-        $before = $worker->only(['client_id', 'name', 'document', 'role', 'responsible_user_id', 'notes']);
+        $before = $worker->only(['client_id', 'post_id', 'name', 'document', 'position_id', 'responsible_user_id', 'notes']);
         $worker->update($data);
 
         WorkerHistory::create([
             'worker_id' => $worker->id,
             'user_id' => $request->user()?->id,
-            'body' => $changeNote,
+            'body' => collect([$changeNote, $this->postChangeLine($before['post_id'] ? (int) $before['post_id'] : null, $worker->post_id ? (int) $worker->post_id : null)])->filter()->implode("\n"),
         ]);
 
         AuditLog::create([
@@ -291,7 +299,7 @@ class WorkerController extends Controller
             'auditable_type' => Worker::class,
             'auditable_id' => $worker->id,
             'before' => $before,
-            'after' => $worker->only(['client_id', 'name', 'document', 'role', 'responsible_user_id', 'notes']),
+            'after' => $worker->only(['client_id', 'post_id', 'name', 'document', 'position_id', 'responsible_user_id', 'notes']),
         ]);
 
         event(new WorkerChanged('updated', $worker->id, ['client_id' => $worker->client_id]));
@@ -303,7 +311,7 @@ class WorkerController extends Controller
     {
         $this->authorize('delete', $worker);
 
-        $before = $worker->only(['client_id', 'name', 'document', 'role', 'responsible_user_id']);
+        $before = $worker->only(['client_id', 'post_id', 'name', 'document', 'position_id', 'responsible_user_id']);
 
         $weaponIdsAffected = [];
 
@@ -399,8 +407,42 @@ class WorkerController extends Controller
         return $header;
     }
 
-    private function roleOptions(): array
+    private function positionOptions()
     {
-        return Worker::roleLabels();
+        return Position::query()->active()->ordered()->get();
+    }
+
+    private function postsForForm(Request $request)
+    {
+        $user = $request->user();
+
+        return Post::query()
+            ->active()
+            ->whereNull('custody_role')
+            ->with('installation:id,name')
+            ->when(! $user?->isAdmin(), fn ($query) => $query->whereIn('client_id', $user?->clients()->pluck('clients.id') ?? []))
+            ->orderBy('name')
+            ->get(['id', 'client_id', 'installation_id', 'name']);
+    }
+
+    private function postValidationRules(Request $request): array
+    {
+        return [
+            'nullable',
+            Rule::exists('posts', 'id')->where(fn ($query) => $query
+                ->where('client_id', (int) $request->input('client_id'))
+                ->whereNull('archived_at')),
+        ];
+    }
+
+    private function postChangeLine(?int $fromPostId, ?int $toPostId): ?string
+    {
+        if ($fromPostId === $toPostId) {
+            return null;
+        }
+
+        $name = fn (?int $id) => $id ? (Post::query()->find($id)?->name ?? '—') : __('sin puesto');
+
+        return __('Puesto: :from → :to', ['from' => $name($fromPostId), 'to' => $name($toPostId)]);
     }
 }

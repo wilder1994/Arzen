@@ -6,11 +6,11 @@ use App\Events\AssignmentChanged;
 use App\Events\PostChanged;
 use App\Models\Client;
 use App\Models\AuditLog;
+use App\Models\Installation;
 use App\Models\Post;
 use App\Models\PostHistory;
 use App\Models\Weapon;
 use App\Models\WeaponPostAssignment;
-use App\Support\MapCoordinates;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -63,7 +63,7 @@ class PostController extends Controller
         }
 
         $postsGlobalTotal = (clone $scopedQuery)->count();
-        $query = (clone $scopedQuery)->with('client');
+        $query = (clone $scopedQuery)->with(['client', 'installation']);
 
         if ($archiveFilter === 'archived') {
             $query->archived();
@@ -112,38 +112,72 @@ class PostController extends Controller
             ]);
     }
 
-    private function clientIdValidationRules(Request $request): array
+    /**
+     * @return list<int>|null null = todos los clientes
+     */
+    private function allowedClientIds(Request $request): ?array
     {
         $user = $request->user();
-        $rules = ['required', 'exists:clients,id'];
-        if ($user && $user->isResponsibleLevelOne() && !$user->isAdmin()) {
-            $ids = $user->clients()->pluck('clients.id')->all();
-            $rules[] = Rule::in($ids);
+
+        if ($user?->isAdmin()) {
+            return null;
         }
 
-        return $rules;
+        if ($user?->isResponsibleLevelOne()) {
+            return $user->clients()->pluck('clients.id')->map(fn ($id) => (int) $id)->all();
+        }
+
+        return [];
     }
 
-    private function clientsForForm(Request $request)
+    private function installationValidationRules(Request $request): array
     {
-        $user = $request->user();
-        if ($user?->isAdmin()) {
-            return Client::orderBy('name')->get();
-        }
-        if ($user?->isResponsibleLevelOne()) {
-            return $user->clients()->orderBy('name')->get();
-        }
+        $allowed = $this->allowedClientIds($request);
 
-        return collect();
+        return [
+            'required',
+            Rule::exists('installations', 'id')->where(function ($query) use ($allowed) {
+                $query->whereNull('archived_at');
+
+                if ($allowed !== null) {
+                    $query->whereIn('client_id', $allowed);
+                }
+            }),
+        ];
+    }
+
+    private function installationsForForm(Request $request)
+    {
+        $allowed = $this->allowedClientIds($request);
+
+        return Installation::query()
+            ->active()
+            ->with('client:id,name,is_own_company')
+            ->when($allowed !== null, fn ($query) => $query->whereIn('client_id', $allowed))
+            ->orderByDesc('is_client_site')
+            ->orderBy('name')
+            ->get()
+            ->sortBy(fn (Installation $installation) => [$installation->client?->is_own_company ? 0 : 1, $installation->client?->name])
+            ->groupBy(fn (Installation $installation) => $installation->client?->name ?? '');
+    }
+
+    private function postNameRule(Request $request, ?Post $ignore = null)
+    {
+        $rule = Rule::unique('posts', 'name')->where(
+            fn ($q) => $q->where('installation_id', (int) $request->input('installation_id'))->whereNull('archived_at')
+        );
+
+        return $ignore ? $rule->ignore($ignore->id) : $rule;
     }
 
     public function create(Request $request)
     {
         $this->authorize('create', Post::class);
 
-        $clients = $this->clientsForForm($request);
+        $installationsByClient = $this->installationsForForm($request);
+        $selectedInstallationId = $request->integer('installation_id') ?: null;
 
-        return view('posts.create', compact('clients'));
+        return view('posts.create', compact('installationsByClient', 'selectedInstallationId'));
     }
 
     public function store(Request $request)
@@ -151,25 +185,11 @@ class PostController extends Controller
         $this->authorize('create', Post::class);
 
         $data = $request->validate([
-            'client_id' => $this->clientIdValidationRules($request),
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('posts', 'name')->where(
-                    fn ($q) => $q->where('client_id', (int) $request->input('client_id'))->whereNull('archived_at')
-                ),
-            ],
-            'address' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
-            'department' => ['required', 'string', 'max:255'],
-            'latitude' => ['nullable', 'numeric'],
-            'longitude' => ['nullable', 'numeric'],
-            'coords_source' => ['nullable', 'string', 'max:20'],
+            'installation_id' => $this->installationValidationRules($request),
+            'name' => ['required', 'string', 'max:255', $this->postNameRule($request)],
             'notes' => ['nullable', 'string'],
         ]);
 
-        $data = MapCoordinates::apply($data);
         $data['archived_at'] = null;
 
         $post = Post::create($data);
@@ -217,9 +237,10 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
-        $clients = $this->clientsForForm($request);
+        $installationsByClient = $this->installationsForForm($request);
+        $selectedInstallationId = $post->installation_id;
 
-        return view('posts.edit', compact('post', 'clients'));
+        return view('posts.edit', compact('post', 'installationsByClient', 'selectedInstallationId'));
     }
 
     public function update(Request $request, Post $post)
@@ -227,23 +248,8 @@ class PostController extends Controller
         $this->authorize('update', $post);
 
         $data = $request->validate([
-            'client_id' => $this->clientIdValidationRules($request),
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('posts', 'name')
-                    ->where(
-                        fn ($q) => $q->where('client_id', (int) $request->input('client_id'))->whereNull('archived_at')
-                    )
-                    ->ignore($post->id),
-            ],
-            'address' => ['nullable', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
-            'department' => ['required', 'string', 'max:255'],
-            'latitude' => ['nullable', 'numeric'],
-            'longitude' => ['nullable', 'numeric'],
-            'coords_source' => ['nullable', 'string', 'max:20'],
+            'installation_id' => $this->installationValidationRules($request),
+            'name' => ['required', 'string', 'max:255', $this->postNameRule($request, $post)],
             'notes' => ['nullable', 'string'],
             'change_note' => ['required', 'string', 'min:3', 'max:5000'],
         ]);
@@ -251,9 +257,7 @@ class PostController extends Controller
         $changeNote = trim((string) ($data['change_note'] ?? ''));
         unset($data['change_note']);
 
-        $data = MapCoordinates::apply($data);
-
-        $before = $post->only(['client_id', 'name', 'address', 'city', 'department', 'notes']);
+        $before = $post->only(['client_id', 'installation_id', 'name', 'address', 'city', 'department', 'notes']);
 
         $post->update($data);
 
@@ -339,7 +343,7 @@ class PostController extends Controller
         $this->authorize('restore', $post);
 
         $conflict = Post::query()
-            ->where('client_id', $post->client_id)
+            ->where('installation_id', $post->installation_id)
             ->where('name', $post->name)
             ->active()
             ->where('id', '!=', $post->id)
@@ -349,7 +353,7 @@ class PostController extends Controller
             return redirect()
                 ->route('posts.index', ['archive' => 'archived'])
                 ->withErrors([
-                    'restore' => 'Ya existe un puesto activo con el mismo nombre para este cliente. Edite el nombre (puesto archivado o activo) antes de reactivar.',
+                    'restore' => 'Ya existe un puesto activo con el mismo nombre en esta instalación. Edite el nombre (puesto archivado o activo) antes de reactivar.',
                 ]);
         }
 

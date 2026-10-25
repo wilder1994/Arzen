@@ -45,7 +45,7 @@ class ClientPolicy
 
     public function delete(User $user, Client $client): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() && ! $client->is_own_company;
     }
 }
 

@@ -339,7 +339,7 @@ class RevalidationDocumentBuilder
 
     private function coverDateLine(CarbonInterface $generatedAt): string
     {
-        $city = trim((string) $this->company()->city);
+        $city = trim((string) $this->company()->letter_city);
         $date = $generatedAt->locale('es')->translatedFormat('j \d\e F \d\e Y');
 
         return $city !== '' ? $city . ', ' . $date : $date;

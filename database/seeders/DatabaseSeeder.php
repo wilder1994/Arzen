@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\CompanySetting;
+use App\Services\OwnCompanyClientService;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,12 +14,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            ResponsibilityLevelSeeder::class,
             IncidentTypeSeeder::class,
             IncidentModalitySeeder::class,
             AdminUserSeeder::class,
         ]);
 
-        CompanySetting::firstOrCreateSingleton();
+        app(OwnCompanyClientService::class)->sync(CompanySetting::firstOrCreateSingleton());
     }
 }

@@ -3,7 +3,7 @@
 **Empresa:** WCodex  
 **Sistema:** Arzen  
 **Perfil:** rol **ADMIN**  
-**Versión del manual:** 3.0  
+**Versión del manual:** 3.1  
 **Fecha:** [Completar]
 
 ---
@@ -249,7 +249,7 @@ Dashboard **Inicio** con menú completo de ADMIN. Complete después **Mi empresa
 
 #### Notas
 
-- Tras el despliegue, cambie la contraseña desde **Perfil** (§17) o cree admins nuevos con contraseña temporal.
+- Tras el despliegue, cambie la contraseña desde **Perfil** (§15.3) o cree admins nuevos con contraseña temporal.
 
 ---
 
@@ -284,14 +284,14 @@ Sesión activa con contraseña propia; ya no se pide cambio obligatorio.
 
 | | |
 |---|---|
-| **Menú** | **Usuarios** |
+| **Menú** | **Ajustes** → **Usuarios** |
 | **Ruta** | `/users` |
 | **Objetivo** | Ver y gestionar cuentas |
 
 #### Qué hacer
 
-1. Con sesión iniciada, clic en **Usuarios** en la barra superior.
-2. Espere a que cargue la tabla con columnas: nombre, correo, rol, nivel (si aplica), estado.
+1. Con sesión iniciada, abra el módulo **Ajustes** y la pestaña **Usuarios**.
+2. Espere a que cargue la tabla con columnas: nombre, correo, rol, cargo y estado.
 3. Use la barra de búsqueda o filtros si están visibles para localizar un usuario.
 
 #### Resultado esperado
@@ -314,25 +314,26 @@ Listado de usuarios con acciones por fila.
 
 | | |
 |---|---|
-| **Menú** | **Usuarios** → **Crear usuario** |
+| **Menú** | **Ajustes** → **Usuarios** → **Crear usuario** |
 | **Ruta** | `/users/create` |
-| **Objetivo** | Alta de cuenta con contraseña temporal |
+| **Objetivo** | Alta de cuenta con contraseña temporal, cartera y matriz |
 
 #### Qué hacer
 
-1. En `/users`, clic **Crear usuario** (o enlace equivalente).
+1. En **Ajustes → Usuarios**, clic **Crear usuario**.
 2. En **Nombre**, escriba el nombre completo.
 3. En **Correo electrónico**, escriba un correo válido (será el login).
-4. En **Rol**, elija **ADMIN**, **RESPONSABLE** o **AUDITOR**.
-5. Si el rol es **RESPONSABLE**, seleccione **Nivel** (1 = gestión, 2 = solo lectura).
-6. Complete **Cargo**, **Centro de costo** y marque **Activo** según política interna.
-7. Pulse **Guardar**.
-8. Lea el **mensaje o banner** con la **contraseña temporal** — cópiela de inmediato; **no se vuelve a mostrar**.
-9. Entregue correo + temporal al usuario por canal seguro.
+4. En **Rol**, elija **ADMIN**, **RESPONSABLE**, **AUDITOR** o **ALMACEN**. Al cambiar el rol se cargan los permisos por defecto en la matriz.
+5. En **Cargo**, elija un cargo de **Ajustes → Cargos** (opcional).
+6. Si el rol no es **ADMIN**, marque los **clientes** de su cartera. El súper administrador ve todos los clientes.
+7. En la **matriz de módulos**, elija por cada módulo **Nada**, **Ver** o **Gestionar**.
+8. Marque **Activo** según política interna y pulse **Guardar**.
+9. Lea el **mensaje o banner** con la **contraseña temporal** — cópiela de inmediato; **no se vuelve a mostrar**.
+10. Entregue correo + temporal al usuario por canal seguro.
 
 #### Resultado esperado
 
-Usuario creado; el nuevo usuario deberá completar **§1.4** en su primer ingreso.
+Usuario creado con cartera y permisos; deberá completar **§1.4** en su primer ingreso.
 
 #### Figura 3.2a — Formulario crear
 
@@ -340,7 +341,7 @@ Usuario creado; el nuevo usuario deberá completar **§1.4** en su primer ingres
 |------|-------------|
 | **①** | Correo |
 | **②** | Rol |
-| **③** | Nivel |
+| **③** | Matriz Nada / Ver / Gestionar |
 | **④** | Guardar |
 
 **[Insertar imagen: fig-03-02-users-create.png]**
@@ -365,15 +366,15 @@ Usuario creado; el nuevo usuario deberá completar **§1.4** en su primer ingres
 
 | | |
 |---|---|
-| **Menú** | **Usuarios** |
+| **Menú** | **Ajustes** → **Usuarios** |
 | **Ruta** | `/users/{id}/edit` |
-| **Objetivo** | Modificar datos o regenerar temporal |
+| **Objetivo** | Modificar datos, cartera o matriz |
 
 #### Qué hacer
 
 1. En el listado, localice la fila del usuario.
 2. Clic **Editar**.
-3. Modifique los campos permitidos (nombre, rol, nivel, estado, etc.).
+3. Modifique nombre, rol, cargo, clientes de la cartera o la matriz **Nada / Ver / Gestionar**.
 4. Si necesita nueva contraseña temporal, marque la opción **Generar contraseña temporal** (si aparece) o use **Enviar** desde el listado (§3.4).
 5. Pulse **Guardar**.
 
@@ -391,7 +392,7 @@ Datos actualizados; mensaje de confirmación del sistema.
 
 | | |
 |---|---|
-| **Menú** | **Usuarios** |
+| **Menú** | **Ajustes** → **Usuarios** |
 | **Objetivo** | Reenviar correo y nueva temporal |
 
 #### Qué hacer
@@ -428,7 +429,7 @@ Correo enviado (si SMTP está configurado); usuario verá §1.4 al ingresar.
 
 | | |
 |---|---|
-| **Menú** | **Usuarios** |
+| **Menú** | **Ajustes** → **Usuarios** |
 | **Objetivo** | Bloquear acceso sin borrar historial |
 
 #### Qué hacer
@@ -448,7 +449,41 @@ Estado actualizado; usuario inactivo no puede iniciar sesión.
 
 ## 4. Cartera operativa (Asignaciones)
 
-### 4.1 Listar responsables y su cartera
+### 4.1 Asignar clientes en el usuario
+
+| | |
+|---|---|
+| **Menú** | **Ajustes** → **Usuarios** |
+| **Ruta** | `/users/{id}/edit` |
+| **Objetivo** | Definir qué clientes opera cada usuario |
+
+#### Qué hacer
+
+1. Abra **Ajustes → Usuarios** y **Editar** del usuario.
+2. En el bloque de **clientes**, marque los que podrá ver y operar.
+3. Desmarque los que debe quitar de su cartera.
+4. Pulse **Guardar**.
+
+#### Resultado esperado
+
+Cartera guardada; el usuario solo ve armas y operación de esos clientes. El **ADMIN** ve todos.
+
+#### Figura 4.1 — Clientes en el usuario
+
+| Ref. | Qué señalar |
+|------|-------------|
+| **①** | Lista de clientes |
+| **②** | Guardar |
+
+**[Insertar imagen: fig-04-01-user-clients.png]**
+
+#### Notas
+
+- Asignar un arma a un **cliente** solo lo hace el súper administrador. La asignación interna (puesto y trabajador) la hacen quienes tienen ese cliente y esas armas en su cartera.
+
+---
+
+### 4.2 Listar responsables y su cartera
 
 | | |
 |---|---|
@@ -458,50 +493,21 @@ Estado actualizado; usuario inactivo no puede iniciar sesión.
 
 #### Qué hacer
 
-1. Clic **Asignaciones** en el menú.
-2. Revise la tabla de **responsables** y cantidad de clientes asignados.
+1. Abra **Asignaciones**.
+2. Revise la tabla de **responsables** y la cantidad de clientes asignados.
 
 #### Resultado esperado
 
-Listado listo para editar o transferir cartera.
+Listado listo para consultar o transferir cartera.
 
-#### Figura 4.1 — Listado carteras
+#### Figura 4.2 — Listado carteras
 
 | Ref. | Qué señalar |
 |------|-------------|
 | **①** | Responsable |
 | **②** | Acción editar |
 
-**[Insertar imagen: fig-04-01-portfolios.png]**
-
----
-
-### 4.2 Asignar clientes a un responsable
-
-| | |
-|---|---|
-| **Ruta** | `/portfolios/{user}/edit` |
-| **Objetivo** | Definir cartera del responsable |
-
-#### Qué hacer
-
-1. En **Asignaciones**, clic **Editar** (o gestionar) en la fila del responsable.
-2. Marque los **checkboxes** de los clientes que podrá ver y operar.
-3. Desmarque los que debe quitar de su cartera.
-4. Pulse **Guardar**.
-
-#### Resultado esperado
-
-Cartera guardada; el responsable solo verá armas/clientes de esos clientes.
-
-#### Figura 4.2 — Edición cartera
-
-| Ref. | Qué señalar |
-|------|-------------|
-| **①** | Lista clientes |
-| **②** | Guardar |
-
-**[Insertar imagen: fig-04-02-portfolio-edit.png]**
+**[Insertar imagen: fig-04-02-portfolios.png]**
 
 ---
 
@@ -526,6 +532,10 @@ Clientes reasignados; revise armas y asignaciones operativas afectadas.
 #### Figura 4.3 — Transferir cartera
 
 **[Insertar imagen: fig-04-03-portfolio-transfer.png]**
+
+#### Notas
+
+- La edición diaria de la cartera se hace en **Ajustes → Usuarios**. Esta pantalla sirve para mover varios clientes de un responsable a otro.
 
 ---
 
@@ -565,18 +575,18 @@ Tabla de clientes visible.
 | | |
 |---|---|
 | **Ruta** | `/clients/create` |
-| **Objetivo** | Alta de cliente con ubicación |
+| **Objetivo** | Alta de cliente con ubicación e instalación principal |
 
 #### Qué hacer
 
 1. Clic **Nuevo cliente**.
-2. Complete datos de identificación, contacto y dirección.
-3. Si la pantalla incluye **mapa**, puede buscar dirección o marcar coordenadas (opcional).
+2. Complete identificación, contacto y tipo de persona (natural o jurídica), alineados al formato de Zentra.
+3. En la ubicación, use el icono de **mapa** para fijar la sede (dirección, departamento, municipio y coordenadas).
 4. Pulse **Guardar**.
 
 #### Resultado esperado
 
-Cliente creado y visible en listado.
+Cliente creado. El sistema genera su **instalación principal** con la misma ubicación.
 
 #### Figura 5.2a — Formulario cliente
 
@@ -604,11 +614,46 @@ Cliente creado y visible en listado.
 
 #### Resultado esperado
 
-Cliente actualizado o archivado según acción.
+Cliente actualizado o archivado según acción. La instalación principal se sincroniza con la ubicación del cliente.
 
 #### Figura 5.3 — Editar cliente
 
 **[Insertar imagen: fig-05-04-client-edit.png]**
+
+---
+
+### 5.4 Instalaciones del cliente
+
+| | |
+|---|---|
+| **Menú** | **Clientes** → ficha o edición |
+| **Ruta** | `/clients/{id}/installations/create` |
+| **Objetivo** | Agregar sedes distintas de la principal |
+
+#### Qué hacer
+
+1. Abra el cliente y localice el bloque **Instalaciones**.
+2. La instalación marcada como sede del cliente ya existe: es la principal.
+3. Para otra sede, clic **Nueva instalación**.
+4. Escriba el nombre. Si la sede es la misma del cliente, marque **Misma ubicación que el cliente**; si no, abra el mapa y fije otra dirección.
+5. Pulse **Guardar**.
+
+#### Resultado esperado
+
+La instalación queda bajo el cliente y podrá recibir puestos.
+
+#### Figura 5.4 — Instalaciones
+
+| Ref. | Qué señalar |
+|------|-------------|
+| **①** | Instalación principal |
+| **②** | Nueva instalación |
+
+**[Insertar imagen: fig-05-05-installations.png]**
+
+#### Notas
+
+- **Mi empresa** también es un cliente del sistema: su sede principal aloja el armerillo.
 
 ---
 
@@ -620,19 +665,19 @@ Cliente actualizado o archivado según acción.
 |---|---|
 | **Menú** | **Puestos** |
 | **Ruta** | `/posts` |
-| **Objetivo** | CRUD de puestos operativos |
+| **Objetivo** | CRUD de puestos dentro de una instalación |
 
 #### Qué hacer
 
 1. Clic **Puestos**.
-2. Para crear: **Nuevo puesto** → complete datos → **Guardar**.
-3. Para editar: **Editar** en la fila → modifique → **Guardar** (nota si aplica).
-4. Para historial: use enlace **Historial** de la fila si está disponible.
-5. Para reactivar archivo: acción **Restaurar** según listado.
+2. Para crear: **Nuevo puesto** → elija **Cliente e instalación** → nombre y nota → **Guardar**.
+3. El puesto toma la dirección y las coordenadas de esa instalación; no se georreferencia aparte.
+4. Para editar: **Editar** en la fila → modifique → **Guardar** (la nota queda en el historial).
+5. Para historial o archivo: use **Historial** o **Restaurar** de la fila.
 
 #### Resultado esperado
 
-Puestos actualizados en el sistema.
+Puesto creado dentro de la instalación elegida.
 
 #### Figura 6.1 — Puestos
 
@@ -646,17 +691,18 @@ Puestos actualizados en el sistema.
 |---|---|
 | **Menú** | **Trabajadores** |
 | **Ruta** | `/workers` |
-| **Objetivo** | CRUD de trabajadores |
+| **Objetivo** | CRUD de trabajadores con cargo y un puesto activo |
 
 #### Qué hacer
 
-1. Clic **Trabajadores**.
-2. Mismo flujo que puestos: **Nuevo**, **Editar**, **Historial**, **Restaurar**.
-3. Revise el **total** en barra de filtros si aparece.
+1. Clic **Trabajadores** → **Nuevo trabajador**.
+2. Elija el **cliente**, el documento y el **cargo** (catálogo de **Ajustes → Cargos**).
+3. Opcional: asigne **un puesto** de ese cliente. Un cambio de puesto queda en el historial.
+4. Pulse **Guardar**. Use **Editar**, **Historial** o **Restaurar** desde el listado.
 
 #### Resultado esperado
 
-Trabajadores registrados para asignación interna de armas.
+Trabajador listo para la asignación interna de armas.
 
 #### Figura 6.2 — Trabajadores
 
@@ -1503,34 +1549,35 @@ Perfil actualizado.
 |---|---|
 | **Menú** | Sidebar → **Mi empresa** → **Datos de la empresa** |
 | **Ruta** | `/empresa` |
-| **Objetivo** | Registrar la información que usan las cartas, los formatos y el logo del sistema |
+| **Objetivo** | Registrar datos legales, sede, logo y membrete en una sola tarjeta |
 
 #### Qué hacer
 
-1. Complete **Razón social**, **NIT**, **Ciudad** y los datos del **Representante legal** (nombre, cédula y ciudad de expedición).
-2. Si los trámites los hace otra persona, complete **Persona autorizada para trámites**; si lo deja vacío, la carta autoriza al representante legal.
-3. En **Logo**, cargue la imagen de la empresa (PNG, JPG o WEBP, máximo 2 MB).
-4. En **Membrete (Word)**, cargue el `.docx` con el membrete como imagen en el encabezado y en el pie.
-5. Defina el **Prefijo** de los códigos internos de armas (por ejemplo `ACME-`).
-6. Clic **Guardar cambios**.
+1. Abra **Mi empresa**. El icono de ayuda del encabezado abre la guía del módulo.
+2. Complete **Razón social**, **NIT** y los datos del **Representante legal**.
+3. En la ubicación, abra el **mapa** y fije la sede (dirección, departamento y municipio). Esa sede es la instalación principal del cliente «Mi empresa» y aloja el armerillo.
+4. En **Ciudad para la carta**, escriba el texto que debe salir en las cartas (puede diferir del municipio del mapa).
+5. Si los trámites los hace otra persona, complete **Persona autorizada para trámites**.
+6. En **Logo** y **Membrete**, use el recuadro: clic para elegir, arrastrar el archivo o pegar con Ctrl+V. No hay botón «Seleccionar archivo».
+7. Defina el **Prefijo** de los códigos internos de armas y pulse **Guardar cambios**.
 
 #### Resultado esperado
 
-El logo aparece en el sidebar, el inicio de sesión y la revista mensual; las cartas de revalidación salen con el membrete y los datos de la empresa; las armas nuevas reciben el prefijo.
+Logo en sidebar, login y revista; cartas con membrete y ciudad propia; la empresa queda como cliente con instalación principal.
 
 #### Figura 16.1 — Datos de la empresa
 
 | Ref. | Qué señalar |
 |------|-------------|
-| **①** | Datos de la empresa y representante legal |
-| **②** | Logo y vista previa del membrete |
-| **③** | Prefijo de códigos internos |
+| **①** | Datos legales y mapa de la sede |
+| **②** | Ciudad para la carta |
+| **③** | Zonas de logo y membrete |
 
 **[Insertar imagen: fig-16-01-company.png]**
 
 #### Notas
 
-- Cambiar el prefijo no modifica los códigos de armas ya registradas.
+- Cambiar el prefijo no modifica los códigos de armas ya registradas. Los cargos y los tipos de novedad están en **Ajustes** (§17), no en esta pantalla.
 
 #### Errores frecuentes
 
@@ -1541,31 +1588,58 @@ El logo aparece en el sidebar, el inicio de sesión y la revista mensual; las ca
 
 ---
 
-### 16.2 Catálogos
+## 17. Ajustes
+
+### 17.1 Cargos
 
 | | |
 |---|---|
-| **Menú** | Sidebar → **Mi empresa** → **Catálogos** |
-| **Ruta** | `/empresa/catalogos` |
-| **Objetivo** | Mantener las listas de cargos, novedades y niveles |
+| **Menú** | **Ajustes** → **Cargos** |
+| **Ruta** | `/ajustes?tab=cargos` |
+| **Objetivo** | Un solo catálogo de cargos para usuarios y trabajadores |
 
 #### Qué hacer
 
-1. Pestaña **Cargos**: escriba el nombre (y descripción opcional) → **Agregar**. Edite y **Guardar**, o **Eliminar** si no está asignado a usuarios.
-2. Pestaña **Tipos de novedad**: ajuste nombre, color, orden, horas de atención y si exige adjunto o nota de cierre → **Guardar tipo**. En los tipos con modalidades, agregue o edite modalidades.
-3. Pestaña **Niveles de responsabilidad**: cambie el nombre o la descripción de los niveles 1 y 2 → **Guardar**.
+1. Abra **Ajustes** y la pestaña **Cargos**.
+2. Escriba el nombre (escolta, guarda, mensajero, recaudador, etc.) y una descripción opcional → **Agregar**.
+3. Edite y **Guardar**, o **Eliminar** si el cargo no está en uso.
 
 #### Resultado esperado
 
-Los formularios de usuarios y de novedades muestran las listas actualizadas.
+El cargo aparece en usuarios y en trabajadores.
 
-#### Figura 16.2 — Catálogos
+#### Figura 17.1 — Cargos
 
-**[Insertar imagen: fig-16-02-catalogs.png]**
+**[Insertar imagen: fig-17-01-positions.png]**
+
+---
+
+### 17.2 Tipos de novedad
+
+| | |
+|---|---|
+| **Menú** | **Ajustes** → **Tipos de novedad** |
+| **Ruta** | `/ajustes?tab=novedades` |
+| **Objetivo** | Mantener los tipos y modalidades que usa el reporte de novedades |
+
+#### Qué hacer
+
+1. Abra la pestaña **Tipos de novedad**. Hay una sola tabla. Mantenimiento y armerillo no aparecen.
+2. Clic **Agregar**. Elija **Tipo** (nombre y color) o **Modalidad** (un tipo ya creado y el nombre) → **Guardar**.
+3. En la fila, edite el nombre o el color, marque **Activo** y pulse **Guardar**. Las flechas suben o bajan el orden.
+4. **Eliminar** solo está disponible si ninguna arma usa ese tipo o esa modalidad. Si ya está en uso, desactívelo: los reportes nuevos no lo ofrecen y el arma que ya lo tiene lo conserva.
+
+#### Resultado esperado
+
+El reporte de novedades ofrece los mismos tipos y modalidades activos.
+
+#### Figura 17.2 — Tipos de novedad
+
+**[Insertar imagen: fig-17-02-incident-types.png]**
 
 #### Notas
 
-- Los tipos de novedad y los niveles son del sistema: no se crean ni se eliminan, porque el tablero, los reportes y los permisos dependen de ellos.
+- El adjunto del reporte siempre es opcional. La nota de cierre siempre es obligatoria. Esas reglas no se configuran en esta pantalla.
 
 ---
 
@@ -1574,6 +1648,7 @@ Los formularios de usuarios y de novedades muestran las listas actualizadas.
 | Versión | Fecha | Elaboró | Aprobó | Cambios |
 |---------|--------|---------|--------|----------|
 | 3.0 | [fecha] | [nombre] | [nombre] | Procedimientos paso a paso en todas las funciones |
+| 3.1 | 2026-10-24 | [nombre] | [nombre] | Ajustes, matriz de módulos, instalaciones, puestos y Mi empresa con mapa |
 
 ---
 
