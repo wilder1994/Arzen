@@ -28,13 +28,18 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
+        'document_type',
+        'document',
+        'phone',
+        'photo_path',
         'password',
         'must_change_password',
         'role',
         'position_id',
         'is_active',
-        'cost_center',
     ];
 
     /**
@@ -63,6 +68,19 @@ class User extends Authenticatable
         'must_change_password' => 'boolean',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    public static function documentTypeLabels(): array
+    {
+        return collect(Client::documentTypeLabels())->except('NIT')->all();
+    }
+
+    public function portraitUrl(): ?string
+    {
+        return $this->photo_path ? asset('storage/'.$this->photo_path) : null;
+    }
 
     public function position()
     {

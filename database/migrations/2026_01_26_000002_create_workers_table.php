@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('workers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('client_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('post_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('document_type', 20)->default('CC');

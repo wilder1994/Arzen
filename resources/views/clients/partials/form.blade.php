@@ -1,6 +1,10 @@
 @php
     $client = $client ?? null;
     $field = fn (string $name, $default = null) => old($name, $client?->{$name} ?? $default);
+    $structureTypes = \App\Models\StructureType::query()->active()->ordered()->get();
+    if ($client?->structureType && $structureTypes->doesntContain('id', $client->structure_type_id)) {
+        $structureTypes->push($client->structureType);
+    }
 @endphp
 
 <h3 class="sj-form-section__title">{{ __('Datos básicos') }}</h3>
@@ -60,6 +64,19 @@
         <label for="client-legal_representative" class="sj-ui-field__label">{{ __('Representante legal') }}</label>
         <input id="client-legal_representative" name="legal_representative" type="text" value="{{ $field('legal_representative') }}" class="sj-ui-field__control">
         <x-input-error :messages="$errors->get('legal_representative')" />
+    </div>
+    <div class="sj-ui-field">
+        <div class="sj-ui-field__label-row">
+            <label for="client-structure_type" class="sj-ui-field__label">{{ __('Tipo de estructura') }}</label>
+            <x-help-tip :text="__('Opcional. Se administra en Ajustes → Tipos de estructura.')" />
+        </div>
+        <select id="client-structure_type" name="structure_type_id" class="sj-ui-field__control">
+            <option value="">{{ __('Sin tipo') }}</option>
+            @foreach ($structureTypes as $type)
+                <option value="{{ $type->id }}" @selected((string) $field('structure_type_id') === (string) $type->id)>{{ $type->name }}</option>
+            @endforeach
+        </select>
+        <x-input-error :messages="$errors->get('structure_type_id')" />
     </div>
     <div class="sj-ui-field">
         <label for="client-representative_email" class="sj-ui-field__label">{{ __('Correo del representante') }}</label>

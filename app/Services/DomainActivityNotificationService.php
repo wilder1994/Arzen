@@ -168,6 +168,20 @@ class DomainActivityNotificationService
                     'module' => 'clients',
                     'actor_name' => $actor,
                 ],
+                'archived' => [
+                    'title' => __('Cliente archivado'),
+                    'body' => __(':actor archivó el cliente :name.', ['actor' => $actor, 'name' => $name]),
+                    'action_url' => route('clients.index'),
+                    'module' => 'clients',
+                    'actor_name' => $actor,
+                ],
+                'restored' => [
+                    'title' => __('Cliente reactivado'),
+                    'body' => __(':actor reactivó el cliente :name.', ['actor' => $actor, 'name' => $name]),
+                    'action_url' => route('clients.index'),
+                    'module' => 'clients',
+                    'actor_name' => $actor,
+                ],
                 default => null,
             };
         }

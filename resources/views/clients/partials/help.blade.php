@@ -1,6 +1,6 @@
 <h3>{{ __('¿Para qué sirve?') }}</h3>
 <p>{{ __('Aquí se registran los clientes a los que su empresa presta servicio. Cada cliente tiene instalaciones; cada instalación tiene puestos; y los trabajadores del cliente se asignan a esos puestos.') }}</p>
-<p>{{ __('Su propia empresa aparece como un cliente más, marcado "Mi empresa". Sus datos se editan en Mi empresa.') }}</p>
+<p>{{ __('Su propia empresa aparece como un cliente más. Sus datos se editan en Mi empresa. Un cliente se archiva cuando no tiene otras instalaciones activas ni armas asignadas. La fila queda en el listado y se puede reactivar. La empresa propia no se archiva.') }}</p>
 
 <h3>{{ __('Datos básicos') }}</h3>
 <dl>
@@ -36,5 +36,8 @@
     <li>{{ __('Desde cada instalación puede agregar sus puestos. Los puestos toman la ubicación de su instalación.') }}</li>
 </ul>
 
+<h3>{{ __('Tipo de estructura') }}</h3>
+<p>{{ __('Opcional. La lista se administra en Ajustes → Tipos de estructura. En la carga, si el archivo trae un tipo que no existe, se crea.') }}</p>
+
 <h3>{{ __('Carga masiva') }}</h3>
-<p>{{ __('En Cargas masivas puede subir el Excel de clientes descargado desde Zentra, sin modificarlo.') }}</p>
+<p>{{ __('El formato se descarga en Formatos. Accesos y Supervisión no van en la plantilla; si un archivo los trae, se ignoran. Con dirección, ciudad y departamento el sistema busca el pin. Si no lo encuentra, la ubicación queda pendiente.') }}</p>

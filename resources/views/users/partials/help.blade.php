@@ -1,5 +1,5 @@
 <h3>{{ __('¿Para qué sirve?') }}</h3>
-<p>{{ __('Aquí se crean las personas que ingresan al sistema y se define qué pueden ver y hacer. Funciona igual que en Zentra: rol, cargo, clientes y una matriz de permisos por módulo.') }}</p>
+<p>{{ __('Aquí se crean las personas que ingresan al sistema y se define qué pueden ver y hacer. La foto, el documento y el correo corporativo identifican a quien maneja armas. La cartera se despliega para marcar los clientes, y el buscador filtra esa lista.') }}</p>
 
 <h3>{{ __('Rol') }}</h3>
 <dl>
@@ -36,4 +36,4 @@
 </ul>
 
 <h3>{{ __('Contraseña') }}</h3>
-<p>{{ __('Al crear el usuario el sistema genera una contraseña temporal y la muestra una sola vez. En el primer ingreso el usuario debe cambiarla. También puede enviar las credenciales por correo desde el listado.') }}</p>
+<p>{{ __('Al crear el usuario el sistema genera una contraseña temporal y la muestra una sola vez. En el primer ingreso el usuario debe cambiarla. Desde Editar puede enviarle las credenciales por correo: eso crea una contraseña temporal nueva y deja inválida la anterior.') }}</p>

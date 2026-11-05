@@ -558,12 +558,6 @@
                 <p class="sj-section-header__subtitle">{{ __('Carga y procesa información en lote') }}</p>
             </div>
             <div class="sj-section-header__actions">
-                <a href="{{ route('weapon-imports.templates.weapon') }}" class="sj-ui-btn sj-ui-btn--ghost">
-                    {{ __('Descargar formato armas') }}
-                </a>
-                <a href="{{ route('weapon-imports.templates.client') }}" class="sj-ui-btn sj-ui-btn--ghost">
-                    {{ __('Descargar formato clientes') }}
-                </a>
                 <button type="button" data-import-trigger data-import-type="weapon" x-data="" x-on:click.prevent="$dispatch('open-modal', 'mass-import-upload')" class="sj-ui-btn sj-ui-btn--primary">
                     {{ __('Subir armas') }}
                 </button>
@@ -573,9 +567,6 @@
                 <button type="button" data-import-trigger data-import-type="client" x-data="" x-on:click.prevent="$dispatch('open-modal', 'mass-import-upload')" class="sj-ui-btn sj-ui-btn--ghost">
                     {{ __('Subir clientes') }}
                 </button>
-                <a href="{{ route('weapon-imports.templates.worker') }}" class="sj-ui-btn sj-ui-btn--ghost">
-                    {{ __('Descargar formato trabajadores') }}
-                </a>
                 <button type="button" data-import-trigger data-import-type="worker" x-data="" x-on:click.prevent="$dispatch('open-modal', 'mass-import-upload')" class="sj-ui-btn sj-ui-btn--ghost">
                     {{ __('Subir trabajadores') }}
                 </button>

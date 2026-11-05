@@ -31,12 +31,12 @@ final class ModuleAccess
             'alerts' => ['label' => __('Alertas'), 'group' => __('Armamento'), 'hint' => __('Vencimientos y cartas de revalidación.')],
             'vests' => ['label' => __('Chalecos'), 'group' => __('Dotación'), 'hint' => __('Inventario y asignación de chalecos.')],
             'clients' => ['label' => __('Clientes e instalaciones'), 'group' => __('Plataforma'), 'hint' => __('Ficha del cliente, sus instalaciones y ubicación.')],
-            'posts' => ['label' => __('Puestos'), 'group' => __('Plataforma'), 'hint' => __('Puestos dentro de las instalaciones.')],
+            'posts' => ['label' => __('Instalaciones'), 'group' => __('Plataforma'), 'hint' => __('Sedes del cliente y los puestos de cada una.')],
             'workers' => ['label' => __('Trabajadores'), 'group' => __('Plataforma'), 'hint' => __('Personal de los clientes y su puesto.')],
             'imports' => ['label' => __('Cargas masivas'), 'group' => __('Plataforma'), 'hint' => __('Subir armas, clientes, trabajadores y chalecos desde Excel.')],
-            'formats' => ['label' => __('Formatos'), 'group' => __('Plataforma'), 'hint' => __('Descarga de formatos como la revista mensual.')],
+            'formats' => ['label' => __('Formatos'), 'group' => __('Plataforma'), 'hint' => __('Descarga de la revista mensual y de los formatos de carga.')],
             'company' => ['label' => __('Mi empresa'), 'group' => __('Mi empresa'), 'hint' => __('Datos legales, ubicación, logo y membrete.')],
-            'settings' => ['label' => __('Ajustes'), 'group' => __('Ajustes'), 'hint' => __('Cargos y catálogos de novedades.')],
+            'settings' => ['label' => __('Ajustes'), 'group' => __('Ajustes'), 'hint' => __('Cargos, vinculación, contratos y catálogos de novedades.')],
             'users' => ['label' => __('Usuarios'), 'group' => __('Ajustes'), 'hint' => __('Crear usuarios, su rol, cargo, clientes y permisos.')],
         ];
     }

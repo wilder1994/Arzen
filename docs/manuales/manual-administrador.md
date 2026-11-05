@@ -545,19 +545,20 @@ Clientes reasignados; revise armas y asignaciones operativas afectadas.
 
 | | |
 |---|---|
-| **Menú** | **Clientes** |
+| **Menú** | **Plataforma** → **Clientes** |
 | **Ruta** | `/clients` |
-| **Objetivo** | Consultar clientes operativos |
+| **Objetivo** | Consultar clientes y cuántas sedes tiene cada uno |
 
 #### Qué hacer
 
 1. Clic **Clientes**.
-2. Use filtros y búsqueda del encabezado si necesita acotar.
-3. Clic en una fila o en **Editar** para modificar.
+2. Use el buscador del encabezado si necesita acotar.
+3. En la columna **Instalaciones**, **1 misma ubicación** indica que el cliente solo tiene su sede principal. **2 instalaciones**, **3 instalaciones**, etc. indica que tiene sedes adicionales.
+4. **Ver** abre la ficha. **Editar** abre el formulario. **Archivar** deja la fila en el listado.
 
 #### Resultado esperado
 
-Tabla de clientes visible.
+Tabla con Cliente, NIT, Contacto, Ubicación, Instalaciones y Acciones. Un cliente archivado queda en degradado rojo-naranja y el botón pasa a **Reactivar**.
 
 #### Figura 5.1 — Listado clientes
 
@@ -603,18 +604,18 @@ Cliente creado. El sistema genera su **instalación principal** con la misma ubi
 | | |
 |---|---|
 | **Ruta** | `/clients/{id}/edit` |
-| **Objetivo** | Actualizar o dar de baja lógica |
+| **Objetivo** | Actualizar datos o archivar sin borrar |
 
 #### Qué hacer
 
-1. Abra **Editar** en la fila del cliente.
-2. Modifique campos necesarios; en ediciones el sistema puede pedir **nota** de historial.
-3. Para archivo, use la acción **Archivar** / estado inactivo según botón visible.
-4. Guarde cambios.
+1. Abra **Editar** en la fila del cliente y guarde los cambios. La instalación principal toma el nombre y la ubicación del cliente.
+2. Para archivar, use **Archivar** en la fila. Confirme.
+3. Si el cliente tiene otras instalaciones activas, archívelas primero en **Instalaciones**. Si tiene armas asignadas, el sistema no lo archiva.
+4. La empresa propia no tiene **Archivar**. Sus datos se editan en **Mi empresa**.
 
 #### Resultado esperado
 
-Cliente actualizado o archivado según acción. La instalación principal se sincroniza con la ubicación del cliente.
+El cliente archivado sigue en el listado. **Reactivar** lo devuelve a la operación. No se elimina el registro.
 
 #### Figura 5.3 — Editar cliente
 
@@ -626,21 +627,23 @@ Cliente actualizado o archivado según acción. La instalación principal se sin
 
 | | |
 |---|---|
-| **Menú** | **Clientes** → ficha o edición |
-| **Ruta** | `/clients/{id}/installations/create` |
-| **Objetivo** | Agregar sedes distintas de la principal |
+| **Menú** | **Plataforma** → **Instalaciones** |
+| **Ruta** | `/installations` y `/installations/{id}/edit` |
+| **Objetivo** | Abrir la sede, sus puestos y las personas y armas de cada puesto |
 
 #### Qué hacer
 
-1. Abra el cliente y localice el bloque **Instalaciones**.
-2. La instalación marcada como sede del cliente ya existe: es la principal.
-3. Para otra sede, clic **Nueva instalación**.
-4. Escriba el nombre. Si la sede es la misma del cliente, marque **Misma ubicación que el cliente**; si no, abra el mapa y fije otra dirección.
-5. Pulse **Guardar**.
+1. Clic **Instalaciones**. La primera columna es la sede; el cliente va después.
+2. **Editar** abre la ficha: mapa, datos y los puestos.
+3. **Agregar puesto** pide solo el nombre. En la tarjeta del puesto se agregan personas y armas.
+4. **Historial** muestra los cambios de la sede y los movimientos del puesto: alta, nombre, persona, arma, archivo y reactivación.
+5. **Archivar** un puesto lo deja en la ficha, suelta personas y armas de ese puesto, y el botón pasa a **Reactivar**.
+6. **Archivar** una instalación solo si no es la principal y no tiene puestos activos. La fila queda en el listado.
+7. Si la sede es la principal, **Editar instalación** avisa y lleva al cliente. Al guardar, regresa a la ficha.
 
 #### Resultado esperado
 
-La instalación queda bajo el cliente y podrá recibir puestos.
+Cada sede se opera desde su ficha. La principal no se archiva.
 
 #### Figura 5.4 — Instalaciones
 
@@ -663,21 +666,20 @@ La instalación queda bajo el cliente y podrá recibir puestos.
 
 | | |
 |---|---|
-| **Menú** | **Puestos** |
-| **Ruta** | `/posts` |
-| **Objetivo** | CRUD de puestos dentro de una instalación |
+| **Menú** | **Plataforma** → **Instalaciones** → ficha de la sede |
+| **Ruta** | `/installations/{id}/edit` |
+| **Objetivo** | Crear, renombrar y archivar puestos de una sede |
 
 #### Qué hacer
 
-1. Clic **Puestos**.
-2. Para crear: **Nuevo puesto** → elija **Cliente e instalación** → nombre y nota → **Guardar**.
-3. El puesto toma la dirección y las coordenadas de esa instalación; no se georreferencia aparte.
-4. Para editar: **Editar** en la fila → modifique → **Guardar** (la nota queda en el historial).
-5. Para historial o archivo: use **Historial** o **Restaurar** de la fila.
+1. Abra la ficha de la instalación.
+2. **Agregar puesto** y escriba el nombre. El puesto toma la ubicación de la sede.
+3. **Editar** cambia el nombre. **Archivar** pide confirmación: las personas quedan sin puesto y las armas sin ubicación interna. La persona conserva el cliente. El arma conserva el cliente y, si tenía responsable, también lo conserva.
+4. El puesto archivado sigue en la ficha. **Reactivar** lo devuelve.
 
 #### Resultado esperado
 
-Puesto creado dentro de la instalación elegida.
+El puesto queda en la sede y cada movimiento aparece en el historial de esa instalación.
 
 #### Figura 6.1 — Puestos
 
@@ -691,14 +693,14 @@ Puesto creado dentro de la instalación elegida.
 |---|---|
 | **Menú** | **Trabajadores** |
 | **Ruta** | `/workers` |
-| **Objetivo** | CRUD de trabajadores con cargo y un puesto activo |
+| **Objetivo** | Registrar la ficha del trabajador, sin asignarlo a un puesto |
 
 #### Qué hacer
 
 1. Clic **Trabajadores** → **Nuevo trabajador**.
-2. Elija el **cliente**, el documento y el **cargo** (catálogo de **Ajustes → Cargos**).
-3. Opcional: asigne **un puesto** de ese cliente. Un cambio de puesto queda en el historial.
-4. Pulse **Guardar**. Use **Editar**, **Historial** o **Restaurar** desde el listado.
+2. Complete identificación, lugar de nacimiento y de expedición, y en **Vinculación** el cargo, el tipo de vinculación y el tipo de contrato.
+3. Esos catálogos se administran en **Ajustes**. El alta no pide cliente ni puesto: eso se hace en la ficha de la instalación.
+4. Pulse **Guardar**. En el listado use **Editar**, **Historial** o **Archivar**.
 
 #### Resultado esperado
 
@@ -1172,8 +1174,8 @@ Archivo generado con armas seleccionadas.
 
 #### Qué hacer
 
-1. Clic **Cargas masivas**.
-2. Descargue o use la **plantilla** indicada en pantalla.
+1. Descargue la plantilla en **Plataforma** → **Formatos**. **Cargas masivas** solo recibe el archivo.
+2. Use esa plantilla. El formato de clientes no trae accesos ni supervisión. El tipo de estructura es opcional.
 3. Clic **Subir** / seleccione archivo Excel.
 4. Revise pantalla de **vista previa** y errores de validación.
 5. Corrija el archivo si hay filas rechazadas.
@@ -1606,7 +1608,7 @@ Logo en sidebar, login y revista; cartas con membrete y ciudad propia; la empres
 
 #### Resultado esperado
 
-El cargo aparece en usuarios y en trabajadores.
+El cargo aparece en usuarios y en trabajadores. En la misma pantalla están **Tipos de vinculación**, **Tipos de contrato** y **Tipos de estructura**. Si una carga trae un nombre que no existe, el sistema lo crea.
 
 #### Figura 17.1 — Cargos
 
@@ -1649,6 +1651,7 @@ El reporte de novedades ofrece los mismos tipos y modalidades activos.
 |---------|--------|---------|--------|----------|
 | 3.0 | [fecha] | [nombre] | [nombre] | Procedimientos paso a paso en todas las funciones |
 | 3.1 | 2026-10-24 | [nombre] | [nombre] | Ajustes, matriz de módulos, instalaciones, puestos y Mi empresa con mapa |
+| 3.2 | 2026-11-05 | [nombre] | [nombre] | Ficha de instalación, archivo visible de cliente y puesto, columna Instalaciones e historial de movimientos |
 
 ---
 

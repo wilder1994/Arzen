@@ -133,6 +133,24 @@ class CompanySettingsTest extends TestCase
             ->assertSessionHas('error');
 
         $this->assertModelExists($position);
+
+        $this->actingAs($admin)
+            ->post(route('catalogs.positions.store'), ['name' => 'Escolta'])
+            ->assertRedirect(route('catalogs.index', ['tab' => 'cargos']));
+
+        $escolta = Position::query()->where('name', 'Escolta')->sole();
+
+        $this->actingAs($admin)
+            ->post(route('catalogs.positions.move', $escolta), ['direction' => 'up'])
+            ->assertRedirect(route('catalogs.index', ['tab' => 'cargos']));
+
+        $this->assertLessThan($position->fresh()->sort_order, $escolta->fresh()->sort_order);
+
+        $this->actingAs($admin)
+            ->get(route('catalogs.index', ['tab' => 'cargos']))
+            ->assertOk()
+            ->assertDontSee('name="description"', false)
+            ->assertDontSee('name="sort_order"', false);
     }
 
     private function letterheadDocx(bool $withImages = true): string

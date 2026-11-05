@@ -108,16 +108,29 @@ Route::middleware('auth')->group(function () {
         ->name('notifications.read');
 
     Route::middleware('module:clients')->group(function () {
+        Route::patch('/clients/{client}/restore', [ClientController::class, 'restore'])->name('clients.restore');
         Route::resource('clients', ClientController::class)->except(['show']);
         Route::get('/clients/{client}/installations/create', [InstallationController::class, 'create'])->name('clients.installations.create');
         Route::post('/clients/{client}/installations', [InstallationController::class, 'store'])->name('clients.installations.store');
         Route::get('/installations/{installation}/edit', [InstallationController::class, 'edit'])->name('installations.edit');
+        Route::get('/installations/{installation}/datos', [InstallationController::class, 'editForm'])->name('installations.form');
         Route::put('/installations/{installation}', [InstallationController::class, 'update'])->name('installations.update');
+        Route::post('/installations/{installation}/puestos', [InstallationController::class, 'storePost'])->name('installations.posts.store');
+        Route::patch('/installations/{installation}/puestos/{post}', [InstallationController::class, 'renamePost'])->name('installations.posts.update');
+        Route::get('/installations/{installation}/trabajadores', [InstallationController::class, 'searchWorkers'])->name('installations.workers.search');
+        Route::post('/installations/{installation}/puestos/{post}/trabajadores', [InstallationController::class, 'assignWorker'])->name('installations.posts.workers.store');
+        Route::delete('/installations/{installation}/puestos/{post}/trabajadores/{worker}', [InstallationController::class, 'detachWorker'])->name('installations.posts.workers.destroy');
+        Route::get('/installations/{installation}/armas', [InstallationController::class, 'searchWeapons'])->name('installations.weapons.search');
+        Route::post('/installations/{installation}/puestos/{post}/armas', [InstallationController::class, 'assignWeapon'])->name('installations.posts.weapons.store');
+        Route::delete('/installations/{installation}/puestos/{post}/armas/{weapon}', [InstallationController::class, 'detachWeapon'])->name('installations.posts.weapons.destroy');
         Route::patch('/installations/{installation}/archive', [InstallationController::class, 'archive'])->name('installations.archive');
         Route::patch('/installations/{installation}/restore', [InstallationController::class, 'restore'])->name('installations.restore');
     });
 
     Route::middleware('module:posts')->group(function () {
+        Route::get('/installations', [InstallationController::class, 'index'])->name('installations.index');
+        Route::get('/installations/create', [InstallationController::class, 'begin'])->name('installations.create');
+        Route::post('/installations', [InstallationController::class, 'save'])->name('installations.store');
         Route::get('/posts/{post}/histories', [PostController::class, 'histories'])->name('posts.histories');
         Route::patch('/posts/{post}/restore', [PostController::class, 'restore'])->name('posts.restore');
         Route::resource('posts', PostController::class)->except(['show']);
@@ -254,6 +267,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/formatos/revista-mensual/opciones-columna', [FormatController::class, 'monthlyReviewColumnOptions'])->name('formatos.revista-mensual.column-options');
         Route::post('/formatos/revista-mensual/vista-previa', [FormatController::class, 'previewMonthlyReview'])->name('formatos.revista-mensual.vista-previa');
         Route::post('/formatos/revista-mensual/descargar', [FormatController::class, 'downloadMonthlyReview'])->name('formatos.revista-mensual.descargar');
+        Route::get('/formatos/plantillas/armas', [FormatController::class, 'downloadWeaponTemplate'])->name('formatos.plantillas.armas');
+        Route::get('/formatos/plantillas/clientes', [FormatController::class, 'downloadClientTemplate'])->name('formatos.plantillas.clientes');
+        Route::get('/formatos/plantillas/trabajadores', [FormatController::class, 'downloadWorkerTemplate'])->name('formatos.plantillas.trabajadores');
     });
 
     Route::middleware('module:reports')->group(function () {
@@ -299,6 +315,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/cargos', [CatalogController::class, 'storePosition'])->name('positions.store');
         Route::put('/cargos/{position}', [CatalogController::class, 'updatePosition'])->name('positions.update');
         Route::delete('/cargos/{position}', [CatalogController::class, 'destroyPosition'])->name('positions.destroy');
+        Route::post('/cargos/{position}/orden', [CatalogController::class, 'movePosition'])->name('positions.move');
+        Route::post('/vinculacion', [CatalogController::class, 'storeEngagementType'])->name('engagement-types.store');
+        Route::put('/vinculacion/{engagementType}', [CatalogController::class, 'updateEngagementType'])->name('engagement-types.update');
+        Route::delete('/vinculacion/{engagementType}', [CatalogController::class, 'destroyEngagementType'])->name('engagement-types.destroy');
+        Route::post('/vinculacion/{engagementType}/orden', [CatalogController::class, 'moveEngagementType'])->name('engagement-types.move');
+        Route::post('/contratos', [CatalogController::class, 'storeContractType'])->name('contract-types.store');
+        Route::put('/contratos/{contractType}', [CatalogController::class, 'updateContractType'])->name('contract-types.update');
+        Route::delete('/contratos/{contractType}', [CatalogController::class, 'destroyContractType'])->name('contract-types.destroy');
+        Route::post('/contratos/{contractType}/orden', [CatalogController::class, 'moveContractType'])->name('contract-types.move');
+        Route::post('/estructuras', [CatalogController::class, 'storeStructureType'])->name('structure-types.store');
+        Route::put('/estructuras/{structureType}', [CatalogController::class, 'updateStructureType'])->name('structure-types.update');
+        Route::delete('/estructuras/{structureType}', [CatalogController::class, 'destroyStructureType'])->name('structure-types.destroy');
+        Route::post('/estructuras/{structureType}/orden', [CatalogController::class, 'moveStructureType'])->name('structure-types.move');
         Route::post('/novedades', [CatalogController::class, 'storeIncident'])->name('incident-types.store');
         Route::put('/novedades/{incidentType}', [CatalogController::class, 'updateIncidentType'])->name('incident-types.update');
         Route::delete('/novedades/{incidentType}', [CatalogController::class, 'destroyIncidentType'])->name('incident-types.destroy');

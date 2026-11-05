@@ -20,7 +20,7 @@
         <div class="sj-page-shell sj-page-shell--wide space-y-3">
             <x-ui-alert type="warning">{{ __('Al guardar se genera una contraseña temporal segura. Podrá copiarla en la siguiente pantalla; el usuario deberá cambiarla en su primer ingreso.') }}</x-ui-alert>
 
-            <form method="POST" action="{{ route('users.store') }}">
+            <form method="POST" action="{{ route('users.store') }}" enctype="multipart/form-data">
                 @csrf
                 <section class="sj-ui-card">
                     <div class="sj-ui-card__body p-6">

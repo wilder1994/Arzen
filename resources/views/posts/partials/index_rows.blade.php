@@ -34,7 +34,7 @@
                 <form action="{{ route('posts.destroy', $post) }}" method="POST" class="inline">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="sj-ui-link sj-ui-link--warn" onclick="return confirm(@js(__('¿Archivar este puesto? Las armas asignadas aquí quedarán sin ubicación interna activa.')))">
+                    <button type="submit" class="sj-ui-link sj-ui-link--warn" onclick="return confirm(@js(__('Si archiva este puesto, las armas y los trabajadores quedan sin asignación, pendientes de una nueva asignación.')))">
                         {{ __('Archivar') }}
                     </button>
                 </form>

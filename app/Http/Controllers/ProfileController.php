@@ -32,6 +32,13 @@ class ProfileController extends Controller
         $before = $user->only(['name', 'email']);
         $user->fill($request->validated());
 
+        if ($user->isDirty('name')) {
+            $parts = preg_split('/\s+/u', trim((string) $user->name), 2) ?: [];
+            $user->first_name = $parts[0] ?? '';
+            $user->last_name = $parts[1] ?? '';
+            $user->name = trim($user->first_name.' '.$user->last_name);
+        }
+
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }

@@ -76,6 +76,40 @@ class ImportTemplateExporterTest extends TestCase
         foreach (ClientImportProcessor::templateHeaders() as $header) {
             $this->assertStringContainsString($header, $sheetXml);
         }
+        $this->assertStringNotContainsString('Accesos', $sheetXml);
+        $this->assertStringNotContainsString('Supervisión', $sheetXml);
+    }
+
+    public function test_worker_template_has_the_ficha_and_an_instruction_sheet(): void
+    {
+        $exporter = new ImportTemplateExporter(new SimpleSpreadsheetExporter);
+        $response = $exporter->streamWorkerTemplate();
+
+        ob_start();
+        $response->sendContent();
+        $binary = ob_get_clean();
+
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'worker-template-test-');
+        file_put_contents($temporaryPath, $binary);
+
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporaryPath) === true);
+        $workbookXml = $zip->getFromName('xl/workbook.xml');
+        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $instructionXml = $zip->getFromName('xl/worksheets/sheet2.xml');
+        $zip->close();
+        @unlink($temporaryPath);
+
+        $this->assertIsString($workbookXml);
+        $this->assertStringContainsString('name="Empleados"', $workbookXml);
+        $this->assertStringContainsString('name="Instrucciones"', $workbookXml);
+        $this->assertIsString($sheetXml);
+        $this->assertStringContainsString('Escolaridad', $sheetXml);
+        $this->assertStringContainsString('Tipo de vinculación', $sheetXml);
+        $this->assertStringContainsString('Nivel de riesgo ARL', $sheetXml);
+        $this->assertStringNotContainsString('Razón Social Cliente Final', $sheetXml);
+        $this->assertIsString($instructionXml);
+        $this->assertStringContainsString('Si no existe, se crea.', $instructionXml);
     }
 
     public function test_vest_template_preserves_data_sheet_and_adds_instruction_sheet(): void

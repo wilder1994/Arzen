@@ -31,6 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const workerPlaces = document.querySelector('[data-worker-places]');
+    if (workerPlaces) {
+        import('./worker-places.js').then(({ initWorkerPlaces }) => {
+            initWorkerPlaces(workerPlaces);
+        });
+    }
+
     const alertsPage = document.querySelector('[data-alerts-page]');
     if (alertsPage) {
         import('./alerts-documents-modal.js').then(({ initAlertsDocumentsPage }) => {

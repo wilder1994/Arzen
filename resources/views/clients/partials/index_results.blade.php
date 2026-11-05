@@ -1,104 +1,78 @@
 @if ($clients->count() > 0)
-    <div class="sj-client-table-wrap sj-table-wrap hidden md:block">
-        <table class="sj-table sj-client-table">
+    <div class="sj-table-wrap hidden md:block">
+        <table class="sj-table sj-table--align-left sj-table--compact sj-user-list">
             <thead>
                 <tr>
-                    <th>{{ __('Cliente') }}</th>
+                    <th class="sj-col-grow">{{ __('Cliente') }}</th>
                     <th>{{ __('NIT') }}</th>
                     <th>{{ __('Contacto') }}</th>
                     <th>{{ __('Ubicación') }}</th>
-                    <th class="sj-client-col-actions">{{ __('Acciones') }}</th>
+                    <th>{{ __('Instalaciones') }}</th>
+                    <th class="sj-col-actions">{{ __('Acciones') }}</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($clients as $client)
                     @php
-                        $location = collect([$client->city, $client->department])->filter()->implode(', ');
-                        $address = collect([$client->address, $client->neighborhood])->filter()->implode(' / ');
-                        $hasContact = filled($client->contact_name) || filled($client->email);
+                        $hasPin = \App\Support\MapCoordinates::isFilled($client->latitude, $client->longitude);
                     @endphp
-                    <tr class="sj-client-row sj-client-row--summary" data-client-row data-client-id="{{ $client->id }}">
-                        <td class="sj-client-cell sj-client-cell--client">
+                    <tr @class(['sj-archived-row' => $client->isArchived()])>
+                        <td class="sj-col-grow">
                             <div class="sj-client-row__lead">
+                                <span>{{ $client->name }}</span>
+                                @if ($client->isArchived())
+                                    <span class="sj-chip">{{ __('Archivado') }}</span>
+                                @endif
+                            </div>
+                        </td>
+                        <td>{{ $client->nit ?: '—' }}</td>
+                        <td>{{ $client->contact_name ?: __('Sin contacto') }}</td>
+                        <td class="sj-col-center">
+                            @if ($hasPin)
                                 <button
                                     type="button"
-                                    class="sj-client-toggle"
-                                    data-client-toggle
-                                    aria-expanded="false"
-                                    aria-controls="client-detail-{{ $client->id }}"
-                                    aria-label="{{ __('Mostrar detalle del cliente') }}"
+                                    class="sj-map-pin"
+                                    aria-label="{{ __('Ver ubicación') }}"
+                                    data-map-title="{{ $client->name }}"
+                                    data-map-lat="{{ $client->latitude }}"
+                                    data-map-lng="{{ $client->longitude }}"
                                 >
-                                    <span class="sj-client-toggle__caret" aria-hidden="true"></span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                    </svg>
                                 </button>
-                                <span class="sj-client-primary sj-client-primary--truncate">{{ $client->name }}</span>
-                                @if ($client->is_own_company)
-                                    <span class="sj-chip">{{ __('Mi empresa') }}</span>
-                                @endif
-                                <span class="sj-chip">{{ trans_choice(':count instalación|:count instalaciones', $client->installations_count ?? 0, ['count' => $client->installations_count ?? 0]) }}</span>
-                            </div>
+                            @else
+                            {{ __('Ubicación pendiente') }}
+                        @endif
                         </td>
-                        <td class="sj-client-cell">
-                            <span class="sj-client-secondary sj-client-secondary--mono">{{ $client->nit ?: '-' }}</span>
-                        </td>
-                        <td class="sj-client-cell">
-                            <span class="sj-client-badge {{ $hasContact ? 'sj-client-badge--green' : 'sj-client-badge--slate' }}">
-                                {{ $hasContact ? __('Con contacto') : __('Sin contacto') }}
-                            </span>
-                        </td>
-                        <td class="sj-client-cell">
-                            <span class="sj-client-secondary">{{ $client->city ?: __('Sin ciudad') }}</span>
-                        </td>
-                        <td class="sj-client-cell sj-client-cell--actions">
-                            <div class="sj-client-actions sj-client-actions--end">
+                        <td>{{ $client->installationListLabel() }}</td>
+                        <td class="sj-col-actions">
+                            <div class="sj-user-list__actions">
+                                <button type="button" class="sj-ui-link" data-open-ficha="client-ficha-{{ $client->id }}" data-ficha-title="{{ $client->name }}">{{ __('Ver') }}</button>
                                 @can('update', $client)
-                                    <a href="{{ route('clients.edit', $client) }}" class="sj-client-action sj-client-action--edit">
-                                        {{ __('Editar') }}
-                                    </a>
+                                    <a href="{{ route('clients.edit', $client) }}" class="sj-ui-link">{{ __('Editar') }}</a>
                                 @endcan
                                 @can('delete', $client)
-                                    <form action="{{ route('clients.destroy', $client) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="sj-client-action sj-client-action--delete" onclick="return confirm(@js(__('¿Eliminar cliente?')))">
-                                            {{ __('Eliminar') }}
-                                        </button>
-                                    </form>
+                                    @if ($client->isArchived())
+                                        <form action="{{ route('clients.restore', $client) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="sj-ui-link" onclick="return confirm(@js(__('¿Reactivar este cliente?')))">{{ __('Reactivar') }}</button>
+                                        </form>
+                                    @else
+                                        <form action="{{ route('clients.destroy', $client) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="sj-ui-link sj-ui-link--danger" onclick="return confirm(@js(__('¿Archivar este cliente? La fila queda en el listado y se puede reactivar.')))">{{ __('Archivar') }}</button>
+                                        </form>
+                                    @endif
                                 @endcan
                             </div>
+                            <template id="client-ficha-{{ $client->id }}">
+                                @include('clients.partials.ficha', ['client' => $client])
+                            </template>
                         </td>
-                    </tr>
-                    <tr
-                        id="client-detail-{{ $client->id }}"
-                        class="sj-client-detail-row hidden"
-                        data-client-detail-row
-                        data-client-id="{{ $client->id }}"
-                    >
-                        <td class="sj-client-detail-cell">
-                            <div class="sj-client-detail__item">
-                                <div class="sj-client-col__label">{{ __('Dirección') }}</div>
-                                <div class="sj-client-secondary">{{ $address ?: __('Sin dirección registrada') }}</div>
-                            </div>
-                        </td>
-                        <td class="sj-client-detail-cell">
-                            <div class="sj-client-detail__item">
-                                <div class="sj-client-col__label">{{ __('Representante legal') }}</div>
-                                <div class="sj-client-secondary">{{ $client->legal_representative ?: __('Sin representante legal registrado') }}</div>
-                            </div>
-                        </td>
-                        <td class="sj-client-detail-cell">
-                            <div class="sj-client-detail__item">
-                                <div class="sj-client-col__label">{{ __('Contacto') }}</div>
-                                <div class="sj-client-secondary">{{ $client->contact_name ?: __('Sin contacto registrado') }}</div>
-                                <div class="sj-client-muted">{{ $client->email ?: __('Sin correo registrado') }}</div>
-                            </div>
-                        </td>
-                        <td class="sj-client-detail-cell">
-                            <div class="sj-client-detail__item">
-                                <div class="sj-client-col__label">{{ __('Ubicación') }}</div>
-                                <div class="sj-client-secondary">{{ $location ?: __('Ubicación pendiente') }}</div>
-                            </div>
-                        </td>
-                        <td class="sj-client-detail-cell sj-client-detail-cell--actions"></td>
                     </tr>
                 @endforeach
             </tbody>
@@ -107,56 +81,40 @@
 
     <div class="sj-client-cards md:hidden">
         @foreach ($clients as $client)
-            @php
-                $location = collect([$client->city, $client->department])->filter()->implode(', ');
-                $address = collect([$client->address, $client->neighborhood])->filter()->implode(' / ');
-            @endphp
-            <article class="sj-client-card">
+            <article @class(['sj-client-card', 'sj-archived-row' => $client->isArchived()])>
                 <div class="sj-client-card__top">
                     <div>
                         <div class="sj-client-col__label">{{ __('Cliente') }}</div>
                         <h3 class="sj-client-card__title">{{ $client->name }}</h3>
-                    </div>
-                    <span class="sj-client-badge sj-client-badge--blue">{{ $client->city ?: __('Sin ciudad') }}</span>
-                </div>
-
-                <div class="sj-client-card__body">
-                    <div class="sj-client-card__meta">
-                        <span class="sj-client-col__label">{{ __('NIT') }}</span>
-                        <span class="sj-client-primary">{{ $client->nit ?: '-' }}</span>
-                    </div>
-                    <div class="sj-client-card__meta">
-                        <span class="sj-client-col__label">{{ __('Contacto') }}</span>
-                        <span class="sj-client-secondary">{{ $client->contact_name ?: __('Sin contacto') }}</span>
-                    </div>
-                    <div class="sj-client-card__meta">
-                        <span class="sj-client-col__label">{{ __('Correo') }}</span>
-                        <span class="sj-client-secondary">{{ $client->email ?: __('Sin correo registrado') }}</span>
-                    </div>
-                    <div class="sj-client-card__meta">
-                        <span class="sj-client-col__label">{{ __('Ubicación') }}</span>
-                        <span class="sj-client-secondary">{{ $location ?: __('Ubicación pendiente') }}</span>
-                    </div>
-                    <div class="sj-client-card__meta">
-                        <span class="sj-client-col__label">{{ __('Dirección') }}</span>
-                        <span class="sj-client-secondary">{{ $address ?: __('Sin dirección registrada') }}</span>
+                        <p class="sj-site-empty">{{ $client->installationListLabel() }}</p>
                     </div>
                 </div>
 
                 <div class="sj-client-card__actions">
+                    <button type="button" class="sj-ui-link" data-open-ficha="client-ficha-{{ $client->id }}" data-ficha-title="{{ $client->name }}">{{ __('Ver') }}</button>
                     @can('update', $client)
                         <a href="{{ route('clients.edit', $client) }}" class="sj-client-action sj-client-action--edit">
                             {{ __('Editar') }}
                         </a>
                     @endcan
                     @can('delete', $client)
-                        <form action="{{ route('clients.destroy', $client) }}" method="POST" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="sj-client-action sj-client-action--delete" onclick="return confirm(@js(__('¿Eliminar cliente?')))">
-                                {{ __('Eliminar') }}
-                            </button>
-                        </form>
+                        @if ($client->isArchived())
+                            <form action="{{ route('clients.restore', $client) }}" method="POST" class="inline">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="sj-client-action" onclick="return confirm(@js(__('¿Reactivar este cliente?')))">
+                                    {{ __('Reactivar') }}
+                                </button>
+                            </form>
+                        @else
+                            <form action="{{ route('clients.destroy', $client) }}" method="POST" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="sj-client-action sj-client-action--delete" onclick="return confirm(@js(__('¿Archivar este cliente? La fila queda en el listado y se puede reactivar.')))">
+                                    {{ __('Archivar') }}
+                                </button>
+                            </form>
+                        @endif
                     @endcan
                 </div>
             </article>

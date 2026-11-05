@@ -1,15 +1,27 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="sj-section-header">
+        <div class="sj-list-header">
             <div class="sj-section-header__main">
                 <h2 class="sj-section-header__title">{{ __('Trabajadores') }}</h2>
             </div>
 
-            <div class="sj-section-header__actions">
+            <form class="sj-list-header__search" role="search" onsubmit="return false;">
+                <input
+                    id="workers-search"
+                    type="search"
+                    name="q"
+                    value="{{ $search }}"
+                    class="sj-ui-field__control"
+                    placeholder="{{ __('Nombre o cédula') }}"
+                >
+                <button type="button" id="workers-search-clear" class="sj-list-header__clear" aria-label="{{ __('Limpiar búsqueda') }}" @if ($search === '') hidden @endif>&times;</button>
+            </form>
+
+            <div class="sj-list-header__end">
+                <span id="workers-global-total" class="sj-list-header__count">{{ $countLabel }}</span>
+                <button type="button" id="workers-open-filters" class="sj-ui-btn sj-ui-btn--ghost">{{ __('Filtros') }}</button>
                 @can('create', App\Models\Worker::class)
-                    <a href="{{ route('workers.create') }}" class="sj-ui-btn sj-ui-btn--primary">
-                        {{ __('Nuevo trabajador') }}
-                    </a>
+                    <a href="{{ route('workers.create') }}" class="sj-ui-btn sj-ui-btn--primary">{{ __('Nuevo trabajador') }}</a>
                 @endcan
             </div>
         </div>
@@ -52,69 +64,62 @@
                 </div>
             @endif
 
-            <div class="sj-ui-card overflow-hidden">
-                <div class="sj-ui-card__body p-6">
-                    <form method="GET" action="{{ route('workers.index') }}" class="sj-ui-filter-bar">
-                        <div class="sj-ui-filter-bar__fields">
-                            <div class="sj-ui-field w-36 shrink-0">
-                                <label for="workers-filter-q" class="sj-ui-field__label">{{ __('Buscar') }}</label>
-                                <input id="workers-filter-q" type="text" name="q" value="{{ $search }}" class="sj-ui-field__control" placeholder="{{ __('Nombre') }}">
-                            </div>
-                            <div class="sj-ui-field min-w-[8rem] max-w-[14rem] flex-1 shrink">
-                                <label for="workers-filter-client" class="sj-ui-field__label">{{ __('Cliente') }}</label>
-                                <select id="workers-filter-client" name="client_id" class="sj-ui-field__control">
-                                    <option value="">{{ __('Todos') }}</option>
-                                    @foreach ($clients as $client)
-                                        <option value="{{ $client->id }}" @selected($clientId == $client->id)>{{ $client->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="sj-ui-field w-32 shrink-0">
-                                <label for="workers-filter-position" class="sj-ui-field__label">{{ __('Cargo') }}</label>
-                                <select id="workers-filter-position" name="position_id" class="sj-ui-field__control">
-                                    <option value="">{{ __('Todos') }}</option>
-                                    @foreach ($positions as $position)
-                                        <option value="{{ $position->id }}" @selected($positionId == $position->id)>{{ $position->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            @if ($showResponsibleFilter)
-                                <div class="sj-ui-field min-w-[8rem] max-w-[14rem] flex-1 shrink">
-                                    <label for="workers-filter-responsible" class="sj-ui-field__label">{{ __('Responsable') }}</label>
-                                    <select id="workers-filter-responsible" name="responsible_user_id" class="sj-ui-field__control">
-                                        <option value="">{{ __('Todos') }}</option>
-                                        @foreach ($responsibles as $responsible)
-                                            <option value="{{ $responsible->id }}" @selected($responsibleId == $responsible->id)>{{ $responsible->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endif
-                            <div class="sj-ui-field w-40 shrink-0">
-                                <label for="workers-filter-archive" class="sj-ui-field__label">{{ __('Estado') }}</label>
-                                <select id="workers-filter-archive" name="archive" class="sj-ui-field__control">
-                                    <option value="active" @selected($archiveFilter === 'active')>{{ __('Solo activos') }}</option>
-                                    <option value="archived" @selected($archiveFilter === 'archived')>{{ __('Solo archivados') }}</option>
-                                    <option value="all" @selected($archiveFilter === 'all')>{{ __('Todos') }}</option>
-                                </select>
-                            </div>
-                            <p
-                                id="workers-global-total"
-                                class="sj-ui-field ml-auto shrink-0 self-end text-sm font-medium text-gray-700 whitespace-nowrap"
-                                aria-live="polite"
-                            >
-                                {{ __('Total') }}:
-                                <span class="tabular-nums text-gray-900">{{ number_format($workersGlobalTotal, 0, ',', '.') }}</span>
-                                {{ trans_choice('trabajador|trabajadores', $workersGlobalTotal) }}
-                            </p>
-                            <div class="sj-ui-filter-bar__actions">
-                                <a href="{{ route('workers.index') }}" class="sj-ui-btn sj-ui-btn--ghost">{{ __('Limpiar') }}</a>
-                                <button type="submit" class="sj-ui-btn sj-ui-btn--primary">{{ __('Filtrar') }}</button>
-                            </div>
+            <div id="workers-filters" class="fixed inset-0 z-[1400] hidden items-center justify-center bg-black/50 p-4">
+                <div class="absolute inset-0" data-close-filters></div>
+                <form method="GET" action="{{ route('workers.index') }}" class="relative w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
+                    <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+                        <h3 class="sj-type-section text-gray-900">{{ __('Filtros') }}</h3>
+                        <button type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm" data-close-filters>{{ __('Cerrar') }}</button>
+                    </div>
+                    <div class="grid gap-4 px-5 py-4 sm:grid-cols-2">
+                        <input type="hidden" name="q" id="workers-filter-q" value="{{ $search }}">
+                        <div class="sj-ui-field">
+                            <label for="workers-filter-client" class="sj-ui-field__label">{{ __('Cliente') }}</label>
+                            <select id="workers-filter-client" name="client_id" class="sj-ui-field__control">
+                                <option value="">{{ __('Todos') }}</option>
+                                @foreach ($clients as $client)
+                                    <option value="{{ $client->id }}" @selected($clientId == $client->id)>{{ $client->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                    </form>
+                        <div class="sj-ui-field">
+                            <label for="workers-filter-position" class="sj-ui-field__label">{{ __('Cargo') }}</label>
+                            <select id="workers-filter-position" name="position_id" class="sj-ui-field__control">
+                                <option value="">{{ __('Todos') }}</option>
+                                @foreach ($positions as $position)
+                                    <option value="{{ $position->id }}" @selected($positionId == $position->id)>{{ $position->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @if ($showResponsibleFilter)
+                            <div class="sj-ui-field">
+                                <label for="workers-filter-responsible" class="sj-ui-field__label">{{ __('Responsable') }}</label>
+                                <select id="workers-filter-responsible" name="responsible_user_id" class="sj-ui-field__control">
+                                    <option value="">{{ __('Todos') }}</option>
+                                    @foreach ($responsibles as $responsible)
+                                        <option value="{{ $responsible->id }}" @selected($responsibleId == $responsible->id)>{{ $responsible->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+                        <div class="sj-ui-field">
+                            <label for="workers-filter-archive" class="sj-ui-field__label">{{ __('Estado') }}</label>
+                            <select id="workers-filter-archive" name="archive" class="sj-ui-field__control">
+                                <option value="active" @selected($archiveFilter === 'active')>{{ __('Solo activos') }}</option>
+                                <option value="archived" @selected($archiveFilter === 'archived')>{{ __('Solo archivados') }}</option>
+                                <option value="all" @selected($archiveFilter === 'all')>{{ __('Todos') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end border-t border-gray-200 px-5 py-4">
+                        <button type="submit" class="sj-ui-btn sj-ui-btn--primary">{{ __('Aplicar') }}</button>
+                    </div>
+                </form>
+            </div>
 
+            <div>
                     <div class="sj-table-wrap overflow-x-auto">
-                    <table class="sj-table sj-table--align-left min-w-full text-sm">
+                    <table class="sj-table sj-table--align-left sj-table--compact sj-user-list">
                         <thead>
                             <tr>
                                 <th>{{ __('Nombre') }}</th>
@@ -173,4 +178,116 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            (() => {
+                const input = document.getElementById('workers-search');
+                const clearButton = document.getElementById('workers-search-clear');
+                const count = document.getElementById('workers-global-total');
+                const tbody = document.getElementById('workers-tbody');
+                const pagination = document.getElementById('workers-pagination');
+                const filters = document.getElementById('workers-filters');
+                const openFilters = document.getElementById('workers-open-filters');
+                const filterQuery = document.getElementById('workers-filter-q');
+                const filterForm = filters?.querySelector('form');
+
+                if (!input || !clearButton || !count || !tbody || !pagination || !filters || !openFilters) {
+                    return;
+                }
+
+                const syncClear = () => {
+                    clearButton.hidden = input.value.trim() === '';
+                };
+
+                const applyStateToUrl = (url, { resetPage = false } = {}) => {
+                    const query = input.value.trim();
+                    const page = resetPage ? '1' : (url.searchParams.get('page') || '1');
+                    const kept = new URLSearchParams(url.search);
+                    url.search = '';
+                    ['client_id', 'position_id', 'responsible_user_id', 'archive'].forEach((key) => {
+                        const value = kept.get(key);
+                        if (value) {
+                            url.searchParams.set(key, value);
+                        }
+                    });
+                    if (query !== '') {
+                        url.searchParams.set('q', query);
+                    }
+                    url.searchParams.set('page', page);
+                };
+
+                const updateList = async (url) => {
+                    const response = await fetch(url, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+                    });
+                    if (!response.ok) {
+                        return;
+                    }
+                    const data = await response.json();
+                    tbody.innerHTML = data.tbody;
+                    pagination.innerHTML = data.pagination;
+                    if (data.count_label) {
+                        count.textContent = data.count_label;
+                    }
+                    window.Alpine?.initTree?.(tbody);
+                };
+
+                let timer = null;
+                input.addEventListener('input', () => {
+                    syncClear();
+                    const url = new URL(window.location.href);
+                    applyStateToUrl(url, { resetPage: true });
+                    window.history.replaceState({}, '', url.toString());
+                    if (timer) {
+                        clearTimeout(timer);
+                    }
+                    timer = setTimeout(() => updateList(url.toString()), 300);
+                });
+
+                clearButton.addEventListener('click', () => {
+                    input.value = '';
+                    input.dispatchEvent(new Event('input'));
+                    input.focus();
+                });
+
+                const openFilterModal = () => {
+                    if (filterQuery) {
+                        filterQuery.value = input.value.trim();
+                    }
+                    filters.classList.remove('hidden');
+                    filters.classList.add('flex');
+                };
+
+                const closeFilterModal = () => {
+                    filters.classList.add('hidden');
+                    filters.classList.remove('flex');
+                };
+
+                openFilters.addEventListener('click', openFilterModal);
+                filters.addEventListener('click', (event) => {
+                    if (event.target.closest('[data-close-filters]')) {
+                        closeFilterModal();
+                    }
+                });
+                filterForm?.addEventListener('submit', () => {
+                    if (filterQuery) {
+                        filterQuery.value = input.value.trim();
+                    }
+                });
+
+                pagination.addEventListener('click', (event) => {
+                    const link = event.target.closest('a');
+                    if (!link || !link.href) {
+                        return;
+                    }
+                    event.preventDefault();
+                    const url = new URL(link.href);
+                    applyStateToUrl(url);
+                    window.history.replaceState({}, '', url.toString());
+                    updateList(url.toString());
+                });
+            })();
+        </script>
+    @endpush
 </x-app-layout>

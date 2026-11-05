@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Client;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 use App\Models\WeaponImportBatch;
 use App\Models\WeaponImportRow;
 use App\Services\Imports\ClientImportProcessor;
@@ -237,8 +238,46 @@ class ClientImportTest extends TestCase
         $client = Client::query()->where('nit', '901888777-6')->firstOrFail();
         $this->assertSame('Residencial Norte', $client->name);
         $this->assertSame('ana@cliente.test', $client->representative_email);
+        $this->assertSame('Ph', $client->structureType->name);
+        $this->assertNull($client->latitude);
+        $this->assertNull($client->mainInstallation->latitude);
         $this->assertSame('Residencial Norte', $client->mainInstallation->name);
         $this->assertSame('Calle 1 # 2-3', $client->mainInstallation->address);
+    }
+
+    public function test_client_import_pins_the_address_when_the_map_resolves_it(): void
+    {
+        config(['services.google.maps_key' => 'test-key']);
+        Http::fake([
+            'maps.googleapis.com/*' => Http::response([
+                'status' => 'OK',
+                'results' => [['geometry' => ['location' => ['lat' => 3.4516, 'lng' => -76.5320]]]],
+            ]),
+        ]);
+
+        $user = User::factory()->create(['role' => 'ADMIN']);
+        $processor = app(ClientImportProcessor::class);
+        [$rows] = $processor->prepareRows(\App\Support\Imports\ZentraClientSchema::headers(), [[
+            'row_number' => 2,
+            'cells' => ['Jurídica', 'Norte', 'Norte PH', 'NIT', '901000111-2', '', '', '', '', '', 'Calle 10 # 20-30', 'Cali', 'Valle del Cauca'],
+        ]]);
+        $batch = WeaponImportBatch::query()->create([
+            'status' => 'draft',
+            'type' => WeaponImportBatch::TYPE_CLIENT,
+            'source_name' => 'clientes.xlsx',
+            'total_rows' => 1,
+            'create_count' => 1,
+            'update_count' => 0,
+            'no_change_count' => 0,
+            'error_count' => 0,
+        ]);
+        $processor->executeRow(WeaponImportRow::query()->create(array_merge($rows[0], ['batch_id' => $batch->id])), $user);
+
+        $client = Client::query()->where('nit', '901000111-2')->firstOrFail();
+        $this->assertEqualsWithDelta(3.4516, (float) $client->latitude, 0.0001);
+        $this->assertEqualsWithDelta(-76.532, (float) $client->mainInstallation->longitude, 0.0001);
+        $this->assertNull($client->structure_type_id);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'geocode'));
     }
 
     public function test_worker_import_builds_installation_post_and_position_from_zentra_employees(): void
@@ -290,6 +329,92 @@ class ClientImportTest extends TestCase
         $this->assertSame('Torre norte', $worker->post->installation->name);
         $this->assertSame($client->id, $worker->post->installation->client_id);
         $this->assertSame('CALI', $worker->post->city);
+        $this->assertSame('Ana', $worker->first_names);
+        $this->assertSame('Pérez', $worker->last_name_paternal);
+        $this->assertSame('Mujer', $worker->sex);
+        $this->assertSame(34, $worker->age);
+        $this->assertSame('OPERATIVO', $worker->collaborator_type);
+        $this->assertSame('Cali', $worker->sector);
+        $this->assertSame('SURA', $worker->eps_name);
+    }
+
+    public function test_worker_import_creates_missing_engagement_and_contract_types(): void
+    {
+        $user = User::factory()->create(['role' => 'ADMIN']);
+        $client = Client::query()->create([
+            'name' => 'Palmas',
+            'legal_name' => 'Palmas del Ingenio PH',
+            'nit' => '900555666-1',
+        ]);
+        $processor = app(\App\Services\Imports\WorkerImportProcessor::class);
+        $headers = ['Nro. Documento de Identidad', 'Nombres', 'Razón Social Cliente Final', 'Tipo de vinculación', 'Tipo de contrato', 'Código EPS', 'Código AFP'];
+
+        [$rows] = $processor->prepareRows($headers, [[
+            'row_number' => 2,
+            'cells' => ['1098000555', 'Marta', 'Palmas del Ingenio PH', 'temporal', 'por días', 'EPS9', 'AFP9'],
+        ]]);
+
+        $this->assertSame(WeaponImportRow::ACTION_CREATE, $rows[0]['action']);
+        $this->assertStringContainsString('tipo de vinculación', $rows[0]['summary']);
+        $this->assertStringContainsString('tipo de contrato', $rows[0]['summary']);
+
+        $batch = WeaponImportBatch::query()->create([
+            'status' => 'draft',
+            'type' => WeaponImportBatch::TYPE_WORKER,
+            'source_name' => 'empleados.xlsx',
+            'total_rows' => 1,
+            'create_count' => 1,
+            'update_count' => 0,
+            'no_change_count' => 0,
+            'error_count' => 0,
+        ]);
+        $row = WeaponImportRow::query()->create(array_merge($rows[0], ['batch_id' => $batch->id]));
+        $processor->executeRow($row, $user);
+
+        $worker = \App\Models\Worker::query()->where('document', '1098000555')->firstOrFail();
+        $this->assertSame($client->id, $worker->client_id);
+        $this->assertSame('Temporal', $worker->engagementType->name);
+        $this->assertSame('Por Días', $worker->contractType->name);
+        $this->assertSame('EPS9', $worker->eps_code);
+        $this->assertSame('AFP9', $worker->afp_code);
+        $this->assertSame(1, \App\Models\EngagementType::query()->where('name', 'Temporal')->count());
+    }
+
+    public function test_worker_import_without_a_client_creates_only_the_ficha(): void
+    {
+        $user = User::factory()->create(['role' => 'ADMIN']);
+        $processor = app(\App\Services\Imports\WorkerImportProcessor::class);
+        $headers = ['Nro. Documento de Identidad', 'Nombres', 'Ap. Paterno', 'Sexo', 'Nacionalidad', 'Escolaridad', 'EPS', 'Cargo'];
+
+        [$rows, $counts] = $processor->prepareRows($headers, [[
+            'row_number' => 2,
+            'cells' => ['1098000666', 'Lucía', 'Ríos', 'Mujer', 'Colombiana', 'Bachillerato', 'SURA', 'Escolta'],
+        ]]);
+
+        $this->assertSame(1, $counts[WeaponImportRow::ACTION_CREATE]);
+        $this->assertNull($rows[0]['client_id']);
+
+        $batch = WeaponImportBatch::query()->create([
+            'status' => 'draft',
+            'type' => WeaponImportBatch::TYPE_WORKER,
+            'source_name' => 'ficha.xlsx',
+            'total_rows' => 1,
+            'create_count' => 1,
+            'update_count' => 0,
+            'no_change_count' => 0,
+            'error_count' => 0,
+        ]);
+        $row = WeaponImportRow::query()->create(array_merge($rows[0], ['batch_id' => $batch->id]));
+        $processor->executeRow($row, $user);
+
+        $worker = \App\Models\Worker::query()->where('document', '1098000666')->firstOrFail();
+        $this->assertNull($worker->client_id);
+        $this->assertNull($worker->post_id);
+        $this->assertSame('Lucía Ríos', $worker->name);
+        $this->assertSame('Colombiana', $worker->nationality);
+        $this->assertSame('Bachillerato', $worker->education);
+        $this->assertSame('SURA', $worker->eps_name);
+        $this->assertSame('Escolta', $worker->position->name);
     }
 }
 

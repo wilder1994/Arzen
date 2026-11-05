@@ -177,6 +177,10 @@ return [
         'responsibility_level_id' => 'nivel de responsabilidad',
         'is_active' => 'estado activo',
         'cost_center' => 'centro de costo',
+        'first_name' => 'nombre',
+        'last_name' => 'apellido',
+        'document_type' => 'tipo de documento',
+        'phone' => 'teléfono de contacto',
     ],
 ];
 

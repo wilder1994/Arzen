@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Weapon;
 use App\Services\Formats\MonthlyWeaponReviewQueryService;
+use App\Services\Imports\ImportTemplateExporter;
 use App\Services\Formats\MonthlyWeaponReviewRowMapper;
 use App\Services\Formats\MonthlyWeaponReviewSpreadsheetExporter;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,21 @@ class FormatController extends Controller
             'formOptions' => $this->queryService->formOptions(),
             'columnKeys' => $this->queryService->columnKeys(),
         ]);
+    }
+
+    public function downloadWeaponTemplate(ImportTemplateExporter $templateExporter): StreamedResponse
+    {
+        return $templateExporter->streamWeaponTemplate();
+    }
+
+    public function downloadClientTemplate(ImportTemplateExporter $templateExporter): StreamedResponse
+    {
+        return $templateExporter->streamClientTemplate();
+    }
+
+    public function downloadWorkerTemplate(ImportTemplateExporter $templateExporter): StreamedResponse
+    {
+        return $templateExporter->streamWorkerTemplate();
     }
 
     public function downloadEmptyMonthlyReview(): StreamedResponse

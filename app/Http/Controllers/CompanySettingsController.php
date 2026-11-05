@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\CompanySetting;
 use App\Models\File;
+use App\Models\Installation;
+use App\Support\Installations\InstallationAudit;
 use App\Services\CompanyLetterheadService;
 use App\Services\OwnCompanyClientService;
 use App\Support\MapCoordinates;
@@ -23,17 +26,35 @@ class CompanySettingsController extends Controller
         $company = CompanySetting::current();
         $letterheadImages = $letterhead->imagesFor($company);
 
+        $returnInstallation = null;
+        $ownCompany = Client::ownCompany();
+        $returnId = $request->integer('return_installation');
+        if ($ownCompany && $returnId !== 0) {
+            $returnInstallation = Installation::matchingPrincipal($returnId, $ownCompany->id);
+        }
+
         return view('company.edit', [
             'company' => $company,
             'hasLetterheadHeader' => $letterheadImages['header'] !== null,
             'hasLetterheadFooter' => $letterheadImages['footer'] !== null,
             'missingLetterFields' => $company->missingLetterFields(),
+            'returnInstallation' => $returnInstallation,
         ]);
     }
 
     public function update(Request $request, CompanyLetterheadService $letterhead, OwnCompanyClientService $ownClient)
     {
         $this->authorizeAdmin($request);
+
+        $returnInstallation = null;
+        $installationBefore = null;
+        $ownCompany = Client::ownCompany();
+        $returnId = $request->integer('return_installation');
+        if ($ownCompany && $returnId !== 0) {
+            $returnInstallation = Installation::matchingPrincipal($returnId, $ownCompany->id);
+            $installationBefore = $returnInstallation?->only(['name', 'address', 'city', 'department']);
+        }
+        $note = trim((string) $request->input('change_note', ''));
 
         $data = $request->validate([
             'legal_name' => ['nullable', 'string', 'max:255'],
@@ -115,6 +136,15 @@ class CompanySettingsController extends Controller
         foreach ($filesToDelete as $file) {
             Storage::disk($file->disk)->delete($file->path);
             $file->delete();
+        }
+
+        if ($returnInstallation) {
+            $returnInstallation->refresh();
+            InstallationAudit::record($request->user()?->id, 'installation_updated', $returnInstallation, $installationBefore, $note);
+
+            return redirect()
+                ->route('installations.edit', $returnInstallation)
+                ->with('status', __('Instalación actualizada.'));
         }
 
         return redirect()

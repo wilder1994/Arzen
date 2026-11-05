@@ -1,6 +1,9 @@
 @php
     $levels = collect(old('grants', $grantLevels))->only(array_keys($modules))->all() + $grantLevels;
     $pickedClients = collect(old('client_ids', $selectedClientIds))->map(fn ($id) => (int) $id)->values()->all();
+    $nameParts = preg_split('/\s+/u', trim((string) $user->name), 2) ?: [];
+    $firstName = old('first_name', $user->first_name ?? ($nameParts[0] ?? ''));
+    $lastName = old('last_name', $user->last_name ?? ($nameParts[1] ?? ''));
     $formConfig = [
         'role' => old('role', $user->role),
         'levels' => $levels,
@@ -13,69 +16,121 @@
 <script type="application/json" id="user-form-config">@json($formConfig)</script>
 <div x-data="userAccessForm()">
     <h3 class="sj-form-section__title">{{ __('Datos del usuario') }}</h3>
-    <div class="sj-company__grid">
-        <div class="sj-ui-field">
-            <label for="user-name" class="sj-ui-field__label">{{ __('Nombre') }}</label>
-            <input id="user-name" name="name" type="text" maxlength="255" value="{{ old('name', $user->name) }}" class="sj-ui-field__control" required>
-            <x-input-error :messages="$errors->get('name')" />
-        </div>
-        <div class="sj-ui-field">
-            <label for="user-email" class="sj-ui-field__label">{{ __('Correo electrónico') }}</label>
-            <input id="user-email" name="email" type="email" maxlength="255" value="{{ old('email', $user->email) }}" class="sj-ui-field__control" required>
-            <x-input-error :messages="$errors->get('email')" />
-        </div>
-        <div class="sj-ui-field">
-            <div class="sj-ui-field__label-row">
-                <label for="user-role" class="sj-ui-field__label">{{ __('Rol') }}</label>
-                <x-help-tip :text="__('El rol define qué datos ve el usuario (por ejemplo, el responsable solo ve los clientes de su cartera). Al cambiarlo se cargan sus permisos por defecto en la matriz.')" />
+    <div class="sj-user-identity">
+        <div
+            class="sj-user-portrait"
+            x-data="userPortrait(@js($user->portraitUrl()))"
+        >
+            <input x-ref="file" name="photo" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" @change="useFile($event)">
+            <button type="button" class="sj-user-portrait__camera" @click="openCamera()">{{ __('Tomar foto') }}</button>
+            <button type="button" class="sj-user-portrait__frame" @click="$refs.file.click()" :aria-label="@js(__('Elegir foto'))">
+                <img x-show="preview" :src="preview" alt="">
+                <span x-show="!preview" class="sj-user-portrait__empty">{{ __('Foto') }}</span>
+            </button>
+            <x-input-error :messages="$errors->get('photo')" />
+
+            <div x-show="cameraOpen" x-cloak class="sj-user-camera" @keydown.escape.window="closeCamera()">
+                <div class="sj-user-camera__panel" @click.outside="closeCamera()">
+                    <video x-ref="video" autoplay playsinline muted></video>
+                    <canvas x-ref="canvas" class="sr-only"></canvas>
+                    <p x-show="cameraError" class="sj-company__hint" x-text="cameraError"></p>
+                    <div class="sj-user-camera__actions">
+                        <button type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm" @click="closeCamera()">{{ __('Cancelar') }}</button>
+                        <button type="button" class="sj-ui-btn sj-ui-btn--primary sj-ui-btn--sm" @click="capture()" :disabled="cameraError !== ''">{{ __('Usar esta foto') }}</button>
+                    </div>
+                </div>
             </div>
-            <select id="user-role" name="role" class="sj-ui-field__control" x-model="role" @change="applyDefaults()" required>
-                @foreach ($roles as $value => $label)
-                    @continue($value === \App\Models\User::ROLE_ADMIN && ! $canAssignAdmin)
-                    <option value="{{ $value }}">{{ $label }}</option>
-                @endforeach
-            </select>
-            <x-input-error :messages="$errors->get('role')" />
         </div>
-        <div class="sj-ui-field">
-            <div class="sj-ui-field__label-row">
-                <label for="user-position" class="sj-ui-field__label">{{ __('Cargo') }}</label>
-                <x-help-tip :text="__('Se crean en Ajustes → Cargos. Es el mismo catálogo que usan los trabajadores.')" />
+
+        <div class="sj-user-fields">
+            <div class="sj-ui-field">
+                <label for="user-first-name" class="sj-ui-field__label">{{ __('Nombre') }}</label>
+                <input id="user-first-name" name="first_name" type="text" maxlength="120" value="{{ $firstName }}" class="sj-ui-field__control" required>
+                <x-input-error :messages="$errors->get('first_name')" />
             </div>
-            <select id="user-position" name="position_id" class="sj-ui-field__control">
-                <option value="">{{ __('Sin cargo') }}</option>
-                @foreach ($positions as $position)
-                    <option value="{{ $position->id }}" @selected((int) old('position_id', $user->position_id) === $position->id)>{{ $position->name }}</option>
-                @endforeach
-            </select>
-            <x-input-error :messages="$errors->get('position_id')" />
+            <div class="sj-ui-field">
+                <label for="user-last-name" class="sj-ui-field__label">{{ __('Apellido') }}</label>
+                <input id="user-last-name" name="last_name" type="text" maxlength="120" value="{{ $lastName }}" class="sj-ui-field__control" required>
+                <x-input-error :messages="$errors->get('last_name')" />
+            </div>
+            <div class="sj-ui-field">
+                <label for="user-document-type" class="sj-ui-field__label">{{ __('Tipo de documento') }}</label>
+                <select id="user-document-type" name="document_type" class="sj-ui-field__control" required>
+                    @foreach (\App\Models\User::documentTypeLabels() as $value => $label)
+                        <option value="{{ $value }}" @selected(old('document_type', $user->document_type ?? 'CC') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('document_type')" />
+            </div>
+            <div class="sj-ui-field">
+                <label for="user-document" class="sj-ui-field__label">{{ __('Número de documento') }}</label>
+                <input id="user-document" name="document" type="text" maxlength="50" value="{{ old('document', $user->document) }}" class="sj-ui-field__control" required>
+                <x-input-error :messages="$errors->get('document')" />
+            </div>
+            <div class="sj-ui-field">
+                <label for="user-phone" class="sj-ui-field__label">{{ __('Teléfono de contacto') }}</label>
+                <input id="user-phone" name="phone" type="tel" maxlength="30" value="{{ old('phone', $user->phone) }}" class="sj-ui-field__control">
+                <x-input-error :messages="$errors->get('phone')" />
+            </div>
+            <div class="sj-ui-field">
+                <label for="user-email" class="sj-ui-field__label">{{ __('Correo corporativo') }}</label>
+                <input id="user-email" name="email" type="email" maxlength="255" value="{{ old('email', $user->email) }}" class="sj-ui-field__control" required>
+                <x-input-error :messages="$errors->get('email')" />
+            </div>
         </div>
-        <div class="sj-ui-field">
-            <label for="user-active" class="sj-ui-field__label">{{ __('Estado') }}</label>
-            <select id="user-active" name="is_active" class="sj-ui-field__control">
-                <option value="1" @selected((string) old('is_active', (int) $user->is_active) === '1')>{{ __('Activo') }}</option>
-                <option value="0" @selected((string) old('is_active', (int) $user->is_active) === '0')>{{ __('Inactivo') }}</option>
-            </select>
-            <x-input-error :messages="$errors->get('is_active')" />
-        </div>
-        <div class="sj-ui-field">
-            <label for="user-cost-center" class="sj-ui-field__label">{{ __('Centro de costo') }}</label>
-            <input id="user-cost-center" name="cost_center" type="text" maxlength="100" value="{{ old('cost_center', $user->cost_center) }}" class="sj-ui-field__control">
-            <x-input-error :messages="$errors->get('cost_center')" />
+        <div class="sj-user-fields sj-user-fields--tail">
+            <div class="sj-ui-field">
+                <div class="sj-ui-field__label-row">
+                    <label for="user-position" class="sj-ui-field__label">{{ __('Cargo') }}</label>
+                    <x-help-tip :text="__('Se crean en Ajustes → Cargos. Es el mismo catálogo que usan los trabajadores.')" />
+                </div>
+                <select id="user-position" name="position_id" class="sj-ui-field__control">
+                    <option value="">{{ __('Sin cargo') }}</option>
+                    @foreach ($positions as $position)
+                        <option value="{{ $position->id }}" @selected((int) old('position_id', $user->position_id) === $position->id)>{{ $position->name }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('position_id')" />
+            </div>
+            <div class="sj-ui-field">
+                <div class="sj-ui-field__label-row">
+                    <label for="user-role" class="sj-ui-field__label">{{ __('Rol') }}</label>
+                    <x-help-tip :text="__('El rol define qué datos ve el usuario (por ejemplo, el responsable solo ve los clientes de su cartera). Al cambiarlo se cargan sus permisos por defecto en la matriz.')" />
+                </div>
+                <select id="user-role" name="role" class="sj-ui-field__control" x-model="role" @change="applyDefaults()" required>
+                    @foreach ($roles as $value => $label)
+                        @continue($value === \App\Models\User::ROLE_ADMIN && ! $canAssignAdmin)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('role')" />
+            </div>
+            <div class="sj-ui-field">
+                <label for="user-active" class="sj-ui-field__label">{{ __('Estado') }}</label>
+                <select id="user-active" name="is_active" class="sj-ui-field__control">
+                    <option value="1" @selected((string) old('is_active', (int) $user->is_active) === '1')>{{ __('Activo') }}</option>
+                    <option value="0" @selected((string) old('is_active', (int) $user->is_active) === '0')>{{ __('Inactivo') }}</option>
+                </select>
+                <x-input-error :messages="$errors->get('is_active')" />
+            </div>
         </div>
     </div>
 
     <hr class="sj-ui-divider">
 
     <div class="sj-form-section__title sj-ui-field__label-row">
-        <h3>{{ __('Clientes (cartera)') }}</h3>
+        <button type="button" class="sj-user-clients__toggle" x-show="role !== 'ADMIN'" x-on:click="clientsOpen = !clientsOpen" x-bind:aria-expanded="clientsOpen.toString()">
+            <span class="sj-catalog__chevron" x-bind:class="clientsOpen && 'is-open'" aria-hidden="true"></span>
+            <span>{{ __('Clientes (cartera)') }}</span>
+            <span class="sj-company__hint" x-text="picked.length + ' {{ __('seleccionados') }}'"></span>
+        </button>
+        <h3 x-show="role === 'ADMIN'">{{ __('Clientes (cartera)') }}</h3>
         <x-help-tip :text="__('Clientes cuyas armas, puestos y trabajadores puede ver y operar el usuario. El súper administrador ve todos.')" />
     </div>
     <div x-show="role === 'ADMIN'" class="sj-company__hint">{{ __('El súper administrador tiene acceso a todos los clientes.') }}</div>
-    <div x-show="role !== 'ADMIN'" class="sj-user-clients">
+    <div x-show="role !== 'ADMIN' && clientsOpen" x-cloak class="sj-user-clients">
         <div class="sj-user-clients__toolbar">
             <input type="search" x-model="clientQuery" class="sj-ui-field__control" placeholder="{{ __('Filtrar clientes…') }}" aria-label="{{ __('Filtrar clientes') }}">
-            <span class="sj-company__hint" x-text="picked.length + ' {{ __('seleccionados') }}'"></span>
         </div>
         <template x-for="id in picked" :key="'picked-' + id">
             <input type="hidden" name="client_ids[]" :value="id">
@@ -94,41 +149,38 @@
 
     <hr class="sj-ui-divider">
 
-    <div class="sj-form-section__title sj-ui-field__label-row">
+    <div class="sj-form-section__title sj-grant-head">
         <h3>{{ __('Permisos por módulo') }}</h3>
         <x-help-tip :text="__('Nada: no ve el módulo. Ver: consulta sin modificar. Gestionar: puede crear, editar y eliminar.')" />
+        <button type="button" class="sj-ui-link" x-show="role !== 'ADMIN'" @click="applyDefaults()">{{ __('Restablecer según el rol') }}</button>
     </div>
     <div x-show="role === 'ADMIN'" class="sj-company__hint">{{ __('El súper administrador tiene acceso total a todos los módulos.') }}</div>
     <div x-show="role !== 'ADMIN'">
-        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <p class="sj-company__hint">{{ __('Se cargan según el rol y se pueden ajustar uno por uno.') }}</p>
-            <button type="button" class="sj-ui-link" @click="applyDefaults()">{{ __('Restablecer según el rol') }}</button>
-        </div>
         <div class="sj-table-wrap">
-            <table class="sj-table sj-table--compact sj-table--align-left sj-grant-matrix">
+            <table class="sj-table sj-table--compact sj-grant-matrix">
                 <thead>
                     <tr>
                         <th>{{ __('Módulo') }}</th>
+                        <th>{{ __('Vista') }}</th>
                         @foreach ($levelLabels as $label)
-                            <th class="text-center">{{ $label }}</th>
+                            <th>{{ $label }}</th>
                         @endforeach
+                        <th>{{ __('Ayuda') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($modules as $key => $module)
                         <tr>
-                            <td>
-                                <span class="sj-ui-field__label-row mb-0">
-                                    <span class="font-medium">{{ $module['label'] }}</span>
-                                    <x-help-tip :text="$module['hint']" />
-                                </span>
-                                <span class="block text-xs text-gray-500">{{ $module['group'] }}</span>
-                            </td>
+                            <td>{{ $module['group'] }}</td>
+                            <td>{{ $module['label'] }}</td>
                             @foreach (array_keys($levelLabels) as $level)
-                                <td class="text-center">
+                                <td>
                                     <input type="radio" name="grants[{{ $key }}]" value="{{ $level }}" class="sj-ui-check" x-model="levels['{{ $key }}']" aria-label="{{ $module['label'] }}: {{ $levelLabels[$level] }}">
                                 </td>
                             @endforeach
+                            <td>
+                                <x-help-tip :text="$module['hint']" />
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -141,6 +193,66 @@
 @once
     @push('scripts')
         <script>
+            window.userPortrait = function (initial) {
+                return {
+                    preview: initial || '',
+                    cameraOpen: false,
+                    cameraError: '',
+                    stream: null,
+                    useFile(event) {
+                        const file = event.target.files && event.target.files[0];
+                        if (!file) {
+                            return;
+                        }
+                        if (this.preview && this.preview.startsWith('blob:')) {
+                            URL.revokeObjectURL(this.preview);
+                        }
+                        this.preview = URL.createObjectURL(file);
+                    },
+                    async openCamera() {
+                        this.cameraError = '';
+                        this.cameraOpen = true;
+                        try {
+                            this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+                            this.$refs.video.srcObject = this.stream;
+                        } catch (e) {
+                            this.cameraError = @js(__('No se pudo abrir la cámara. Elija una foto desde el recuadro.'));
+                        }
+                    },
+                    closeCamera() {
+                        if (this.stream) {
+                            this.stream.getTracks().forEach((track) => track.stop());
+                            this.stream = null;
+                        }
+                        this.cameraOpen = false;
+                    },
+                    capture() {
+                        const video = this.$refs.video;
+                        const canvas = this.$refs.canvas;
+                        if (!video.videoWidth) {
+                            return;
+                        }
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        canvas.getContext('2d').drawImage(video, 0, 0);
+                        canvas.toBlob((blob) => {
+                            if (!blob) {
+                                return;
+                            }
+                            const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+                            const transfer = new DataTransfer();
+                            transfer.items.add(file);
+                            this.$refs.file.files = transfer.files;
+                            if (this.preview && this.preview.startsWith('blob:')) {
+                                URL.revokeObjectURL(this.preview);
+                            }
+                            this.preview = URL.createObjectURL(blob);
+                            this.closeCamera();
+                        }, 'image/jpeg', 0.9);
+                    },
+                };
+            };
+
             window.userAccessForm = function () {
                 const cfg = JSON.parse(document.getElementById('user-form-config').textContent);
 
@@ -149,6 +261,7 @@
                     levels: { ...cfg.levels },
                     clients: cfg.clients,
                     picked: cfg.picked,
+                    clientsOpen: cfg.picked.length > 0,
                     clientQuery: '',
                     get filteredClients() {
                         const query = this.clientQuery.trim().toLowerCase();

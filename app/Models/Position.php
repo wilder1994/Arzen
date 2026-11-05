@@ -12,7 +12,6 @@ class Position extends Model
 
     protected $fillable = [
         'name',
-        'description',
         'is_active',
         'sort_order',
     ];

@@ -53,8 +53,11 @@ class ModuleAccessTest extends TestCase
         $position = Position::query()->create(['name' => 'Escolta']);
 
         $this->actingAs($admin)->post(route('users.store'), [
-            'name' => 'Laura Responsable',
+            'first_name' => 'Laura',
+            'last_name' => 'Responsable',
             'email' => 'laura@arzen.test',
+            'document_type' => 'CC',
+            'document' => '1098000001',
             'role' => User::ROLE_RESPONSABLE,
             'position_id' => $position->id,
             'is_active' => '1',
@@ -63,6 +66,7 @@ class ModuleAccessTest extends TestCase
         ])->assertRedirect(route('users.index'));
 
         $user = User::query()->where('email', 'laura@arzen.test')->firstOrFail();
+        $this->assertSame('Laura Responsable', $user->name);
         $this->assertSame($position->id, $user->position_id);
         $this->assertTrue($user->hasClientInPortfolio($client->id));
         $this->assertSame(ModuleAccess::VIEW, $user->moduleLevel('weapons'));
@@ -77,8 +81,11 @@ class ModuleAccessTest extends TestCase
         $manager->syncModuleLevels(['users' => ModuleAccess::MANAGE]);
 
         $this->actingAs($manager)->post(route('users.store'), [
-            'name' => 'Intruso',
+            'first_name' => 'Intruso',
+            'last_name' => 'Admin',
             'email' => 'intruso@arzen.test',
+            'document_type' => 'CC',
+            'document' => '1098000002',
             'role' => User::ROLE_ADMIN,
             'is_active' => '1',
         ])->assertForbidden();

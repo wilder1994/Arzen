@@ -1,6 +1,6 @@
 # Manuales de usuario — Arzen
 
-Manuales **paso a paso** (administrador v3.1; el resto v3.0): cada función incluye pantalla/menú/ruta, **Qué hacer**, **Resultado esperado**, figuras con tabla «Qué señalar» y errores frecuentes cuando aplica.
+Manuales **paso a paso** (administrador v3.2; el resto v3.0): cada función incluye pantalla/menú/ruta, **Qué hacer**, **Resultado esperado**, figuras con tabla «Qué señalar» y errores frecuentes cuando aplica.
 
 | Manual | Archivo | Perfil |
 |--------|---------|--------|

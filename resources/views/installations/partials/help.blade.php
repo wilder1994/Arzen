@@ -1,5 +1,8 @@
 <h3>{{ __('¿Qué es una instalación?') }}</h3>
-<p>{{ __('Es una sede del cliente: un edificio, una planta, una oficina o un conjunto. Cada instalación agrupa sus puestos de servicio, y los puestos toman su ubicación.') }}</p>
+<p>{{ __('Es una sede del cliente. En el listado, Editar abre esa sede: el mapa, sus datos, sus puestos y las personas y armas de cada puesto.') }}</p>
+
+<h3>{{ __('Puestos y trabajadores') }}</h3>
+<p>{{ __('Arriba se lee la sede. Editar instalación abre el formulario del nombre y la ubicación. Si la sede es la del mismo cliente, el sistema avisa y lleva a la ficha del cliente; al guardar, regresa aquí. Agregar puesto pide solo el nombre. Cada puesto tiene personas y armas. El historial guarda la nota del cambio y los movimientos de los puestos: alta, nombre, personas, armas, archivo y reactivación.') }}</p>
 
 <h3>{{ __('Instalación principal') }}</h3>
 <p>{{ __('Se crea sola al registrar el cliente, con su mismo nombre y ubicación. Si el cliente tiene una sola sede, no hace falta crear más.') }}</p>
@@ -21,4 +24,4 @@
 </dl>
 
 <h3>{{ __('Archivar') }}</h3>
-<p>{{ __('Una instalación solo se puede archivar cuando no tiene puestos activos. La instalación principal no se archiva.') }}</p>
+<p>{{ __('Una instalación solo se archiva cuando no tiene puestos activos. La fila queda en el listado, marcada como archivada, y el botón pasa a Reactivar. La instalación principal no se archiva. Un puesto archivado sigue en la ficha: las personas y las armas quedan sin puesto, y el botón pasa a Reactivar.') }}</p>

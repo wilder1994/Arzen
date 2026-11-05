@@ -18,32 +18,11 @@
         showClientsModal: false,
         modalUserName: "",
         modalClients: [],
-        showSendCredentialsModal: false,
-        sendCredUserId: null,
-        sendCredName: "",
-        sendCredEmail: "",
-        appBaseUrl: @json(rtrim(url("/"), "/")),
-        sendCredUrlTemplate: @json(route("users.send-access-credentials", ["user" => "__ID__"])),
-        openSendCred(id, name, email) {
-            this.sendCredUserId = id;
-            this.sendCredName = name;
-            this.sendCredEmail = email;
-            this.showSendCredentialsModal = true;
-        },
-        closeSendCred() {
-            this.showSendCredentialsModal = false;
-            this.sendCredUserId = null;
-            this.sendCredName = "";
-            this.sendCredEmail = "";
-        },
-        sendCredAction() {
-            return this.sendCredUserId
-                ? this.sendCredUrlTemplate.replace("__ID__", String(this.sendCredUserId))
-                : "#";
-        },
-        openClientsModal(name, clients) {
+        modalSeesAll: false,
+        openClientsModal(name, clients, seesAll) {
             this.modalUserName = name;
             this.modalClients = clients;
+            this.modalSeesAll = !!seesAll;
             this.showClientsModal = true;
         }
     }'>
@@ -85,85 +64,67 @@
             @endif
 
             <div class="sj-ui-card overflow-hidden">
-                <div class="sj-ui-card__body p-6">
-                    <div class="sj-table-wrap overflow-x-auto">
-                        <table class="sj-table sj-table--align-left min-w-full text-sm">
+                <div class="sj-ui-card__body p-4">
+                    <div class="sj-table-wrap">
+                        <table class="sj-table sj-table--align-left sj-table--compact sj-user-list">
                             <thead>
                                 <tr>
                                     <th>{{ __('Nombre') }}</th>
-                                    <th>{{ __('Correo electrónico') }}</th>
+                                    <th>{{ __('Correo') }}</th>
                                     <th>{{ __('Rol') }}</th>
                                     <th>{{ __('Cargo') }}</th>
-                                    <th>{{ __('Módulos') }}</th>
-                                    <th>{{ __('Clientes asignados') }}</th>
-                                    <th>{{ __('Estado activo') }}</th>
+                                    <th class="sj-user-list__clients">{{ __('Clientes') }}</th>
+                                    <th class="sj-user-list__state">{{ __('Estado') }}</th>
                                     <th>{{ __('Acciones') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($users as $user)
                                     <tr>
-                                        <td class="px-3 py-2">{{ $user->name }}</td>
-                                        <td class="px-3 py-2">{{ $user->email }}</td>
-                                        <td class="px-3 py-2">{{ $roles[$user->role] ?? $user->role }}</td>
-                                        <td class="px-3 py-2">{{ $user->position?->name ?? '-' }}</td>
-                                        <td class="px-3 py-2">
-                                            @if ($user->isAdmin())
-                                                {{ __('Acceso total') }}
-                                            @else
-                                                @php($moduleCounts = collect($user->moduleLevels())->countBy())
-                                                {{ __(':manage gestiona · :view consulta', ['manage' => $moduleCounts->get('manage', 0), 'view' => $moduleCounts->get('view', 0)]) }}
-                                            @endif
-                                        </td>
-                                        <td class="px-3 py-2">
+                                        <td>{{ $user->name }}</td>
+                                        <td>{{ $user->email }}</td>
+                                        <td>{{ $roles[$user->role] ?? $user->role }}</td>
+                                        <td>{{ $user->position?->name ?? '—' }}</td>
+                                        <td class="sj-user-list__clients">
                                             <button
                                                 type="button"
                                                 class="sj-ui-link"
-                                                @click='openClientsModal(@json($user->name), @json($user->clients->pluck("name")->values()->all()))'
+                                                @click='openClientsModal(@json($user->name), @json($user->clients->pluck("name")->values()->all()), @json($user->isAdmin()))'
                                             >
-                                                {{ __('Ver clientes') }}
+                                                {{ $user->isAdmin() ? __('Todos') : $user->clients->count() }}
                                             </button>
                                         </td>
-                                        <td class="px-3 py-2">
-                                            <span class="{{ $user->is_active ? 'text-green-700' : 'text-gray-500' }}">
-                                                {{ $user->is_active ? __('Activo') : __('Inactivo') }}
-                                            </span>
-                                        </td>
-                                        <td class="px-3 py-2 text-right space-x-2">
-                                            <a href="{{ route('users.edit', $user) }}" class="sj-ui-link">
-                                                {{ __('Editar') }}
-                                            </a>
-                                            @if ($user->is_active)
-                                                <button
-                                                    type="button"
-                                                    class="sj-ui-link sj-ui-link--success"
-                                                    @click='openSendCred({{ $user->id }}, @json($user->name), @json($user->email))'
-                                                >
-                                                    {{ __('Enviar') }}
-                                                </button>
-                                            @endif
-                                            <form method="POST" action="{{ route('users.status', $user) }}" class="inline">
+                                        <td class="sj-user-list__state">
+                                            <form method="POST" action="{{ route('users.status', $user) }}">
                                                 @csrf
                                                 @method('PATCH')
-                                                <input type="hidden" name="is_active" value="{{ $user->is_active ? 0 : 1 }}">
-                                                <button class="sj-ui-link sj-ui-link--warn">
-                                                    {{ $user->is_active ? __('Desactivar') : __('Activar') }}
-                                                </button>
+                                                <label class="sj-switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="is_active"
+                                                        value="1"
+                                                        @checked($user->is_active)
+                                                        aria-label="{{ $user->is_active ? __('Activo') : __('Inactivo') }}"
+                                                        onchange="this.form.submit()"
+                                                    >
+                                                    <span class="sj-switch__track"></span>
+                                                </label>
                                             </form>
-                                            <form method="POST" action="{{ route('users.destroy', $user) }}" class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button class="sj-ui-link sj-ui-link--danger" onclick="return confirm(@js(__('¿Eliminar usuario?')))">
-                                                    {{ __('Eliminar') }}
-                                                </button>
-                                            </form>
+                                        </td>
+                                        <td>
+                                            <div class="sj-user-list__actions">
+                                                <a href="{{ route('users.edit', $user) }}" class="sj-ui-link">{{ __('Editar') }}</a>
+                                                <form method="POST" action="{{ route('users.destroy', $user) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="sj-ui-link sj-ui-link--danger" onclick="return confirm(@js(__('¿Eliminar usuario?')))">{{ __('Eliminar') }}</button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="px-3 py-6 text-center text-gray-500">
-                                            {{ __('Sin usuarios registrados.') }}
-                                        </td>
+                                        <td colspan="7" class="sj-user-list__empty">{{ __('Sin usuarios registrados.') }}</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -173,60 +134,6 @@
                     <div class="mt-4">
                         {{ $users->links() }}
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div
-            x-show="showSendCredentialsModal"
-            x-cloak
-            x-transition.opacity
-            class="fixed inset-0 z-[1400] flex items-center justify-center bg-black/50 p-4"
-            @click.self="closeSendCred()"
-        >
-            <div class="w-full max-w-lg rounded-lg bg-white shadow-xl">
-                <div class="border-b border-gray-200 px-5 py-4">
-                    <h3 class="sj-type-section text-gray-900">{{ __('Confirmar envío de credenciales') }}</h3>
-                    <p class="mt-1 text-sm text-gray-600">
-                        {{ __('Correo destino') }}: <span class="font-medium text-gray-900" x-text="sendCredEmail"></span>
-                    </p>
-                </div>
-                <div class="max-h-[70vh] overflow-y-auto px-5 py-4 space-y-3 text-sm text-gray-700">
-                    <p>{{ __('Se enviará un correo a este usuario con la siguiente información:') }}</p>
-                    <ul class="list-disc space-y-2 pl-5">
-                        <li>
-                            {{ __('Enlace de acceso a la aplicación:') }}
-                            <code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs" x-text="appBaseUrl"></code>
-                        </li>
-                        <li>
-                            {{ __('Usuario (correo electrónico):') }}
-                            <span class="font-medium" x-text="sendCredEmail"></span>
-                        </li>
-                        <li>{{ __('Una contraseña temporal nueva; si el usuario ya tenía una, dejará de ser válida.') }}</li>
-                        <li>{{ __('Instrucciones indicando que al iniciar sesión por primera vez deberá cambiar la contraseña de forma obligatoria.') }}</li>
-                    </ul>
-                    <p class="text-amber-800 bg-amber-50 border border-amber-100 rounded-md px-3 py-2 text-xs">
-                        {{ __('¿Desea continuar?') }}
-                    </p>
-                </div>
-                <div class="flex items-center justify-end gap-2 border-t border-gray-200 px-5 py-4">
-                    <button
-                        type="button"
-                        class="sj-ui-btn sj-ui-btn--ghost"
-                        @click="closeSendCred()"
-                    >
-                        {{ __('Cancelar') }}
-                    </button>
-                    <form
-                        method="POST"
-                        class="inline"
-                        x-bind:action="sendCredAction()"
-                    >
-                        @csrf
-                        <x-primary-button type="submit" class="text-sm" x-bind:disabled="!sendCredUserId">
-                            {{ __('Enviar correo') }}
-                        </x-primary-button>
-                    </form>
                 </div>
             </div>
         </div>
@@ -254,12 +161,13 @@
                     </button>
                 </div>
                 <div class="max-h-80 overflow-y-auto px-5 py-4">
-                    <ul class="space-y-2 text-sm text-gray-700" x-show="modalClients.length > 0">
+                    <p class="text-sm text-gray-700" x-show="modalSeesAll">{{ __('Ve todos los clientes.') }}</p>
+                    <ul class="space-y-2 text-sm text-gray-700" x-show="!modalSeesAll && modalClients.length > 0">
                         <template x-for="(clientName, idx) in modalClients" :key="idx">
                             <li class="rounded border border-gray-200 px-3 py-2" x-text="clientName"></li>
                         </template>
                     </ul>
-                    <p class="text-sm text-gray-500" x-show="modalClients.length === 0">
+                    <p class="text-sm text-gray-500" x-show="!modalSeesAll && modalClients.length === 0">
                         {{ __('Sin clientes asignados.') }}
                     </p>
                 </div>

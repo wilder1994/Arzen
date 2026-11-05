@@ -6,6 +6,8 @@ use App\Events\AssignmentChanged;
 use App\Events\WorkerChanged;
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\ContractType;
+use App\Models\EngagementType;
 use App\Models\Position;
 use App\Models\Post;
 use App\Models\User;
@@ -13,7 +15,9 @@ use App\Models\Weapon;
 use App\Models\WeaponWorkerAssignment;
 use App\Models\Worker;
 use App\Models\WorkerHistory;
+use App\Support\Workers\WorkerProfile;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -77,7 +81,13 @@ class WorkerController extends Controller
         }
 
         if ($search !== '') {
-            $query->where('name', 'like', '%' . $search . '%');
+            $query->where(function ($builder) use ($search) {
+                $builder->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('document', 'like', '%'.$search.'%')
+                    ->orWhere('first_names', 'like', '%'.$search.'%')
+                    ->orWhere('last_name_paternal', 'like', '%'.$search.'%')
+                    ->orWhere('last_name_maternal', 'like', '%'.$search.'%');
+            });
         }
 
         if ($clientId) {
@@ -104,12 +114,14 @@ class WorkerController extends Controller
             $responsibles = User::where('role', 'RESPONSABLE')->orderBy('name')->get();
         }
         $positions = $this->positionOptions();
+        $countLabel = $this->workerCountLabel($workers);
 
         if ($request->ajax()) {
             return response()->json([
                 'tbody' => view('workers.partials.index_rows', compact('workers'))->render(),
                 'pagination' => view('workers.partials.index_pagination', compact('workers'))->render(),
-                'total_global' => $workersGlobalTotal,
+                'total_global' => $workers->total(),
+                'count_label' => $countLabel,
             ])
                 ->withHeaders([
                     'Cache-Control' => 'private, no-store, must-revalidate',
@@ -130,22 +142,12 @@ class WorkerController extends Controller
                 'archiveFilter',
                 'showResponsibleFilter',
                 'workersGlobalTotal',
+                'countLabel',
             ))
             ->withHeaders([
                 'Cache-Control' => 'private, no-store, must-revalidate',
                 'Vary' => 'Cookie',
             ]);
-    }
-
-    private function clientIdValidationRules(Request $request): array
-    {
-        $user = $request->user();
-        $rules = ['required', 'exists:clients,id'];
-        if ($user && $user->isResponsibleLevelOne() && !$user->isAdmin()) {
-            $rules[] = Rule::in($user->clients()->pluck('clients.id')->all());
-        }
-
-        return $rules;
     }
 
     private function clientsForForm(Request $request)
@@ -165,40 +167,14 @@ class WorkerController extends Controller
     {
         $this->authorize('create', Worker::class);
 
-        $clients = $this->clientsForForm($request);
-        $user = $request->user();
-        $lockResponsible = $user && ! $user->isAdmin() && $user->isResponsibleLevelOne();
-        $responsibles = $lockResponsible
-            ? collect([$user])
-            : User::where('role', 'RESPONSABLE')->orderBy('name')->get();
-        $positions = $this->positionOptions();
-        $posts = $this->postsForForm($request);
-
-        return view('workers.create', compact('clients', 'responsibles', 'positions', 'posts', 'lockResponsible'));
+        return view('workers.create', $this->formCatalogs());
     }
 
     public function store(Request $request)
     {
         $this->authorize('create', Worker::class);
 
-        $user = $request->user();
-        $lockResponsible = $user && ! $user->isAdmin() && $user->isResponsibleLevelOne();
-
-        $data = $request->validate([
-            'client_id' => $this->clientIdValidationRules($request),
-            'name' => ['required', 'string', 'max:255'],
-            'document' => ['nullable', 'string', 'max:50'],
-            'position_id' => ['nullable', Rule::exists('positions', 'id')],
-            'post_id' => $this->postValidationRules($request),
-            'document_type' => ['required', Rule::in(array_keys(Client::documentTypeLabels()))],
-            'responsible_user_id' => ['nullable', 'exists:users,id'],
-            'notes' => ['nullable', 'string'],
-        ]);
-
-        if ($lockResponsible) {
-            $data['responsible_user_id'] = $user->id;
-        }
-
+        $data = $this->workerData($request);
         $data['archived_at'] = null;
 
         $worker = Worker::create($data);
@@ -246,40 +222,14 @@ class WorkerController extends Controller
     {
         $this->authorize('update', $worker);
 
-        $clients = $this->clientsForForm($request);
-        $user = $request->user();
-        $lockResponsible = $user && ! $user->isAdmin() && $user->isResponsibleLevelOne();
-        $responsibles = $lockResponsible
-            ? collect([$user])
-            : User::where('role', 'RESPONSABLE')->orderBy('name')->get();
-        $positions = $this->positionOptions();
-        $posts = $this->postsForForm($request);
-
-        return view('workers.edit', compact('worker', 'clients', 'responsibles', 'positions', 'posts', 'lockResponsible'));
+        return view('workers.edit', array_merge(['worker' => $worker], $this->formCatalogs($worker)));
     }
 
     public function update(Request $request, Worker $worker)
     {
         $this->authorize('update', $worker);
 
-        $user = $request->user();
-        $lockResponsible = $user && ! $user->isAdmin() && $user->isResponsibleLevelOne();
-
-        $data = $request->validate([
-            'client_id' => $this->clientIdValidationRules($request),
-            'name' => ['required', 'string', 'max:255'],
-            'document' => ['nullable', 'string', 'max:50'],
-            'position_id' => ['nullable', Rule::exists('positions', 'id')],
-            'post_id' => $this->postValidationRules($request),
-            'document_type' => ['required', Rule::in(array_keys(Client::documentTypeLabels()))],
-            'responsible_user_id' => ['nullable', 'exists:users,id'],
-            'notes' => ['nullable', 'string'],
-            'change_note' => ['required', 'string', 'min:3', 'max:5000'],
-        ]);
-
-        if ($lockResponsible) {
-            $data['responsible_user_id'] = $user->id;
-        }
+        $data = $this->workerData($request, true);
 
         $changeNote = trim((string) ($data['change_note'] ?? ''));
         unset($data['change_note']);
@@ -407,32 +357,66 @@ class WorkerController extends Controller
         return $header;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function formCatalogs(?Worker $worker = null): array
+    {
+        $positions = $this->positionOptions();
+        if ($worker?->position && $positions->doesntContain('id', $worker->position_id)) {
+            $positions->push($worker->position);
+        }
+
+        $engagementTypes = EngagementType::query()->active()->ordered()->get();
+        if ($worker?->engagementType && $engagementTypes->doesntContain('id', $worker->engagement_type_id)) {
+            $engagementTypes->push($worker->engagementType);
+        }
+
+        $contractTypes = ContractType::query()->active()->ordered()->get();
+        if ($worker?->contractType && $contractTypes->doesntContain('id', $worker->contract_type_id)) {
+            $contractTypes->push($worker->contractType);
+        }
+
+        return compact('positions', 'engagementTypes', 'contractTypes');
+    }
+
     private function positionOptions()
     {
         return Position::query()->active()->ordered()->get();
     }
 
-    private function postsForForm(Request $request)
+    /**
+     * @return array<string, mixed>
+     */
+    private function workerData(Request $request, bool $withChangeNote = false): array
     {
-        $user = $request->user();
+        $rules = array_merge(WorkerProfile::rules(), [
+            'document' => ['nullable', 'string', 'max:50'],
+            'position_id' => ['nullable', Rule::exists('positions', 'id')],
+            'engagement_type_id' => ['nullable', Rule::exists('engagement_types', 'id')],
+            'contract_type_id' => ['nullable', Rule::exists('contract_types', 'id')],
+            'document_type' => ['required', Rule::in(array_keys(Client::documentTypeLabels()))],
+        ]);
 
-        return Post::query()
-            ->active()
-            ->whereNull('custody_role')
-            ->with('installation:id,name')
-            ->when(! $user?->isAdmin(), fn ($query) => $query->whereIn('client_id', $user?->clients()->pluck('clients.id') ?? []))
-            ->orderBy('name')
-            ->get(['id', 'client_id', 'installation_id', 'name']);
+        if ($withChangeNote) {
+            $rules['change_note'] = ['required', 'string', 'min:3', 'max:5000'];
+        }
+
+        $data = $request->validate($rules);
+        $data['name'] = WorkerProfile::composeName(
+            $data['first_names'] ?? null,
+            $data['last_name_paternal'] ?? null,
+            $data['last_name_maternal'] ?? null,
+        );
+
+        return $data;
     }
 
-    private function postValidationRules(Request $request): array
+    private function workerCountLabel(LengthAwarePaginator $workers): string
     {
-        return [
-            'nullable',
-            Rule::exists('posts', 'id')->where(fn ($query) => $query
-                ->where('client_id', (int) $request->input('client_id'))
-                ->whereNull('archived_at')),
-        ];
+        $total = $workers->total();
+
+        return number_format($total, 0, ',', '.').' '.trans_choice('trabajador|trabajadores', $total);
     }
 
     private function postChangeLine(?int $fromPostId, ?int $toPostId): ?string

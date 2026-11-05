@@ -30,8 +30,6 @@ final class ZentraClientSchema
             'Dirección',
             'Ciudad',
             'Departamento',
-            'Accesos',
-            'Supervisión',
         ];
     }
 
@@ -64,6 +62,7 @@ final class ZentraClientSchema
             'direccion principal' => 'address',
             'ciudad' => 'city',
             'departamento' => 'department',
+            'tipo de estructura' => 'structure_type',
         ];
     }
 

@@ -28,7 +28,7 @@
                 </thead>
                 <tbody>
                     @foreach ($installations as $installation)
-                        <tr @class(['opacity-60' => $installation->isArchived()])>
+                        <tr @class(['sj-archived-row' => $installation->isArchived()])>
                             <td>
                                 <span class="font-semibold">{{ $installation->name }}</span>
                                 @if ($installation->is_client_site)

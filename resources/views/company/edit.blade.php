@@ -38,6 +38,9 @@
             <form method="POST" action="{{ route('company.update') }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                @if ($returnInstallation)
+                    <input type="hidden" name="return_installation" value="{{ $returnInstallation->id }}">
+                @endif
 
                 <section class="sj-ui-card">
                     <div class="sj-ui-card__body p-6">
@@ -171,6 +174,13 @@
                                 </x-file-drop>
                             </div>
                         </div>
+
+                        @if ($returnInstallation)
+                            <div class="sj-ui-field mt-4">
+                                <label for="company-change-note" class="sj-ui-field__label">{{ __('Nota del cambio') }}</label>
+                                <textarea id="company-change-note" name="change_note" rows="2" maxlength="2000" class="sj-ui-field__control" placeholder="{{ __('Opcional. Queda en el historial de la instalación.') }}">{{ old('change_note') }}</textarea>
+                            </div>
+                        @endif
 
                         <div class="mt-6 flex justify-end">
                             <button type="submit" class="sj-ui-btn sj-ui-btn--primary">{{ __('Guardar cambios') }}</button>

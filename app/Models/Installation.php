@@ -42,6 +42,15 @@ class Installation extends Model
     /**
      * Instalación que representa la sede del propio cliente; se crea si aún no existe.
      */
+    public static function matchingPrincipal(int $id, int $clientId): ?self
+    {
+        return static::query()
+            ->whereKey($id)
+            ->where('client_id', $clientId)
+            ->where('is_client_site', true)
+            ->first();
+    }
+
     public static function mainFor(Client $client): self
     {
         $existing = static::query()

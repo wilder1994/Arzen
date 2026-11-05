@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ContractType;
+use App\Models\EngagementType;
+use App\Models\StructureType;
 use App\Models\IncidentModality;
 use App\Models\IncidentType;
 use App\Models\Position;
@@ -13,7 +16,7 @@ use Illuminate\Validation\Rule;
 
 class CatalogController extends Controller
 {
-    public const TABS = ['cargos', 'novedades'];
+    public const TABS = ['cargos', 'vinculacion', 'contratos', 'estructuras', 'novedades'];
 
     public function index(Request $request)
     {
@@ -23,14 +26,27 @@ class CatalogController extends Controller
 
         return view('settings.catalogs', [
             'tab' => $tab,
-            'positions' => Position::query()->withCount(['users', 'workers'])->ordered()->get(),
-            'incidentTypes' => IncidentType::query()
-                ->catalog()
-                ->with(['modalities' => fn ($query) => $query->withCount('incidents')->orderBy('sort_order')->orderBy('name')])
-                ->withCount('incidents')
-                ->orderBy('sort_order')
-                ->orderBy('name')
-                ->get(),
+            'positions' => $tab === 'cargos'
+                ? Position::query()->withCount(['users', 'workers'])->ordered()->get()
+                : collect(),
+            'engagementTypes' => $tab === 'vinculacion'
+                ? EngagementType::query()->withCount('workers')->ordered()->get()
+                : collect(),
+            'contractTypes' => $tab === 'contratos'
+                ? ContractType::query()->withCount('workers')->ordered()->get()
+                : collect(),
+            'structureTypes' => $tab === 'estructuras'
+                ? StructureType::query()->withCount('clients')->ordered()->get()
+                : collect(),
+            'incidentTypes' => $tab === 'novedades'
+                ? IncidentType::query()
+                    ->catalog()
+                    ->with(['modalities' => fn ($query) => $query->withCount('incidents')->orderBy('sort_order')->orderBy('name')])
+                    ->withCount('incidents')
+                    ->orderBy('sort_order')
+                    ->orderBy('name')
+                    ->get()
+                : collect(),
         ]);
     }
 
@@ -38,10 +54,14 @@ class CatalogController extends Controller
     {
         $this->authorizeAdmin($request);
 
-        Position::create($request->validate([
+        $name = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:positions,name'],
-            'description' => ['nullable', 'string', 'max:255'],
-        ]));
+        ])['name'];
+
+        Position::create([
+            'name' => $name,
+            'sort_order' => ((int) Position::query()->max('sort_order')) + 10,
+        ]);
 
         return $this->back('cargos', __('Cargo creado.'));
     }
@@ -52,11 +72,8 @@ class CatalogController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('positions', 'name')->ignore($position->id)],
-            'description' => ['nullable', 'string', 'max:255'],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
         ]);
-        $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
         $data['is_active'] = $request->boolean('is_active');
 
         $position->update($data);
@@ -75,6 +92,83 @@ class CatalogController extends Controller
         $position->delete();
 
         return $this->back('cargos', __('Cargo eliminado.'));
+    }
+
+    public function movePosition(Request $request, Position $position)
+    {
+        $this->authorizeAdmin($request);
+
+        $direction = $request->validate([
+            'direction' => ['required', Rule::in(['up', 'down'])],
+        ])['direction'];
+
+        $this->moveWithin(
+            Position::query()->ordered()->get(),
+            $position->id,
+            $direction
+        );
+
+        return $this->back('cargos', __('Orden actualizado.'));
+    }
+
+    public function storeEngagementType(Request $request)
+    {
+        return $this->storeNamedCatalog($request, EngagementType::class, 'vinculacion', __('Tipo de vinculación creado.'));
+    }
+
+    public function updateEngagementType(Request $request, EngagementType $engagementType)
+    {
+        return $this->updateNamedCatalog($request, $engagementType, 'vinculacion', __('Tipo de vinculación actualizado.'));
+    }
+
+    public function destroyEngagementType(Request $request, EngagementType $engagementType)
+    {
+        return $this->destroyNamedCatalog($request, $engagementType, 'vinculacion', __('Tipo de vinculación eliminado.'), __('No se puede eliminar un tipo de vinculación en uso. Desactívelo.'));
+    }
+
+    public function moveEngagementType(Request $request, EngagementType $engagementType)
+    {
+        return $this->moveNamedCatalog($request, EngagementType::class, $engagementType, 'vinculacion');
+    }
+
+    public function storeContractType(Request $request)
+    {
+        return $this->storeNamedCatalog($request, ContractType::class, 'contratos', __('Tipo de contrato creado.'));
+    }
+
+    public function updateContractType(Request $request, ContractType $contractType)
+    {
+        return $this->updateNamedCatalog($request, $contractType, 'contratos', __('Tipo de contrato actualizado.'));
+    }
+
+    public function destroyContractType(Request $request, ContractType $contractType)
+    {
+        return $this->destroyNamedCatalog($request, $contractType, 'contratos', __('Tipo de contrato eliminado.'), __('No se puede eliminar un tipo de contrato en uso. Desactívelo.'));
+    }
+
+    public function moveContractType(Request $request, ContractType $contractType)
+    {
+        return $this->moveNamedCatalog($request, ContractType::class, $contractType, 'contratos');
+    }
+
+    public function storeStructureType(Request $request)
+    {
+        return $this->storeNamedCatalog($request, StructureType::class, 'estructuras', __('Tipo de estructura creado.'));
+    }
+
+    public function updateStructureType(Request $request, StructureType $structureType)
+    {
+        return $this->updateNamedCatalog($request, $structureType, 'estructuras', __('Tipo de estructura actualizado.'));
+    }
+
+    public function destroyStructureType(Request $request, StructureType $structureType)
+    {
+        return $this->destroyNamedCatalog($request, $structureType, 'estructuras', __('Tipo de estructura eliminado.'), __('No se puede eliminar un tipo de estructura en uso. Desactívelo.'));
+    }
+
+    public function moveStructureType(Request $request, StructureType $structureType)
+    {
+        return $this->moveNamedCatalog($request, StructureType::class, $structureType, 'estructuras');
     }
 
     public function storeIncident(Request $request)
@@ -227,6 +321,69 @@ class CatalogController extends Controller
         );
 
         return $this->back('novedades', __('Orden actualizado.'));
+    }
+
+    /**
+     * @param  class-string<EngagementType|ContractType>  $model
+     */
+    private function storeNamedCatalog(Request $request, string $model, string $tab, string $message)
+    {
+        $this->authorizeAdmin($request);
+
+        $name = $request->validate([
+            'name' => ['required', 'string', 'max:255', Rule::unique($model::query()->getModel()->getTable(), 'name')],
+        ])['name'];
+
+        $model::query()->create([
+            'name' => $name,
+            'sort_order' => ((int) $model::query()->max('sort_order')) + 10,
+        ]);
+
+        return $this->back($tab, $message);
+    }
+
+    private function updateNamedCatalog(Request $request, EngagementType|ContractType|StructureType $item, string $tab, string $message)
+    {
+        $this->authorizeAdmin($request);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255', Rule::unique($item->getTable(), 'name')->ignore($item->id)],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+        $data['is_active'] = $request->boolean('is_active');
+        $item->update($data);
+
+        return $this->back($tab, $message);
+    }
+
+    private function destroyNamedCatalog(Request $request, EngagementType|ContractType|StructureType $item, string $tab, string $deleted, string $inUse)
+    {
+        $this->authorizeAdmin($request);
+
+        $used = $item instanceof StructureType ? $item->clients()->exists() : $item->workers()->exists();
+        if ($used) {
+            return $this->back($tab, null, $inUse);
+        }
+
+        $item->delete();
+
+        return $this->back($tab, $deleted);
+    }
+
+    /**
+     * @param  class-string<EngagementType|ContractType>  $model
+     */
+    private function moveNamedCatalog(Request $request, string $model, EngagementType|ContractType|StructureType $item, string $tab)
+    {
+        $this->authorizeAdmin($request);
+
+        $direction = $request->validate([
+            'direction' => ['required', Rule::in(['up', 'down'])],
+        ])['direction'];
+
+        $this->moveWithin($model::query()->ordered()->get(), $item->id, $direction);
+
+        return $this->back($tab, __('Orden actualizado.'));
     }
 
     private function createModality(IncidentType $incidentType, string $name): void

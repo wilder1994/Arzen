@@ -13,6 +13,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -28,7 +29,7 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::with(['position', 'clients', 'moduleGrants'])
+        $users = User::with(['position', 'clients'])
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
@@ -44,27 +45,19 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'in:'.implode(',', array_keys($this->roleOptions()))],
-            'position_id' => ['nullable', 'exists:positions,id'],
-            'client_ids' => ['nullable', 'array'],
-            'client_ids.*' => ['integer', 'exists:clients,id'],
-            'grants' => ['nullable', 'array'],
-            'grants.*' => ['nullable', Rule::in([ModuleAccess::NONE, ModuleAccess::VIEW, ModuleAccess::MANAGE])],
-            'is_active' => ['required', 'boolean'],
-            'cost_center' => ['nullable', 'string', 'max:100'],
-        ]);
+        $data = $request->validate($this->identityRules($request));
 
         $this->guardAdminRole($data['role']);
         [$clientIds, $grants] = $this->pullAccess($data);
+        unset($data['photo'], $data['generate_temporary_password']);
+        $data = $this->withDisplayName($data);
 
         $plainPassword = $this->temporaryPasswordGenerator->generate();
         $data['password'] = $plainPassword;
         $data['must_change_password'] = true;
 
         $user = User::create($data);
+        $this->storePortrait($request, $user);
         $user->clients()->sync($clientIds);
         $user->syncModuleLevels($grants);
 
@@ -94,23 +87,12 @@ class UserController extends Controller
     {
         $this->guardAdminTarget($user);
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'generate_temporary_password' => ['sometimes', 'boolean'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'in:'.implode(',', array_keys($this->roleOptions()))],
-            'position_id' => ['nullable', 'exists:positions,id'],
-            'client_ids' => ['nullable', 'array'],
-            'client_ids.*' => ['integer', 'exists:clients,id'],
-            'grants' => ['nullable', 'array'],
-            'grants.*' => ['nullable', Rule::in([ModuleAccess::NONE, ModuleAccess::VIEW, ModuleAccess::MANAGE])],
-            'is_active' => ['required', 'boolean'],
-            'cost_center' => ['nullable', 'string', 'max:100'],
-        ]);
+        $data = $request->validate($this->identityRules($request, $user));
 
         $this->guardAdminRole($data['role']);
         [$clientIds, $grants] = $this->pullAccess($data);
+        unset($data['photo']);
+        $data = $this->withDisplayName($data);
 
         $generateTemporary = $request->boolean('generate_temporary_password');
         $passwordInput = (string) ($data['password'] ?? '');
@@ -128,6 +110,7 @@ class UserController extends Controller
 
         $before = $user->only(['name', 'email', 'role', 'position_id', 'is_active']);
         $user->update($data);
+        $this->storePortrait($request, $user);
         $user->clients()->sync($clientIds);
         $user->syncModuleLevels($grants);
 
@@ -244,6 +227,10 @@ class UserController extends Controller
     {
         $this->guardAdminTarget($user);
 
+        if ($user->photo_path) {
+            Storage::disk('public')->delete($user->photo_path);
+        }
+
         AuditLog::create([
             'user_id' => request()->user()?->id,
             'action' => 'user_deleted',
@@ -256,6 +243,66 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('users.index')->with('status', 'Usuario eliminado.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function identityRules(Request $request, ?User $user = null): array
+    {
+        $documentUnique = Rule::unique('users', 'document')
+            ->where(fn ($query) => $query->where('document_type', $request->input('document_type')));
+
+        if ($user) {
+            $documentUnique = $documentUnique->ignore($user->id);
+        }
+
+        return [
+            'first_name' => ['required', 'string', 'max:120'],
+            'last_name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
+            'document_type' => ['required', Rule::in(array_keys(User::documentTypeLabels()))],
+            'document' => ['required', 'string', 'max:50', $documentUnique],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'role' => ['required', 'in:'.implode(',', array_keys($this->roleOptions()))],
+            'position_id' => ['nullable', 'exists:positions,id'],
+            'client_ids' => ['nullable', 'array'],
+            'client_ids.*' => ['integer', 'exists:clients,id'],
+            'grants' => ['nullable', 'array'],
+            'grants.*' => ['nullable', Rule::in([ModuleAccess::NONE, ModuleAccess::VIEW, ModuleAccess::MANAGE])],
+            'is_active' => ['required', 'boolean'],
+            'generate_temporary_password' => ['sometimes', 'boolean'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function withDisplayName(array $data): array
+    {
+        $data['first_name'] = trim((string) $data['first_name']);
+        $data['last_name'] = trim((string) $data['last_name']);
+        $data['name'] = trim($data['first_name'].' '.$data['last_name']);
+        $data['phone'] = trim((string) ($data['phone'] ?? '')) ?: null;
+
+        return $data;
+    }
+
+    private function storePortrait(Request $request, User $user): void
+    {
+        if (! $request->hasFile('photo')) {
+            return;
+        }
+
+        if ($user->photo_path) {
+            Storage::disk('public')->delete($user->photo_path);
+        }
+
+        $path = $request->file('photo')->store('users/'.$user->id, 'public');
+        $user->update(['photo_path' => $path]);
     }
 
     private function roleOptions(): array

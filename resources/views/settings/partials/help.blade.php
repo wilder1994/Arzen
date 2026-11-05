@@ -1,12 +1,21 @@
 <h3>{{ __('¿Qué hay en Ajustes?') }}</h3>
-<p>{{ __('Las listas y la configuración propias de su empresa: usuarios con sus permisos, cargos y tipos de novedad.') }}</p>
+<p>{{ __('Las listas y la configuración propias de su empresa: usuarios con sus permisos, cargos, tipos de vinculación, tipos de contrato y tipos de novedad.') }}</p>
 
 <h3>{{ __('Cargos') }}</h3>
 <ul>
     <li>{{ __('Es un solo catálogo para usuarios y trabajadores: escolta, guarda, supervisor, mensajero, recaudador, etc.') }}</li>
-    <li>{{ __('El orden define cómo aparecen en las listas. Un cargo inactivo deja de ofrecerse en los formularios, pero quien ya lo tiene lo conserva.') }}</li>
+    <li>{{ __('Las flechas cambian el orden en las listas. Un cargo inactivo deja de ofrecerse en los formularios, pero quien ya lo tiene lo conserva.') }}</li>
     <li>{{ __('Un cargo en uso no se puede eliminar; desactívelo.') }}</li>
     <li>{{ __('En las cargas masivas, si llega un cargo que no existe, se crea automáticamente.') }}</li>
+</ul>
+
+<h3>{{ __('Tipos de estructura') }}</h3>
+<p>{{ __('Opcional en el cliente. Un tipo en uso no se elimina; se desactiva. En la carga de clientes, si llega un tipo que no existe, se crea.') }}</p>
+
+<h3>{{ __('Tipos de vinculación y de contrato') }}</h3>
+<ul>
+    <li>{{ __('Cada empresa arma sus propias listas. El sistema trae unas semillas para que el formulario no quede vacío: puede dejarlas, borrarlas o agregar las suyas.') }}</li>
+    <li>{{ __('Un tipo en uso no se puede eliminar; desactívelo. En la carga desde Zentra, si llega un tipo que no existe, se crea y la fila sigue.') }}</li>
 </ul>
 
 <h3>{{ __('Tipos de novedad') }}</h3>

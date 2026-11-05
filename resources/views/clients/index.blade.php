@@ -5,49 +5,28 @@
     @endphp
 
     <x-slot name="header">
-        <div class="client-directory-header">
-            <div class="client-directory-header__icon-shell" aria-hidden="true">
-                <img src="{{ asset('images/icons/Clientes.png') }}" alt="" class="client-directory-header__icon">
+        <div class="sj-list-header">
+            <div class="sj-section-header__main">
+                <h2 class="sj-section-header__title">{{ $pageTitle }}</h2>
             </div>
 
-            <div class="client-directory-header__main">
-                <div class="client-directory-header__row">
-                    <div class="client-directory-header__intro">
-                        <div class="client-directory-header__copy">
-                            <h2 class="sj-type-page text-gray-800">
-                                {{ $pageTitle }}
-                            </h2>
-                            <p class="mt-1 sj-type-page-sub text-slate-500">
-                                {{ __('Consulta y administra la base de clientes registrada en el sistema.') }}
-                            </p>
-                        </div>
-                    </div>
+            <form class="sj-list-header__search" role="search" onsubmit="return false;">
+                <input
+                    id="clients-search"
+                    type="search"
+                    name="q"
+                    value="{{ $search }}"
+                    class="sj-ui-field__control"
+                    placeholder="{{ __('Buscar cliente') }}"
+                >
+                <button type="button" id="clients-search-clear" class="sj-list-header__clear" aria-label="{{ __('Limpiar búsqueda') }}" @if ($search === '') hidden @endif>&times;</button>
+            </form>
 
-                    <div class="client-directory-header__actions">
-                        @can('create', App\Models\Client::class)
-                            <a href="{{ route('clients.create') }}" class="sj-ui-btn sj-ui-btn--primary client-directory-header__primary-action">
-                                {{ __('Nuevo cliente') }}
-                            </a>
-                        @endcan
-                    </div>
-                </div>
-
-                <div class="client-directory-header__row client-directory-header__row--bottom">
-                    <form class="client-directory-header__search" role="search" onsubmit="return false;">
-                        <input
-                            id="clients-search"
-                            type="search"
-                            name="q"
-                            value="{{ $search }}"
-                            class="sj-ui-field__control h-10 w-full"
-                            placeholder="{{ __('Buscar por razón social, NIT, contacto, correo o ciudad...') }}"
-                        >
-                    </form>
-
-                    <div class="client-directory-header__tools">
-                        <span id="clients-count" class="client-directory-header__counter">{{ $clientCountLabel }}</span>
-                    </div>
-                </div>
+            <div class="sj-list-header__end">
+                <span id="clients-count" class="sj-list-header__count">{{ $clientCountLabel }}</span>
+                @can('create', App\Models\Client::class)
+                    <a href="{{ route('clients.create') }}" class="sj-ui-btn sj-ui-btn--primary">{{ __('Nuevo cliente') }}</a>
+                @endcan
             </div>
         </div>
     </x-slot>
@@ -70,11 +49,31 @@
                 </div>
             @endif
 
-            <section class="sj-ui-card overflow-hidden sj-client-panel">
-                <div id="clients-results">
-                    @include('clients.partials.index_results', ['clients' => $clients, 'search' => $search])
+            <div id="clients-results">
+                @include('clients.partials.index_results', ['clients' => $clients, 'search' => $search])
+            </div>
+
+            <div id="client-ficha-modal" class="fixed inset-0 z-[1400] hidden items-center justify-center bg-black/50 p-4">
+                <div class="absolute inset-0" data-close-ficha></div>
+                <div class="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
+                    <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+                        <h3 id="client-ficha-title" class="sj-type-section text-gray-900"></h3>
+                        <button type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm" data-close-ficha>{{ __('Cerrar') }}</button>
+                    </div>
+                    <div id="client-ficha-body" class="overflow-y-auto px-5 py-4"></div>
                 </div>
-            </section>
+            </div>
+
+            <div id="location-modal" class="fixed inset-0 z-[1400] hidden items-center justify-center bg-black/50 p-4">
+                <div class="absolute inset-0" data-close-map></div>
+                <div class="relative w-full max-w-3xl overflow-hidden rounded-lg bg-white shadow-xl">
+                    <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+                        <h3 id="location-modal-title" class="sj-type-section text-gray-900"></h3>
+                        <button type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm" data-close-map>{{ __('Cerrar') }}</button>
+                    </div>
+                    <iframe id="location-modal-frame" class="h-[28rem] w-full" title="{{ __('Ubicación') }}"></iframe>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -82,12 +81,54 @@
         <script>
             (() => {
                 const input = document.getElementById('clients-search');
+                const clearButton = document.getElementById('clients-search-clear');
                 const results = document.getElementById('clients-results');
                 const count = document.getElementById('clients-count');
+                const modal = document.getElementById('location-modal');
+                const modalTitle = document.getElementById('location-modal-title');
+                const modalFrame = document.getElementById('location-modal-frame');
+                const fichaModal = document.getElementById('client-ficha-modal');
+                const fichaTitle = document.getElementById('client-ficha-title');
+                const fichaBody = document.getElementById('client-ficha-body');
 
-                if (!input || !results || !count) {
+                if (!input || !results || !count || !clearButton || !modal || !fichaModal) {
                     return;
                 }
+
+                const syncClear = () => {
+                    clearButton.hidden = input.value.trim() === '';
+                };
+
+                const openMap = (title, lat, lng) => {
+                    modalTitle.textContent = title;
+                    modalFrame.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(lat + ',' + lng) + '&z=16&output=embed';
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                };
+
+                const closeMap = () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    modalFrame.src = '';
+                };
+
+                const closeFicha = () => {
+                    fichaModal.classList.add('hidden');
+                    fichaModal.classList.remove('flex');
+                    fichaBody.replaceChildren();
+                };
+
+                const openFicha = (id, title) => {
+                    const template = document.getElementById(id);
+                    if (!template) {
+                        return;
+                    }
+
+                    fichaTitle.textContent = title;
+                    fichaBody.replaceChildren(template.content.cloneNode(true));
+                    fichaModal.classList.remove('hidden');
+                    fichaModal.classList.add('flex');
+                };
 
                 const currentState = () => ({
                     q: input.value.trim(),
@@ -106,49 +147,8 @@
                     url.searchParams.set('page', page);
                 };
 
-                const closeExpandedRows = () => {
-                    results.querySelectorAll('[data-client-row]').forEach((row) => {
-                        row.classList.remove('is-open');
-
-                        const toggle = row.querySelector('[data-client-toggle]');
-                        if (toggle) {
-                            toggle.setAttribute('aria-expanded', 'false');
-                            toggle.setAttribute('aria-label', '{{ __('Mostrar detalle del cliente') }}');
-                        }
-                    });
-
-                    results.querySelectorAll('[data-client-detail-row]').forEach((row) => {
-                        row.classList.add('hidden');
-                    });
-                };
-
-                const toggleExpandedRow = (summaryRow) => {
-                    if (!summaryRow) {
-                        return;
-                    }
-
-                    const clientId = summaryRow.dataset.clientId;
-                    const detailRow = results.querySelector(`[data-client-detail-row][data-client-id="${clientId}"]`);
-                    const toggle = summaryRow.querySelector('[data-client-toggle]');
-                    const isOpen = summaryRow.classList.contains('is-open');
-
-                    closeExpandedRows();
-
-                    if (isOpen || !detailRow) {
-                        return;
-                    }
-
-                    summaryRow.classList.add('is-open');
-                    detailRow.classList.remove('hidden');
-
-                    if (toggle) {
-                        toggle.setAttribute('aria-expanded', 'true');
-                        toggle.setAttribute('aria-label', '{{ __('Ocultar detalle del cliente') }}');
-                    }
-                };
-
                 const updateList = async (url) => {
-                    closeExpandedRows();
+                    closeFicha();
 
                     const response = await fetch(url, {
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -165,6 +165,7 @@
 
                 let timer = null;
                 input.addEventListener('input', () => {
+                    syncClear();
                     const url = new URL(window.location.href);
                     applyStateToUrl(url, { resetPage: true });
                     window.history.replaceState({}, '', url.toString());
@@ -178,7 +179,37 @@
                     }, 300);
                 });
 
+                clearButton.addEventListener('click', () => {
+                    input.value = '';
+                    input.dispatchEvent(new Event('input'));
+                    input.focus();
+                });
+
+                modal.addEventListener('click', (event) => {
+                    if (event.target.closest('[data-close-map]')) {
+                        closeMap();
+                    }
+                });
+
+                fichaModal.addEventListener('click', (event) => {
+                    if (event.target.closest('[data-close-ficha]')) {
+                        closeFicha();
+                    }
+                });
+
                 results.addEventListener('click', (event) => {
+                    const fichaButton = event.target.closest('[data-open-ficha]');
+                    if (fichaButton) {
+                        openFicha(fichaButton.dataset.openFicha || '', fichaButton.dataset.fichaTitle || '');
+                        return;
+                    }
+
+                    const mapButton = event.target.closest('.sj-map-pin');
+                    if (mapButton) {
+                        openMap(mapButton.dataset.mapTitle || '', mapButton.dataset.mapLat || '', mapButton.dataset.mapLng || '');
+                        return;
+                    }
+
                     const link = event.target.closest('a');
                     if (link && link.href && link.closest('.pagination, nav')) {
                         event.preventDefault();
@@ -186,148 +217,9 @@
                         applyStateToUrl(url);
                         window.history.replaceState({}, '', url.toString());
                         updateList(url.toString());
-                        return;
                     }
-
-                    if (event.target.closest('.sj-client-action--edit, .sj-client-action--delete, form')) {
-                        return;
-                    }
-
-                    const summaryRow = event.target.closest('[data-client-row]');
-                    if (!summaryRow) {
-                        return;
-                    }
-
-                    toggleExpandedRow(summaryRow);
                 });
             })();
         </script>
     @endpush
-
-    <style>
-        .client-directory-header {
-            align-items: stretch;
-            display: grid;
-            gap: 0.55rem;
-            grid-template-columns: 4.5rem minmax(0, 1fr);
-        }
-
-        .client-directory-header__row {
-            align-items: flex-end;
-            display: flex;
-            gap: 1rem;
-            justify-content: space-between;
-        }
-
-        .client-directory-header__row--bottom {
-            align-items: flex-start;
-        }
-
-        .client-directory-header__main {
-            display: flex;
-            flex-direction: column;
-            gap: 0.55rem;
-        }
-
-        .client-directory-header__copy {
-            min-width: 0;
-        }
-
-        .client-directory-header__intro,
-        .client-directory-header__search {
-            flex: 1 1 auto;
-            min-width: 0;
-        }
-
-        .client-directory-header__icon-shell {
-            align-items: center;
-            background: transparent;
-            border: 0;
-            border-radius: 0;
-            box-shadow: none;
-            display: inline-flex;
-            height: 100%;
-            justify-content: center;
-            min-height: 6rem;
-            overflow: visible;
-            padding: 0;
-            width: 4.5rem;
-        }
-
-        .client-directory-header__icon {
-            display: block;
-            height: 4.2rem;
-            max-height: 100%;
-            max-width: 100%;
-            object-fit: contain;
-            width: 4.2rem;
-        }
-
-        .client-directory-header__search {
-            max-width: 42rem;
-        }
-
-        .client-directory-header__actions,
-        .client-directory-header__tools {
-            align-items: center;
-            display: flex;
-            flex: 0 0 auto;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            justify-content: flex-end;
-        }
-
-        .client-directory-header__primary-action,
-        .client-directory-header__counter {
-            align-items: center;
-            border-radius: 0.75rem;
-            display: inline-flex;
-            font-size: var(--sj-fs-md);
-            font-weight: 600;
-            height: var(--sj-ui-control-height);
-        }
-
-        .client-directory-header__primary-action {
-            background: rgb(37 99 235);
-            color: #fff;
-            padding: 0 1rem;
-            transition: 150ms ease;
-        }
-
-        .client-directory-header__primary-action:hover {
-            background: rgb(29 78 216);
-        }
-
-        .client-directory-header__counter {
-            background: #fff;
-            border: 1px solid rgb(226 232 240);
-            color: rgb(51 65 85);
-            padding: 0 1rem;
-        }
-
-        @media (max-width: 1100px) {
-            .client-directory-header {
-                grid-template-columns: 1fr;
-            }
-
-            .client-directory-header__icon-shell {
-                min-height: 4.5rem;
-                width: 4rem;
-            }
-
-            .client-directory-header__row {
-                align-items: stretch;
-                flex-direction: column;
-            }
-
-            .client-directory-header__search {
-                max-width: none;
-            }
-
-            .client-directory-header__actions,
-            .client-directory-header__tools {
-                justify-content: flex-start;
-            }
-        }
-    </style>
 </x-app-layout>

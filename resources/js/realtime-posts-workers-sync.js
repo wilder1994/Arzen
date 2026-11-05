@@ -97,8 +97,8 @@ function initRealtimePostsWorkersSync() {
         tbody.innerHTML = data.tbody;
         pagination.innerHTML = data.pagination;
         const totalEl = document.getElementById('workers-global-total');
-        if (totalEl && data.total_global != null) {
-            totalEl.textContent = formatGlobalTotalLabel(data.total_global, 'trabajador', 'trabajadores');
+        if (totalEl && data.count_label) {
+            totalEl.textContent = data.count_label;
         }
         window.Alpine?.initTree?.(tbody);
     };

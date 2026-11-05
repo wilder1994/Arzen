@@ -1,5 +1,5 @@
 <h3>{{ __('¿Para qué sirve?') }}</h3>
-<p>{{ __('Aquí se registra el personal de cada cliente que recibe armas o dotación: escoltas, guardas, mensajeros, recaudadores, supervisores.') }}</p>
+<p>{{ __('Aquí se registra la ficha del personal: identificación, contacto, cargo, vinculación y seguridad social.') }}</p>
 
 <h3>{{ __('Identificación') }}</h3>
 <dl>
@@ -8,24 +8,24 @@
         <dd>{{ __('Cédula, cédula de extranjería, pasaporte o PPT. Con el número se reconoce al trabajador en las cargas masivas.') }}</dd>
     </div>
     <div>
-        <dt>{{ __('Cargo') }}</dt>
-        <dd>{{ __('Se elige del catálogo de Ajustes → Cargos, que es el mismo para usuarios y trabajadores.') }}</dd>
+        <dt>{{ __('Lugar de nacimiento y de expedición') }}</dt>
+        <dd>{{ __('Primero el departamento y después la ciudad de ese departamento.') }}</dd>
+    </div>
+    <div>
+        <dt>{{ __('Nacionalidad') }}</dt>
+        <dd>{{ __('Queda en Colombiana. Puede cambiarla si el trabajador es de otro país.') }}</dd>
     </div>
 </dl>
 
-<h3>{{ __('Asignación') }}</h3>
+<h3>{{ __('Vinculación') }}</h3>
 <dl>
     <div>
-        <dt>{{ __('Cliente') }}</dt>
-        <dd>{{ __('Cliente para el que trabaja. Su propia empresa aparece como "Mi empresa".') }}</dd>
+        <dt>{{ __('Cargo') }}</dt>
+        <dd>{{ __('Se elige del catálogo de Ajustes → Cargos, que es el mismo para usuarios y trabajadores.') }}</dd>
     </div>
     <div>
-        <dt>{{ __('Puesto') }}</dt>
-        <dd>{{ __('Opcional. Solo muestra los puestos del cliente elegido. El trabajador queda en un solo puesto a la vez, y cada cambio de puesto queda en su historial.') }}</dd>
-    </div>
-    <div>
-        <dt>{{ __('Responsable') }}</dt>
-        <dd>{{ __('Usuario de su empresa que responde por el trabajador.') }}</dd>
+        <dt>{{ __('Tipo de vinculación y tipo de contrato') }}</dt>
+        <dd>{{ __('Cada empresa define los suyos en Ajustes. Si una carga trae uno que no existe, el sistema lo crea.') }}</dd>
     </div>
 </dl>
 

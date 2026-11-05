@@ -34,7 +34,7 @@ class ImportTemplateExporter
             instructionSheetName: 'Instrucciones',
             instructionHeaders: self::instructionHeaders(),
             instructionRows: ClientImportProcessor::templateInstructions(),
-            dataColumnWidths: [16, 28, 28, 14, 18, 26, 16, 26, 26, 18, 30, 18, 18, 10, 12],
+            dataColumnWidths: [16, 28, 28, 14, 18, 26, 16, 26, 26, 22, 30, 18, 18],
             instructionColumnWidths: [32, 12, 14, 72],
         );
     }
@@ -48,8 +48,8 @@ class ImportTemplateExporter
             instructionSheetName: 'Instrucciones',
             instructionHeaders: self::instructionHeaders(),
             instructionRows: WorkerImportProcessor::templateInstructions(),
-            dataColumnWidths: [18, 20, 16, 16, 22, 30, 22, 22, 20],
-            instructionColumnWidths: [32, 12, 14, 72],
+            dataColumnWidths: array_fill(0, count(WorkerImportProcessor::templateHeaders()), 24),
+            instructionColumnWidths: [42, 12, 22, 78],
         );
     }
 

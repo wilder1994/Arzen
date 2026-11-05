@@ -16,6 +16,7 @@ class Client extends Model
 
     protected $fillable = [
         'party_type',
+        'structure_type_id',
         'name',
         'legal_name',
         'document_type',
@@ -32,10 +33,12 @@ class Client extends Model
         'department',
         'latitude',
         'longitude',
+        'archived_at',
     ];
 
     protected $casts = [
         'is_own_company' => 'boolean',
+        'archived_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -85,6 +88,11 @@ class Client extends Model
         return static::query()->where('is_own_company', true)->first();
     }
 
+    public function structureType()
+    {
+        return $this->belongsTo(StructureType::class);
+    }
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_clients')->withTimestamps();
@@ -113,6 +121,28 @@ class Client extends Model
     public function scopeExternal(Builder $query): Builder
     {
         return $query->where('is_own_company', false);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereNull('clients.archived_at');
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archived_at !== null;
+    }
+
+    public function installationListLabel(): string
+    {
+        $active = (int) ($this->active_installations_count ?? $this->installations_count ?? 0);
+        $extra = (int) ($this->extra_installations_count ?? 0);
+
+        if ($extra === 0) {
+            return $active.' '.__('misma ubicación');
+        }
+
+        return trans_choice(':count instalación|:count instalaciones', $active, ['count' => $active]);
     }
 
     public function displayLegalName(): string

@@ -6,6 +6,8 @@ use App\Events\ClientChanged;
 use App\Events\MapDataChanged;
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\Installation;
+use App\Support\Installations\InstallationAudit;
 use App\Models\WeaponClientAssignment;
 use App\Support\MapCoordinates;
 use Illuminate\Http\Request;
@@ -44,7 +46,12 @@ class ClientController extends Controller
         }
 
         $clients = $query
-            ->withCount(['installations' => fn ($builder) => $builder->active()])
+            ->with('structureType:id,name')
+            ->withCount([
+                'installations as active_installations_count' => fn ($builder) => $builder->active(),
+                'installations as extra_installations_count' => fn ($builder) => $builder->active()->where('is_client_site', false),
+            ])
+            ->orderByRaw('CASE WHEN clients.archived_at IS NULL THEN 0 ELSE 1 END')
             ->orderByDesc('is_own_company')
             ->orderBy('name')
             ->paginate(15)
@@ -86,15 +93,28 @@ class ClientController extends Controller
         return redirect()->route('clients.edit', $client)->with('status', __('Cliente creado con su instalación principal.'));
     }
 
-    public function edit(Client $client)
+    public function edit(Request $request, Client $client)
     {
-        return view('clients.edit', compact('client'));
+        return view('clients.edit', [
+            'client' => $client,
+            'returnInstallation' => $this->installationFromReturn($request, $client),
+        ]);
     }
 
     public function update(Request $request, Client $client)
     {
         if ($client->is_own_company) {
             return redirect()->route('company.edit');
+        }
+
+        $returnInstallation = $this->installationFromReturn($request, $client);
+        $note = null;
+        $installationBefore = null;
+        if ($returnInstallation) {
+            $note = trim((string) ($request->validate([
+                'change_note' => ['nullable', 'string', 'max:2000'],
+            ])['change_note'] ?? ''));
+            $installationBefore = $returnInstallation->only(['name', 'address', 'city', 'department']);
         }
 
         $data = MapCoordinates::apply($this->validated($request));
@@ -115,11 +135,30 @@ class ClientController extends Controller
         event(new ClientChanged('updated', $client->id));
         event(new MapDataChanged('updated', $client->id));
 
+        if ($returnInstallation) {
+            $returnInstallation->refresh();
+            InstallationAudit::record($request->user()?->id, 'installation_updated', $returnInstallation, $installationBefore, $note);
+
+            return redirect()->route('installations.edit', $returnInstallation)->with('status', __('Instalación actualizada.'));
+        }
+
         return redirect()->route('clients.edit', $client)->with('status', __('Cliente actualizado.'));
     }
 
     public function destroy(Client $client)
     {
+        if ($client->is_own_company) {
+            return redirect()->route('clients.index')->withErrors([
+                'client' => __('La empresa propia no se puede archivar.'),
+            ]);
+        }
+
+        if ($client->installations()->active()->where('is_client_site', false)->exists()) {
+            return redirect()->route('clients.index')->withErrors([
+                'client' => __('Archive primero las instalaciones de este cliente.'),
+            ]);
+        }
+
         $hasWeapons = WeaponClientAssignment::query()
             ->where('client_id', $client->id)
             ->where('is_active', true)
@@ -127,27 +166,57 @@ class ClientController extends Controller
 
         if ($hasWeapons) {
             return redirect()->route('clients.index')->withErrors([
-                'client' => 'No se puede eliminar el cliente porque tiene armas asignadas.',
+                'client' => __('No se puede archivar el cliente porque tiene armas asignadas.'),
             ]);
         }
 
+        $client->update(['archived_at' => now()]);
+
         AuditLog::create([
             'user_id' => request()->user()?->id,
-            'action' => 'client_deleted',
+            'action' => 'client_archived',
             'auditable_type' => Client::class,
             'auditable_id' => $client->id,
-            'before' => $client->only(['name', 'nit', 'city', 'department']),
-            'after' => null,
+            'before' => ['archived_at' => null],
+            'after' => ['archived_at' => $client->archived_at?->toDateTimeString()],
         ]);
 
-        $clientId = $client->id;
+        event(new ClientChanged('archived', $client->id));
+        event(new MapDataChanged('updated', $client->id));
 
-        event(new ClientChanged('deleted', $clientId));
-        event(new MapDataChanged('deleted', $clientId));
+        return redirect()->route('clients.index')->with('status', __('Cliente archivado.'));
+    }
 
-        $client->delete();
+    public function restore(Client $client)
+    {
+        $this->authorize('delete', $client);
 
-        return redirect()->route('clients.index')->with('status', 'Cliente eliminado.');
+        $wasArchivedAt = $client->archived_at;
+        $client->update(['archived_at' => null]);
+
+        AuditLog::create([
+            'user_id' => request()->user()?->id,
+            'action' => 'client_restored',
+            'auditable_type' => Client::class,
+            'auditable_id' => $client->id,
+            'before' => ['archived_at' => $wasArchivedAt?->toDateTimeString()],
+            'after' => ['archived_at' => null],
+        ]);
+
+        event(new ClientChanged('restored', $client->id));
+        event(new MapDataChanged('updated', $client->id));
+
+        return redirect()->route('clients.index')->with('status', __('Cliente reactivado.'));
+    }
+
+    private function installationFromReturn(Request $request, Client $client): ?Installation
+    {
+        $id = $request->integer('return_installation');
+        if ($id === 0) {
+            return null;
+        }
+
+        return Installation::matchingPrincipal($id, $client->id);
     }
 
     /**
@@ -170,6 +239,7 @@ class ClientController extends Controller
             'neighborhood' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
             'department' => ['required', 'string', 'max:255'],
+            'structure_type_id' => ['nullable', Rule::exists('structure_types', 'id')],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'coords_source' => ['nullable', 'string', 'max:20'],

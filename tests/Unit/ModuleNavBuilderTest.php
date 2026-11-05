@@ -32,6 +32,9 @@ class ModuleNavBuilderTest extends TestCase
         $this->assertSame(['armamento', 'dotacion', 'plataforma', 'empresa', 'ajustes'], $this->moduleKeys($nav));
         $this->assertContains('datos-empresa', $keys);
         $this->assertContains('cargos', $keys);
+        $this->assertContains('vinculacion', $keys);
+        $this->assertContains('contratos', $keys);
+        $this->assertContains('estructuras', $keys);
         $this->assertContains('novedades', $keys);
         $this->assertContains('usuarios', $keys);
         $this->assertContains('asignaciones', $keys);

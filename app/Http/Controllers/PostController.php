@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\AssignmentChanged;
 use App\Events\PostChanged;
+use App\Events\WorkerChanged;
 use App\Models\Client;
 use App\Models\AuditLog;
 use App\Models\Installation;
@@ -11,6 +12,9 @@ use App\Models\Post;
 use App\Models\PostHistory;
 use App\Models\Weapon;
 use App\Models\WeaponPostAssignment;
+use App\Models\Worker;
+use App\Models\WorkerHistory;
+use App\Support\Installations\InstallationAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -211,7 +215,9 @@ class PostController extends Controller
 
         event(new PostChanged('created', $post->id, ['client_id' => $post->client_id]));
 
-        return redirect()->route('posts.index')->with('status', 'Puesto creado.');
+        return redirect()
+            ->route('installations.edit', $post->installation_id)
+            ->with('status', __('Puesto creado.'));
     }
 
     public function histories(Request $request, Post $post)
@@ -281,15 +287,16 @@ class PostController extends Controller
         return redirect()->route('posts.index')->with('status', 'Puesto actualizado.');
     }
 
-    public function destroy(Post $post)
+    public function destroy(Request $request, Post $post)
     {
         $this->authorize('delete', $post);
 
         $before = $post->only(['client_id', 'name']);
 
         $weaponIdsAffected = [];
+        $releasedWorkers = [];
 
-        DB::transaction(function () use ($post, &$weaponIdsAffected) {
+        DB::transaction(function () use ($post, $request, &$weaponIdsAffected, &$releasedWorkers) {
             $weaponIdsAffected = WeaponPostAssignment::query()
                 ->where('post_id', $post->id)
                 ->where('is_active', true)
@@ -304,6 +311,27 @@ class PostController extends Controller
                     'is_active' => null,
                 ]);
 
+            foreach (Worker::query()->where('post_id', $post->id)->get() as $worker) {
+                $workerBefore = $worker->only(['client_id', 'post_id']);
+                $worker->update(['post_id' => null]);
+                $releasedWorkers[] = $worker;
+
+                WorkerHistory::query()->create([
+                    'worker_id' => $worker->id,
+                    'user_id' => $request->user()?->id,
+                    'body' => __('Puesto: :from → :to', ['from' => $post->name, 'to' => __('sin puesto')]),
+                ]);
+
+                AuditLog::create([
+                    'user_id' => $request->user()?->id,
+                    'action' => 'worker_updated',
+                    'auditable_type' => Worker::class,
+                    'auditable_id' => $worker->id,
+                    'before' => $workerBefore,
+                    'after' => $worker->only(['client_id', 'post_id']),
+                ]);
+            }
+
             $post->archived_at = now();
             $post->save();
         });
@@ -314,6 +342,10 @@ class PostController extends Controller
             event(new AssignmentChanged('unassigned', $weaponId, [
                 'client_id' => $clientId,
             ]));
+        }
+
+        foreach ($releasedWorkers as $worker) {
+            event(new WorkerChanged('updated', $worker->id, ['client_id' => $worker->client_id]));
         }
 
         AuditLog::create([
@@ -330,12 +362,20 @@ class PostController extends Controller
         PostHistory::create([
             'post_id' => $post->id,
             'user_id' => request()->user()?->id,
-            'body' => __('Registro: puesto archivado.'),
+            'body' => __('Registro: puesto archivado. Las personas y las armas quedaron sin puesto.'),
         ]);
 
+        $this->noteInstallationMovement($request, $post, __('Puesto archivado: :name. Las personas y las armas quedaron sin puesto.', [
+            'name' => $post->name,
+        ]));
+
+        $target = $request->input('return') === 'installation' && $post->installation_id
+            ? route('installations.edit', $post->installation_id).'#puesto-'.$post->id
+            : route('posts.index', ['archive' => 'archived']);
+
         return redirect()
-            ->route('posts.index', ['archive' => 'archived'])
-            ->with('status', 'Puesto archivado. Las armas que estaban asignadas a este puesto quedaron sin ubicación interna activa.');
+            ->to($target)
+            ->with('status', __('Puesto archivado. Las personas y las armas quedaron sin puesto.'));
     }
 
     public function restore(Request $request, Post $post)
@@ -350,8 +390,12 @@ class PostController extends Controller
             ->exists();
 
         if ($conflict) {
+            $target = $request->input('return') === 'installation' && $post->installation_id
+                ? route('installations.edit', $post->installation_id)
+                : route('posts.index', ['archive' => 'archived']);
+
             return redirect()
-                ->route('posts.index', ['archive' => 'archived'])
+                ->to($target)
                 ->withErrors([
                     'restore' => 'Ya existe un puesto activo con el mismo nombre en esta instalación. Edite el nombre (puesto archivado o activo) antes de reactivar.',
                 ]);
@@ -379,7 +423,27 @@ class PostController extends Controller
             'body' => __('Registro: puesto reactivado.'),
         ]);
 
-        return redirect()->route('posts.index')->with('status', 'Puesto reactivado.');
+        $this->noteInstallationMovement($request, $post, __('Puesto reactivado: :name.', ['name' => $post->name]));
+
+        $target = $request->input('return') === 'installation' && $post->installation_id
+            ? route('installations.edit', $post->installation_id).'#puesto-'.$post->id
+            : route('posts.index');
+
+        return redirect()->to($target)->with('status', __('Puesto reactivado.'));
+    }
+
+    private function noteInstallationMovement(Request $request, Post $post, string $detail): void
+    {
+        if (! $post->installation_id) {
+            return;
+        }
+
+        $installation = Installation::query()->find($post->installation_id);
+        if (! $installation) {
+            return;
+        }
+
+        InstallationAudit::movement($request->user()?->id, $installation, $detail);
     }
 
     private function initialHistoryBody(?string $userName, ?string $notes): string

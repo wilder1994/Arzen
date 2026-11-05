@@ -105,8 +105,11 @@ class AlmacenRoleTest extends TestCase
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
 
         $response = $this->actingAs($admin)->post(route('users.store'), [
-            'name' => 'Personal Almacén',
+            'first_name' => 'Personal',
+            'last_name' => 'Almacén',
             'email' => 'almacen@example.com',
+            'document_type' => 'CC',
+            'document' => '1098000003',
             'role' => User::ROLE_ALMACEN,
             'is_active' => true,
         ]);

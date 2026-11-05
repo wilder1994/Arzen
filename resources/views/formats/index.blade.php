@@ -5,6 +5,11 @@
                 <p class="sj-section-header__eyebrow">{{ __('Documentos operativos') }}</p>
                 <h2 class="sj-section-header__title">{{ __('Formatos') }}</h2>
             </div>
+            <div class="sj-section-header__actions">
+                <x-help-drawer :title="__('Formatos')">
+                    @include('formats.partials.help')
+                </x-help-drawer>
+            </div>
         </div>
     </x-slot>
 
@@ -34,6 +39,48 @@
                             >
                                 {{ __('Con relación de armas') }}
                             </button>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="sj-ui-card">
+                    <div class="sj-ui-card__body flex h-full min-h-[11.5rem] flex-col gap-4 p-5">
+                        <div class="min-h-0 flex-1">
+                            <p class="sj-type-eyebrow text-sky-700">{{ __('Carga · Armas') }}</p>
+                            <h3 class="mt-2 sj-type-section text-slate-900">{{ __('Formato de armas') }}</h3>
+                        </div>
+                        <div class="mt-auto">
+                            <a href="{{ route('formatos.plantillas.armas') }}" class="sj-ui-btn sj-ui-btn--primary w-full justify-center">
+                                {{ __('Descargar formato') }}
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="sj-ui-card">
+                    <div class="sj-ui-card__body flex h-full min-h-[11.5rem] flex-col gap-4 p-5">
+                        <div class="min-h-0 flex-1">
+                            <p class="sj-type-eyebrow text-sky-700">{{ __('Carga · Clientes') }}</p>
+                            <h3 class="mt-2 sj-type-section text-slate-900">{{ __('Formato de clientes') }}</h3>
+                        </div>
+                        <div class="mt-auto">
+                            <a href="{{ route('formatos.plantillas.clientes') }}" class="sj-ui-btn sj-ui-btn--primary w-full justify-center">
+                                {{ __('Descargar formato') }}
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="sj-ui-card">
+                    <div class="sj-ui-card__body flex h-full min-h-[11.5rem] flex-col gap-4 p-5">
+                        <div class="min-h-0 flex-1">
+                            <p class="sj-type-eyebrow text-sky-700">{{ __('Carga · Trabajadores') }}</p>
+                            <h3 class="mt-2 sj-type-section text-slate-900">{{ __('Formato de trabajadores') }}</h3>
+                        </div>
+                        <div class="mt-auto">
+                            <a href="{{ route('formatos.plantillas.trabajadores') }}" class="sj-ui-btn sj-ui-btn--primary w-full justify-center">
+                                {{ __('Descargar formato') }}
+                            </a>
                         </div>
                     </div>
                 </article>

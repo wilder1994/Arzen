@@ -4,7 +4,9 @@ namespace App\Services\Imports;
 
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\StructureType;
 use App\Models\User;
+use App\Services\Geo\ColombiaGeocoder;
 use App\Models\WeaponImportBatch;
 use App\Models\WeaponImportRow;
 use App\Services\Imports\Contracts\ImportBatchProcessor;
@@ -49,6 +51,7 @@ class ClientImportProcessor implements ImportBatchProcessor
         'address' => 'Dirección',
         'city' => 'Ciudad',
         'department' => 'Departamento',
+        'structure_type' => 'Tipo de estructura',
     ];
 
     public function type(): string
@@ -79,12 +82,11 @@ class ClientImportProcessor implements ImportBatchProcessor
             ['Teléfono', 'No', 'Texto', 'Teléfono de contacto.'],
             ['Representante', 'No', 'Texto', 'Representante legal.'],
             ['Email representante', 'No', 'Correo', 'Correo del representante legal.'],
-            ['Tipo de estructura', 'No', 'Texto', 'Solo lo usa Zentra; Arzen lo ignora.'],
-            ['Dirección', 'No', 'Texto', 'Dirección principal. Crea o actualiza la instalación principal.'],
-            ['Ciudad', 'No', 'Texto', 'Municipio.'],
-            ['Departamento', 'No', 'Texto', 'Departamento.'],
-            ['Accesos', 'No', 'SI / NO', 'Solo lo usa Zentra; Arzen lo ignora.'],
-            ['Supervisión', 'No', 'SI / NO', 'Solo lo usa Zentra; Arzen lo ignora.'],
+            ['Tipo de estructura', 'No', 'Texto', 'Opcional. Catálogo de Ajustes → Tipos de estructura. Si no existe, se crea. Vacío = sin tipo.'],
+            ['Dirección', 'No', 'Texto', 'Dirección principal. Junto con ciudad y departamento se busca el pin en el mapa.'],
+            ['Ciudad', 'No', 'Texto', 'Municipio. Si el mapa no resuelve la dirección, la ubicación queda pendiente.'],
+            ['Departamento', 'No', 'Texto', 'Departamento de Colombia.'],
+            ['Accesos / Supervisión', 'No', '—', 'No van en esta plantilla. Si el archivo los trae, se ignoran.'],
         ];
     }
 
@@ -154,6 +156,11 @@ class ClientImportProcessor implements ImportBatchProcessor
                         $changedFields
                     ));
                 }
+            }
+
+            $structureName = $normalizedPayload['structure_type'] ?? null;
+            if ($action !== WeaponImportRow::ACTION_ERROR && $structureName && ! StructureType::findByName($structureName)) {
+                $summary .= ' Se creará el tipo de estructura "'.$structureName.'".';
             }
 
             $counts[$action]++;
@@ -306,7 +313,7 @@ class ClientImportProcessor implements ImportBatchProcessor
     {
         $payload = [];
 
-        foreach (self::IMPORTABLE_FIELDS as $field) {
+        foreach (array_merge(self::IMPORTABLE_FIELDS, ['structure_type']) as $field) {
             $payload[$field] = $this->extractCell($cells, $columnMap, $field);
         }
 
@@ -345,6 +352,7 @@ class ClientImportProcessor implements ImportBatchProcessor
             'address' => $value('address'),
             'city' => $value('city'),
             'department' => $value('department'),
+            'structure_type' => $value('structure_type'),
         ];
 
         if ($payload['nit'] === null) {
@@ -395,6 +403,11 @@ class ClientImportProcessor implements ImportBatchProcessor
             }
         }
 
+        $incomingType = $normalizedPayload['structure_type'] ?? null;
+        if ($incomingType !== null && StructureType::catalogKey((string) $client->structureType?->name) !== StructureType::catalogKey($incomingType)) {
+            $changedFields[] = 'structure_type';
+        }
+
         return $changedFields;
     }
 
@@ -419,7 +432,7 @@ class ClientImportProcessor implements ImportBatchProcessor
         $attributes['party_type'] ??= Client::PARTY_LEGAL;
         $attributes['document_type'] ??= 'NIT';
 
-        return $attributes;
+        return $this->applyImportExtras($attributes, $payload);
     }
 
     /**
@@ -436,7 +449,40 @@ class ClientImportProcessor implements ImportBatchProcessor
             }
         }
 
-        return $updatePayload;
+        return $this->applyImportExtras($updatePayload, $payload, $this->findClientByNit($payload['nit'] ?? null));
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function applyImportExtras(array $attributes, array $payload, ?Client $existing = null): array
+    {
+        unset($attributes['structure_type']);
+
+        $type = StructureType::resolveByName(isset($payload['structure_type']) ? (string) $payload['structure_type'] : null);
+        if ($type) {
+            $attributes['structure_type_id'] = $type->id;
+        }
+
+        $locationTouched = $existing === null || array_intersect(array_keys($attributes), ['address', 'city', 'department']) !== [];
+        if (! $locationTouched) {
+            return $attributes;
+        }
+
+        $point = app(ColombiaGeocoder::class)->locate(
+            isset($attributes['address']) ? (string) $attributes['address'] : $existing?->address,
+            isset($attributes['city']) ? (string) $attributes['city'] : $existing?->city,
+            isset($attributes['department']) ? (string) $attributes['department'] : $existing?->department,
+        );
+
+        if ($point) {
+            $attributes['latitude'] = $point['latitude'];
+            $attributes['longitude'] = $point['longitude'];
+        }
+
+        return $attributes;
     }
 
     private function findClientByNit(mixed $nit): ?Client

@@ -54,7 +54,12 @@ class FormatControllerTest extends TestCase
         $this->actingAs($admin)
             ->get(route('formatos.index'))
             ->assertOk()
-            ->assertSee(__('Revista mensual de armamento'));
+            ->assertSee(__('Revista mensual de armamento'))
+            ->assertSee(__('Formato de armas'))
+            ->assertSee(__('Formato de clientes'))
+            ->assertSee(__('Formato de trabajadores'))
+            ->assertSee('Ayuda: Formatos')
+            ->assertDontSee(__('Descargar formato armas'));
     }
 
     public function test_monthly_review_weapons_returns_paginated_table_rows(): void

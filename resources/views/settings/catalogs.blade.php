@@ -2,10 +2,17 @@
     <x-slot name="header">
         <div class="sj-section-header">
             <div class="sj-section-header__main">
-                <h2 class="sj-section-header__title">{{ $tab === 'cargos' ? __('Cargos') : __('Tipos de novedad') }}</h2>
-                <p class="sj-section-header__subtitle">
-                    {{ $tab === 'cargos' ? __('Cargos de su empresa para usuarios y trabajadores.') : __('Tipos y modalidades que salen al registrar una novedad. El adjunto es opcional y la nota de cierre es obligatoria.') }}
-                </p>
+                @php
+                    [$catalogTitle, $catalogSubtitle] = match ($tab) {
+                        'vinculacion' => [__('Tipos de vinculación'), __('Cómo se vincula el personal. Cada empresa conserva, quita o agrega los tipos que usa.')],
+                        'contratos' => [__('Tipos de contrato'), __('Contratos de su empresa. Cada empresa conserva, quita o agrega los que usa.')],
+                        'estructuras' => [__('Tipos de estructura'), __('Tipos de sede del cliente. Cada empresa conserva, quita o agrega los que usa.')],
+                        'novedades' => [__('Tipos de novedad'), __('Tipos y modalidades que salen al registrar una novedad. El adjunto es opcional y la nota de cierre es obligatoria.')],
+                        default => [__('Cargos'), __('Cargos de su empresa para usuarios y trabajadores.')],
+                    };
+                @endphp
+                <h2 class="sj-section-header__title">{{ $catalogTitle }}</h2>
+                <p class="sj-section-header__subtitle">{{ $catalogSubtitle }}</p>
             </div>
             <div class="sj-section-header__actions">
                 <x-help-drawer :title="__('Ajustes')">
@@ -33,12 +40,9 @@
             @if ($tab === 'cargos')
                 <section class="sj-ui-card">
                     <div class="sj-ui-card__body p-6">
-                        <form method="POST" action="{{ route('catalogs.positions.store') }}" class="sj-position-row">
+                        <form method="POST" action="{{ route('catalogs.positions.store') }}" class="sj-position-add">
                             @csrf
                             <input name="name" type="text" required maxlength="255" placeholder="{{ __('Nuevo cargo, por ejemplo: Escolta') }}" class="sj-ui-field__control" aria-label="{{ __('Nuevo cargo') }}">
-                            <input name="description" type="text" maxlength="255" placeholder="{{ __('Descripción (opcional)') }}" class="sj-ui-field__control" aria-label="{{ __('Descripción') }}">
-                            <span></span>
-                            <span></span>
                             <button type="submit" class="sj-ui-btn sj-ui-btn--primary sj-ui-btn--sm">{{ __('Agregar') }}</button>
                         </form>
 
@@ -46,41 +50,86 @@
 
                         <div class="sj-position-row sj-position-row--head" aria-hidden="true">
                             <span>{{ __('Cargo') }}</span>
-                            <span>{{ __('Descripción') }}</span>
                             <span>{{ __('Orden') }}</span>
-                            <span>{{ __('En uso') }}</span>
-                            <span></span>
+                            <span>{{ __('Estado') }}</span>
+                            <span>{{ __('Acciones') }}</span>
                         </div>
 
                         @forelse ($positions as $position)
-                            @php
-                                $inUse = $position->users_count + $position->workers_count;
-                            @endphp
                             <div class="sj-position-row">
                                 <form id="position-{{ $position->id }}" method="POST" action="{{ route('catalogs.positions.update', $position) }}" class="contents">
                                     @csrf
                                     @method('PUT')
                                     <input name="name" type="text" required maxlength="255" value="{{ $position->name }}" class="sj-ui-field__control" aria-label="{{ __('Cargo') }}">
-                                    <input name="description" type="text" maxlength="255" value="{{ $position->description }}" class="sj-ui-field__control" aria-label="{{ __('Descripción') }}">
-                                    <input name="sort_order" type="number" min="0" max="65535" value="{{ $position->sort_order }}" class="sj-ui-field__control" aria-label="{{ __('Orden') }}">
                                 </form>
-                                <span class="sj-company__hint">{{ __(':users usuarios · :workers trabajadores', ['users' => $position->users_count, 'workers' => $position->workers_count]) }}</span>
-                                <div class="flex items-center gap-3">
-                                    <label class="sj-company__check">
-                                        <input type="hidden" name="is_active" value="0" form="position-{{ $position->id }}">
-                                        <input type="checkbox" name="is_active" value="1" form="position-{{ $position->id }}" class="sj-ui-check rounded" @checked($position->is_active)>
-                                        {{ __('Activo') }}
-                                    </label>
-                                    <button type="submit" form="position-{{ $position->id }}" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">{{ __('Guardar') }}</button>
+                                <div class="sj-catalog__order">
+                                    <form method="POST" action="{{ route('catalogs.positions.move', $position) }}">
+                                        @csrf
+                                        <input type="hidden" name="direction" value="up">
+                                        <button type="submit" class="sj-catalog__arrow" aria-label="{{ __('Subir') }}">↑</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('catalogs.positions.move', $position) }}">
+                                        @csrf
+                                        <input type="hidden" name="direction" value="down">
+                                        <button type="submit" class="sj-catalog__arrow" aria-label="{{ __('Bajar') }}">↓</button>
+                                    </form>
+                                </div>
+                                <label class="sj-catalog__state">
+                                    <input type="hidden" name="is_active" value="0" form="position-{{ $position->id }}">
+                                    <input type="checkbox" name="is_active" value="1" form="position-{{ $position->id }}" class="sj-ui-check rounded" @checked($position->is_active)>
+                                    {{ __('activo') }}
+                                </label>
+                                <div class="sj-catalog__actions">
+                                    <button type="submit" form="position-{{ $position->id }}" class="sj-ui-btn sj-ui-btn--success sj-ui-btn--sm">{{ __('Guardar') }}</button>
                                     <form method="POST" action="{{ route('catalogs.positions.destroy', $position) }}" onsubmit="return confirm(@js(__('¿Eliminar este cargo?')))">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="sj-ui-link sj-ui-link--danger" @disabled($inUse > 0) title="{{ $inUse > 0 ? __('En uso: desactívelo en lugar de eliminarlo.') : __('Eliminar') }}">{{ __('Eliminar') }}</button>
+                                        <button type="submit" class="sj-ui-btn sj-ui-btn--danger sj-ui-btn--sm" @disabled($position->users_count > 0 || $position->workers_count > 0) title="{{ $position->users_count > 0 || $position->workers_count > 0 ? __('En uso: desactívelo.') : __('Eliminar') }}">{{ __('Eliminar') }}</button>
                                     </form>
                                 </div>
                             </div>
                         @empty
                             <p class="sj-company__hint">{{ __('Aún no hay cargos. Agregue los cargos de su empresa para asignarlos a usuarios y trabajadores.') }}</p>
+                        @endforelse
+                    </div>
+                </section>
+            @elseif (in_array($tab, ['vinculacion', 'contratos', 'estructuras'], true))
+                @php
+                    [$catalogItems, $catalogLabel, $catalogPlaceholder, $catalogStore, $catalogUpdate, $catalogMove, $catalogDestroy, $catalogConfirm, $catalogPrefix, $catalogEmpty] = match ($tab) {
+                        'contratos' => [$contractTypes, __('Tipo de contrato'), __('Nuevo tipo, por ejemplo: Término fijo'), 'catalogs.contract-types.store', 'catalogs.contract-types.update', 'catalogs.contract-types.move', 'catalogs.contract-types.destroy', __('¿Eliminar este tipo de contrato?'), 'contract', __('Aún no hay tipos de contrato.')],
+                        'estructuras' => [$structureTypes, __('Tipo de estructura'), __('Nuevo tipo, por ejemplo: PH'), 'catalogs.structure-types.store', 'catalogs.structure-types.update', 'catalogs.structure-types.move', 'catalogs.structure-types.destroy', __('¿Eliminar este tipo de estructura?'), 'structure', __('Aún no hay tipos de estructura.')],
+                        default => [$engagementTypes, __('Tipo de vinculación'), __('Nuevo tipo, por ejemplo: Dependiente'), 'catalogs.engagement-types.store', 'catalogs.engagement-types.update', 'catalogs.engagement-types.move', 'catalogs.engagement-types.destroy', __('¿Eliminar este tipo de vinculación?'), 'engagement', __('Aún no hay tipos de vinculación.')],
+                    };
+                @endphp
+                <section class="sj-ui-card">
+                    <div class="sj-ui-card__body p-6">
+                        <form method="POST" action="{{ route($catalogStore) }}" class="sj-position-add">
+                            @csrf
+                            <input name="name" type="text" required maxlength="255" placeholder="{{ $catalogPlaceholder }}" class="sj-ui-field__control" aria-label="{{ $catalogLabel }}">
+                            <button type="submit" class="sj-ui-btn sj-ui-btn--primary sj-ui-btn--sm">{{ __('Agregar') }}</button>
+                        </form>
+
+                        <hr class="sj-ui-divider">
+
+                        <div class="sj-position-row sj-position-row--head" aria-hidden="true">
+                            <span>{{ $catalogLabel }}</span>
+                            <span>{{ __('Orden') }}</span>
+                            <span>{{ __('Estado') }}</span>
+                            <span>{{ __('Acciones') }}</span>
+                        </div>
+
+                        @forelse ($catalogItems as $item)
+                            @include('settings.partials.name-catalog-row', [
+                                'item' => $item,
+                                'label' => $catalogLabel,
+                                'formPrefix' => $catalogPrefix,
+                                'updateRoute' => $catalogUpdate,
+                                'moveRoute' => $catalogMove,
+                                'destroyRoute' => $catalogDestroy,
+                                'deleteConfirm' => $catalogConfirm,
+                            ])
+                        @empty
+                            <p class="sj-company__hint">{{ $catalogEmpty }}</p>
                         @endforelse
                     </div>
                 </section>

@@ -4,6 +4,8 @@ namespace App\Services\Imports;
 
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\ContractType;
+use App\Models\EngagementType;
 use App\Models\Installation;
 use App\Models\Position;
 use App\Models\Post;
@@ -14,6 +16,7 @@ use App\Models\Worker;
 use App\Models\WorkerHistory;
 use App\Services\Imports\Contracts\ImportBatchProcessor;
 use App\Support\Imports\ZentraClientSchema;
+use App\Support\Workers\WorkerProfile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -50,6 +53,42 @@ class WorkerImportProcessor implements ImportBatchProcessor
         'instalacion' => 'installation',
         'puesto' => 'post',
         'cargo' => 'position',
+        'sexo' => 'sex',
+        'edad' => 'age',
+        'tipo colaborador' => 'collaborator_type',
+        'sector ciudad' => 'sector',
+        'mismo cc origen' => 'same_cost_center',
+        'fecha nacimiento' => 'birth_date',
+        'lugar de nacimiento departamento' => 'birth_department',
+        'lugar de nacimiento ciudad' => 'birth_city',
+        'telefono emergencia' => 'emergency_phone',
+        'contacto emergencia' => 'emergency_contact',
+        'nacionalidad' => 'nationality',
+        'discapacidad' => 'has_disability',
+        'email ficha' => 'email',
+        'lugar de expedicion documento de identificacion' => 'document_issue_department',
+        'lugar de expedicion documento de identificacion ciudad' => 'document_issue_city',
+        'fecha de expedicion documento de identificacion' => 'document_issued_at',
+        'g sanguineo' => 'blood_group',
+        'telefono' => 'phone',
+        'lugar de residencia' => 'residence_city',
+        'direccion' => 'address',
+        'escolaridad' => 'education',
+        'estado civil' => 'marital_status',
+        'numero de hijos' => 'children_count',
+        'tipo de vinculacion' => 'engagement_type',
+        'tipo de cotizante' => 'contributor_type',
+        'tipo de contrato' => 'labor_contract_type',
+        'fecha de ingreso' => 'hired_on',
+        'vencimiento de contrato' => 'labor_contract_ends_on',
+        'fecha de retiro' => 'left_on',
+        'codigo eps' => 'eps_code',
+        'eps' => 'eps_name',
+        'codigo afp' => 'afp_code',
+        'pension' => 'afp_name',
+        'caja de compensacion' => 'compensation_fund',
+        'arl' => 'arl_name',
+        'nivel de riesgo arl' => 'arl_risk_level',
     ];
 
     public function type(): string
@@ -70,10 +109,36 @@ class WorkerImportProcessor implements ImportBatchProcessor
             'Ap. Paterno',
             'Ap. Materno',
             'Nombres',
-            'Razón Social Cliente Final',
-            'Instalaciones',
-            'Puesto',
+            'Sexo',
+            'Fecha Nacimiento',
+            'Lugar de Nacimiento (Departamento)',
+            'Lugar de Nacimiento (Ciudad)',
+            'Nacionalidad',
+            'G.Sanguíneo',
+            'Lugar de Expedición Documento de Identificación',
+            'Lugar de Expedición Documento de Identificación (Ciudad)',
+            'Fecha de Expedición Documento de Identificación',
+            'Discapacidad',
+            'Escolaridad',
+            'Estado civil',
+            'Número de hijos',
+            'Teléfono',
+            'Email Ficha',
+            'Dirección',
+            'Lugar de residencia',
+            'Contacto Emergencia',
+            'Teléfono Emergencia',
             'Cargo',
+            'Tipo de vinculación',
+            'Tipo de contrato',
+            'Fecha de ingreso',
+            'Vencimiento de contrato',
+            'Fecha de retiro',
+            'EPS',
+            'Pensión',
+            'Caja de compensación',
+            'ARL',
+            'Nivel de riesgo ARL',
         ];
     }
 
@@ -84,14 +149,41 @@ class WorkerImportProcessor implements ImportBatchProcessor
     {
         return [
             ['Tipo Documento de Identidad', 'No', 'Texto', 'CC, CE, PA o PPT. Vacío = CC.'],
-            ['Nro. Documento de Identidad', 'Sí', 'Texto', 'Clave del trabajador dentro del cliente: si existe se actualiza, si no se crea.'],
-            ['Ap. Paterno', 'Sí*', 'Texto', 'Primer apellido. (*) O use una columna "Nombre completo".'],
+            ['Nro. Documento de Identidad', 'Sí', 'Texto', 'Si el documento ya existe sin cliente, se actualiza. Si no existe, se crea.'],
+            ['Ap. Paterno', 'Sí*', 'Texto', 'Primer apellido. (*) Basta nombres o un apellido.'],
             ['Ap. Materno', 'No', 'Texto', 'Segundo apellido.'],
             ['Nombres', 'Sí*', 'Texto', 'Nombres del trabajador.'],
-            ['Razón Social Cliente Final', 'Sí', 'Texto', 'Cliente ya registrado en Arzen (nombre comercial o razón social).'],
-            ['Instalaciones', 'No', 'Texto', 'Instalación del cliente. Vacío = instalación principal. Si no existe, se crea con la ubicación del cliente.'],
-            ['Puesto', 'No', 'Texto', 'Puesto dentro de la instalación. Si no existe, se crea.'],
-            ['Cargo', 'No', 'Texto', 'Cargo del catálogo de Ajustes. Si no existe, se crea.'],
+            ['Sexo', 'No', 'Texto', 'Hombre o Mujer.'],
+            ['Fecha Nacimiento', 'No', 'Fecha dd/mm/aaaa', 'También acepta fecha de Excel.'],
+            ['Lugar de Nacimiento (Departamento)', 'No', 'Texto', 'Departamento de Colombia, por ejemplo ANTIOQUIA.'],
+            ['Lugar de Nacimiento (Ciudad)', 'No', 'Texto', 'Municipio de ese departamento.'],
+            ['Nacionalidad', 'No', 'Texto', 'Vacío = sin dato. En el formulario nuevo queda Colombiana.'],
+            ['G.Sanguíneo', 'No', 'Texto', 'O+, O-, A+, A-, B+, B-, AB+, AB- o Pendiente.'],
+            ['Lugar de Expedición Documento de Identificación', 'No', 'Texto', 'Departamento donde se expidió el documento.'],
+            ['Lugar de Expedición Documento de Identificación (Ciudad)', 'No', 'Texto', 'Ciudad de ese departamento.'],
+            ['Fecha de Expedición Documento de Identificación', 'No', 'Fecha dd/mm/aaaa', 'También acepta fecha de Excel.'],
+            ['Discapacidad', 'No', 'Sí o No', 'Vacío = sin dato.'],
+            ['Escolaridad', 'No', 'Texto', 'Primaria, Bachillerato, Educación superior u Otro.'],
+            ['Estado civil', 'No', 'Texto', 'Texto libre.'],
+            ['Número de hijos', 'No', 'Número', 'De 0 a 30.'],
+            ['Teléfono', 'No', 'Texto', 'Teléfono de contacto.'],
+            ['Email Ficha', 'No', 'Correo', 'Correo del trabajador.'],
+            ['Dirección', 'No', 'Texto', 'Dirección de residencia.'],
+            ['Lugar de residencia', 'No', 'Texto', 'Ciudad donde vive.'],
+            ['Contacto Emergencia', 'No', 'Texto', 'Nombre de la persona de emergencia.'],
+            ['Teléfono Emergencia', 'No', 'Texto', 'Teléfono de esa persona.'],
+            ['Cargo', 'No', 'Texto', 'Catálogo de Ajustes → Cargos. Si no existe, se crea.'],
+            ['Tipo de vinculación', 'No', 'Texto', 'Catálogo de Ajustes → Tipos de vinculación. Si no existe, se crea.'],
+            ['Tipo de contrato', 'No', 'Texto', 'Catálogo de Ajustes → Tipos de contrato. Si no existe, se crea.'],
+            ['Fecha de ingreso', 'No', 'Fecha dd/mm/aaaa', 'También acepta fecha de Excel.'],
+            ['Vencimiento de contrato', 'No', 'Fecha dd/mm/aaaa', 'También acepta fecha de Excel.'],
+            ['Fecha de retiro', 'No', 'Fecha dd/mm/aaaa', 'También acepta fecha de Excel.'],
+            ['EPS', 'No', 'Texto', 'Nombre de la EPS.'],
+            ['Pensión', 'No', 'Texto', 'Fondo de pensión (AFP).'],
+            ['Caja de compensación', 'No', 'Texto', 'Nombre de la caja.'],
+            ['ARL', 'No', 'Texto', 'Aseguradora de riesgos laborales.'],
+            ['Nivel de riesgo ARL', 'No', 'Texto', 'I, II, III, IV o V.'],
+            ['Cliente / Instalación / Puesto', 'No', 'Texto', 'No van en esta plantilla. Si el archivo trae Razón Social Cliente Final, Instalaciones o Puesto, se aplican. Si vienen vacíos, el trabajador queda sin cliente ni puesto.'],
         ];
     }
 
@@ -131,21 +223,33 @@ class WorkerImportProcessor implements ImportBatchProcessor
             $client = $payload['client_id'] ? $clients->firstWhere('id', $payload['client_id']) : null;
             $worker = null;
 
-            if ($client && $payload['document']) {
-                $otherClient = Worker::query()
-                    ->where('document', $payload['document'])
-                    ->where('client_id', '!=', $client->id)
-                    ->exists();
+            if ($payload['document']) {
+                $workerQuery = Worker::query()->with(['position', 'post.installation', 'engagementType', 'contractType']);
 
-                if ($otherClient) {
-                    $errors[] = 'El documento pertenece a un trabajador de otro cliente.';
+                if ($client) {
+                    $otherClient = Worker::query()
+                        ->where('document', $payload['document'])
+                        ->where('client_id', '!=', $client->id)
+                        ->exists();
+
+                    if ($otherClient) {
+                        $errors[] = 'El documento pertenece a un trabajador de otro cliente.';
+                    }
+
+                    $worker = (clone $workerQuery)
+                        ->where('client_id', $client->id)
+                        ->where('document', $payload['document'])
+                        ->first();
+                } else {
+                    if (Worker::query()->where('document', $payload['document'])->whereNotNull('client_id')->exists()) {
+                        $errors[] = 'El documento pertenece a un trabajador ya asignado a un cliente.';
+                    }
+
+                    $worker = (clone $workerQuery)
+                        ->whereNull('client_id')
+                        ->where('document', $payload['document'])
+                        ->first();
                 }
-
-                $worker = Worker::query()
-                    ->with(['position', 'post.installation'])
-                    ->where('client_id', $client->id)
-                    ->where('document', $payload['document'])
-                    ->first();
             }
 
             if ($errors !== []) {
@@ -199,14 +303,14 @@ class WorkerImportProcessor implements ImportBatchProcessor
             ]);
 
             $payload = $row->normalized_payload ?? [];
-            $client = Client::query()->find($payload['client_id'] ?? null);
+            $client = isset($payload['client_id']) ? Client::query()->find($payload['client_id']) : null;
 
-            if (! $client) {
+            if (($payload['client_id'] ?? null) && ! $client) {
                 throw new RuntimeException(sprintf('No se encontró el cliente de la fila %d.', $row->row_number));
             }
 
             $worker = Worker::query()
-                ->where('client_id', $client->id)
+                ->when($client, fn ($query) => $query->where('client_id', $client->id), fn ($query) => $query->whereNull('client_id'))
                 ->where('document', $payload['document'] ?? null)
                 ->first();
 
@@ -220,21 +324,37 @@ class WorkerImportProcessor implements ImportBatchProcessor
                 return;
             }
 
-            $installation = $this->resolveInstallation($client, $payload['installation'] ?? null);
-            $post = $this->resolvePost($installation, $payload['post'] ?? null);
+            $post = null;
+            if ($client) {
+                $installation = $this->resolveInstallation($client, $payload['installation'] ?? null);
+                $post = $this->resolvePost($installation, $payload['post'] ?? null);
+            }
             $position = Position::resolveByName($payload['position'] ?? null);
+            $engagement = EngagementType::resolveByName($payload['engagement_type'] ?? null);
+            $contract = ContractType::resolveByName($payload['labor_contract_type'] ?? null);
             $before = $worker ? $this->snapshot($worker) : null;
             $previousPostId = $worker?->post_id;
 
             $attributes = [
-                'client_id' => $client->id,
                 'name' => $payload['name'],
                 'document_type' => $payload['document_type'],
                 'document' => $payload['document'],
             ];
 
+            if ($client) {
+                $attributes['client_id'] = $client->id;
+            }
+
             if ($position) {
                 $attributes['position_id'] = $position->id;
+            }
+
+            if ($engagement) {
+                $attributes['engagement_type_id'] = $engagement->id;
+            }
+
+            if ($contract) {
+                $attributes['contract_type_id'] = $contract->id;
             }
 
             if ($post) {
@@ -242,7 +362,7 @@ class WorkerImportProcessor implements ImportBatchProcessor
             }
 
             $worker = $worker ?? new Worker(['archived_at' => null]);
-            $worker->fill($attributes);
+            $worker->fill($attributes + WorkerProfile::filledAttributes($payload));
             $worker->save();
 
             $historyLines = [$before ? __('Actualizado por carga masiva.') : __('Registro inicial por carga masiva.')];
@@ -262,7 +382,7 @@ class WorkerImportProcessor implements ImportBatchProcessor
             $after = $this->snapshot($worker->fresh(['position', 'post.installation']));
 
             $row->update([
-                'client_id' => $client->id,
+                'client_id' => $client?->id,
                 'before_payload' => $before,
                 'after_payload' => $after,
                 'execution_status' => WeaponImportRow::EXECUTION_COMPLETED,
@@ -300,7 +420,6 @@ class WorkerImportProcessor implements ImportBatchProcessor
         $missing = array_filter([
             isset($map['document']) ? null : 'Nro. Documento de Identidad',
             $hasName ? null : 'Nombres / Ap. Paterno',
-            isset($map['client']) ? null : 'Razón Social Cliente Final',
         ]);
 
         if ($missing !== []) {
@@ -346,9 +465,7 @@ class WorkerImportProcessor implements ImportBatchProcessor
 
         $client = null;
         $clientName = $value('client');
-        if ($clientName === null) {
-            $errors[] = 'El cliente es obligatorio.';
-        } else {
+        if ($clientName !== null) {
             $key = $this->textKey($clientName);
             $client = $clients->first(fn (Client $candidate) => $this->textKey($candidate->name) === $key || $this->textKey((string) $candidate->legal_name) === $key);
 
@@ -371,7 +488,20 @@ class WorkerImportProcessor implements ImportBatchProcessor
             }
         }
 
-        return [[
+        [$profile, $profileNotes] = WorkerProfile::attributesFromRaw($raw);
+        $notes = array_merge($notes, $profileNotes);
+
+        $engagementName = $value('engagement_type');
+        if ($engagementName && ! EngagementType::findByName($engagementName)) {
+            $notes[] = 'Se creará el tipo de vinculación "'.$engagementName.'".';
+        }
+
+        $contractName = $value('labor_contract_type');
+        if ($contractName && ! ContractType::findByName($contractName)) {
+            $notes[] = 'Se creará el tipo de contrato "'.$contractName.'".';
+        }
+
+        return [array_merge($profile, [
             'client_id' => $client?->id,
             'client_name' => $client?->name ?? $clientName,
             'name' => $name,
@@ -380,7 +510,9 @@ class WorkerImportProcessor implements ImportBatchProcessor
             'installation' => $value('installation'),
             'post' => $value('post'),
             'position' => $value('position'),
-        ], $errors, $notes];
+            'engagement_type' => $engagementName,
+            'labor_contract_type' => $contractName,
+        ]), $errors, $notes];
     }
 
     /**
@@ -401,6 +533,18 @@ class WorkerImportProcessor implements ImportBatchProcessor
 
         if ($payload['post'] && $this->textKey((string) $worker->post?->name) !== $this->textKey($payload['post'])) {
             $changes[] = 'puesto';
+        }
+
+        if (($payload['engagement_type'] ?? null) && $this->textKey((string) $worker->engagementType?->name) !== $this->textKey($payload['engagement_type'])) {
+            $changes[] = 'vinculación';
+        }
+
+        if (($payload['labor_contract_type'] ?? null) && $this->textKey((string) $worker->contractType?->name) !== $this->textKey($payload['labor_contract_type'])) {
+            $changes[] = 'contrato';
+        }
+
+        if (WorkerProfile::differs($worker, $payload)) {
+            $changes[] = 'ficha';
         }
 
         return $changes;
