@@ -2,9 +2,9 @@
 
 **Empresa:** WCodex  
 **Sistema:** Arzen  
-**Perfil:** **Staff** (ADMIN o RESPONSABLE con Revista en Gestionar) y **colaborador temporal**  
-**Versión del manual:** 3.1  
-**Fecha:** [Completar]
+**Perfil:** **Staff** (ADMIN o RESPONSABLE con Revista en Gestionar) y **usuario de campo**  
+**Versión del manual:** 3.2  
+**Fecha:** 2026-11-06
 
 ---
 
@@ -115,7 +115,7 @@ El navegador abre la pantalla **Inicio de sesión** (`/login`).
 |---|---|
 | **Pantalla** | **Cambio de contraseña obligatorio** |
 | **Cuándo aplica** | Usuario creado en el sistema con **contraseña temporal** o tras acción **Enviar** en el listado de usuarios |
-| **Cuándo NO aplica** | Solo **staff** (Parte A). Colaboradores: salte a **§12** (ingreso con código). |
+| **Cuándo NO aplica** | Solo **staff** (Parte A). El usuario de campo entra por **§6** con correo y contraseña. |
 
 #### Qué hacer
 
@@ -218,343 +218,182 @@ URL del sistema (/)
 ---
 ## 2. Objetivo y alcance
 
-Colaborador sube **4 fotos técnicas** (derecho, izquierdo, cañón/marca, serie) a **staging**. Staff revisa y **Actualizar** copia a fotos oficiales.
+El usuario de campo toma **cinco fotos** (lado derecho, lado izquierdo, cañón/disparador/marca, serie e impronta). El staff solo revisa: **Actualizar** pasa las fotos al inventario y **Rechazar** borra el borrador. El staff no toma fotos.
 
 ---
 
-## 3. Usuarios temporales (staff)
+## 3. Usuario de campo
 
-### 3.1 Listar usuarios temporales
-
-| | |
-|---|---|
-| **Menú** | **Revista armas** → **Usuarios temporales** |
-| **Ruta** | `/revista-armas/usuarios-temporales` |
-| **Objetivo** | Ver colaboradores |
-
-#### Qué hacer
-
-1. Clic **Revista armas**.
-2. Clic **Usuarios temporales**.
-3. Revise correo, estado, dueño.
-
-#### Resultado esperado
-
-Listado cargado.
-
-#### Figura 3.1 — Listado temporales
-
-**[Insertar imagen: fig-03-01-temp-users.png]**
-
----
-
-### 3.2 Crear usuario temporal
+### 3.1 Crear el usuario
 
 | | |
 |---|---|
-| **Ruta** | crear temporal |
-| **Objetivo** | Alta colaborador |
+| **Menú** | **Ajustes** → **Usuarios** → **Crear usuario** |
+| **Ruta** | `/users/create` |
+| **Objetivo** | Dar una cuenta de campo, no una cuenta de plataforma |
 
 #### Qué hacer
 
-1. Clic **Crear**.
-2. Nombre y **correo** (usado en ingreso §12).
-3. Activo.
-4. ADMIN: elija **responsable dueño**.
-5. RESPONSABLE: dueño es usted.
-6. **Guardar**.
+1. En **Tipo de usuario**, elija **Usuario de campo**.
+2. Escriba el **correo** y la **zona**. La zona es el nombre que se muestra.
+3. Elija el **responsable** dueño.
+4. Si varios responsables deben usarlo, marque el uso compartido y elija esos responsables.
+5. Indique los **días de cada mes** en los que puede entrar. Por defecto, del 1 al 5.
+6. **Guardar** y entregue el correo y la contraseña por un canal seguro.
 
 #### Resultado esperado
 
-Colaborador listo para acceso.
+La cuenta existe. Fuera de esos días del mes el ingreso de campo no abre.
 
-#### Figura 3.2 — Crear temporal
+#### Figura 3.1 — Usuario de campo
 
 | Ref. | Qué señalar |
 |------|-------------|
-| **①** | Correo |
-| **②** | Dueño (ADMIN) |
+| **①** | Tipo de usuario |
+| **②** | Zona y responsable |
+| **③** | Días del mes |
 
-**[Insertar imagen: fig-03-02-temp-create.png]**
+**[Insertar imagen: fig-03-01-field-user.png]**
 
 ---
 
-### 3.3 Desactivar usuario temporal
+### 3.2 Desactivar
 
 | | |
 |---|---|
-| **Objetivo** | Bloquear nuevos ingresos |
+| **Objetivo** | Impedir el ingreso |
 
 #### Qué hacer
 
-1. En fila, **Editar** o desactivar.
-2. Confirme.
-3. No borra fotos ya en staging.
+1. En **Usuarios**, edite la cuenta y déjela inactiva, o archívela según la política de la empresa.
+2. Las fotos ya tomadas en revisión no se borran solas.
 
 #### Resultado esperado
 
-Usuario inactivo.
-
-#### Figura 3.3 — Desactivar
-
-**[Insertar imagen: fig-03-03-temp-off.png]**
+Esa persona no vuelve a entrar a Mis armas.
 
 ---
 
-## 4. Asignar acceso temporal (12 h)
-
-### 4.1 Generar código y enlace
+## 4. Enviar armas a campo
 
 | | |
 |---|---|
 | **Pantalla** | `/revista-armas` |
-| **Objetivo** | Acceso campo |
+| **Objetivo** | Dejar armas en la cuenta de campo |
 
 #### Qué hacer
 
-1. Clic **Asignar acceso temporal**.
-2. Seleccione **usuario temporal**.
-3. Marque **armas** (use buscador si hay muchas).
-4. Confirme asignación.
-5. Copie **código** y enlace `/revista-armas/ingreso` del modal de éxito.
-6. Envíe al colaborador por canal seguro.
+1. Clic **Enviar a campo**.
+2. Elija el **usuario de campo**.
+3. Busque por serie, marca, cliente, puesto o trabajador.
+4. Marque las filas en la tabla: **Cliente**, **Puesto o trabajador**, **Tipo**, **Serie** y **Marca**.
+5. Confirme.
 
 #### Resultado esperado
 
-Correo enviado; código válido 12 h.
+Esas armas aparecen en Mis armas de ese usuario mientras su ventana de días esté abierta.
 
-#### Figura 4.1a — Modal asignar
+#### Figura 4.1 — Enviar a campo
 
 | Ref. | Qué señalar |
 |------|-------------|
-| **①** | Usuario |
-| **②** | Armas |
+| **①** | Usuario de campo |
+| **②** | Tabla de armas |
 | **③** | Confirmar |
 
-**[Insertar imagen: fig-04-01-assign.png]**
-
-#### Figura 4.1b — Código 12h
-
-| Ref. | Qué señalar |
-|------|-------------|
-| **①** | Código |
-| **②** | Copiar |
-
-**[Insertar imagen: fig-04-02-code.png]**
+**[Insertar imagen: fig-04-01-enviar-campo.png]**
 
 ---
 
-### 4.2 Revocar acceso
-
-| | |
-|---|---|
-| **Objetivo** | Invalidar código |
-
-#### Qué hacer
-
-1. Localice acceso vigente.
-2. Use **Revocar**.
-3. Confirme.
-4. Fotos en staging no se borran.
-
-#### Resultado esperado
-
-Nuevos ingresos bloqueados.
-
-#### Figura 4.2 — Revocar
-
-**[Insertar imagen: fig-04-03-revoke.png]**
-
----
-
-## 5. Revisar y aprobar fotos (staff)
-
-### 5.1 Filtrar por usuario temporal
+## 5. Revisar fotos (staff)
 
 | | |
 |---|---|
 | **Ruta** | `/revista-armas` |
-| **Objetivo** | Ver progreso |
+| **Objetivo** | Aprobar o descartar el borrador |
 
 #### Qué hacer
 
-1. Desplegable **Usuario temporal** → **Filtrar**.
-2. Columna **Realizado**: ✓ = 4/4, ✕ = falta alguna.
-3. Sin usuario en filtro no aparece **Ver**.
+1. Abra el arma del usuario de campo.
+2. Revise las cinco casillas. Si no hay foto, se lee **Sin foto**. No hay botón de cámara ni de archivo.
+3. **Actualizar** copia el borrador a las fotos oficiales del arma.
+4. **Rechazar** elimina solo ese borrador. Las fotos oficiales no cambian.
+5. **Cancelar** cierra la revisión.
 
 #### Resultado esperado
 
-Tabla filtrada.
+La ficha del arma queda con las fotos aprobadas y una nota en el historial.
 
-#### Figura 5.1 — Filtros
+#### Figura 5.1 — Revisión
 
-**[Insertar imagen: fig-05-01-filters.png]**
-
----
-
-### 5.2 Modal Ver (revisión 4 fotos)
-
-| | |
-|---|---|
-| **Objetivo** | Inspeccionar staging |
-
-#### Qué hacer
-
-1. Clic **Ver** en fila.
-2. Revise 4 casillas en modal 2×2.
-3. Cierre o continúe.
-
-#### Resultado esperado
-
-Evidencia revisada.
-
-#### Figura 5.2 — Modal Ver
-
-| Ref. | Qué señalar |
-|------|-------------|
-| **①** | Casilla vacía |
-| **②** | Con imagen |
-
-**[Insertar imagen: fig-05-02-review.png]**
+**[Insertar imagen: fig-05-01-revision.png]**
 
 ---
 
-### 5.3 Actualizar fotos oficiales
+## 6. Parte B — Usuario de campo
+
+### 6.1 Ingreso
 
 | | |
 |---|---|
-| **Objetivo** | Aprobar staging |
-
-#### Qué hacer
-
-1. Clic **Actualizar**.
-2. Si faltan fotos: lea **aviso** con cantidad — no actualiza.
-3. Si 4/4: confirme en **modal de confirmación**.
-4. Valide en **ficha del arma** fotos y **Notas**.
-
-#### Resultado esperado
-
-Oficiales actualizadas.
-
-#### Figura 5.3a — Aviso faltan
-
-**[Insertar imagen: fig-05-03-missing.png]**
-
-#### Figura 5.3b — Confirmar
-
-**[Insertar imagen: fig-05-04-confirm.png]**
-
----
-
-### 5.4 Rechazar staging
-
-| | |
-|---|---|
-| **Objetivo** | Borrar borrador |
-
-#### Qué hacer
-
-1. Clic **Rechazar**.
-2. Confirme modal.
-3. Colaborador debe volver a capturar.
-
-#### Resultado esperado
-
-Staging eliminado; oficiales sin cambio.
-
-#### Figura 5.4 — Rechazar
-
-**[Insertar imagen: fig-05-05-reject.png]**
-
----
-
-## 6. Parte B — Colaborador temporal
-
-### 6.1 Ingreso con código
-
-| | |
-|---|---|
-| **Pantalla** | Ingreso Revista |
+| **Pantalla** | Ingreso de campo |
 | **Ruta** | `/revista-armas/ingreso` |
-| **Objetivo** | Entrar sin cuenta Arzen |
+| **Objetivo** | Entrar solo a las armas asignadas |
 
 #### Qué hacer
 
-1. Abra enlace del correo o `/revista-armas/ingreso`.
-2. **Correo** registrado por el responsable.
-3. **Código** 12 h (copie exacto).
-4. Envíe formulario → **Mis armas**.
+1. Abra `/revista-armas/ingreso`.
+2. Escriba el **correo** y la **contraseña**.
+3. Pulse **Entrar**.
 
 #### Resultado esperado
 
-Listado de armas asignadas.
+Se abre **Mis armas**. Si el día del mes está fuera de la ventana, el ingreso no continúa.
 
-#### Figura 6.1 — Ingreso
+#### Figura 6.1 — Ingreso de campo
 
 | Ref. | Qué señalar |
 |------|-------------|
 | **①** | Correo |
-| **②** | Código |
+| **②** | Contraseña |
 | **③** | Entrar |
 
-**[Insertar imagen: fig-06-01-guest-login.png]**
+**[Insertar imagen: fig-06-01-field-login.png]**
 
 ---
 
-### 6.2 Subir las 4 fotos por arma
+### 6.2 Tomar las cinco fotos
 
 | | |
 |---|---|
-| **Pantalla** | Modal captura |
-| **Objetivo** | Completar 4/4 |
+| **Objetivo** | Completar las casillas sin salir de la pantalla |
 
 #### Qué hacer
 
-1. En **Mis armas**, clic **Ver**.
-2. Toque casilla pendiente.
-3. **Tomar foto** o **Galería**.
-4. Cropper → **Guardar**.
-5. Espere **Imagen guardada**.
-6. Repita hasta ✓ en las cuatro.
-7. Avise al responsable para **Actualizar**.
+1. En **Mis armas**, abra el arma.
+2. Toque la casilla: lado derecho, lado izquierdo, cañón/disparador/marca, serie o impronta.
+3. Tome la foto. El recorte, el disparo y **Cancelar** quedan en la misma pantalla.
+4. Repita hasta las cinco casillas.
+5. Avise al responsable para que revise.
 
 #### Resultado esperado
 
-Staging completo; staff aprueba.
-
-#### Figura 6.2a — Cuadrícula
-
-**[Insertar imagen: fig-06-02-grid.png]**
-
-#### Figura 6.2b — Cropper móvil
-
-**[Insertar imagen: fig-06-03-cropper.png]**
+El borrador queda listo. El staff lo aprueba o lo rechaza.
 
 #### Errores frecuentes
 
 | Situación | Acción |
 |-----------|--------|
-| Código inválido | Solicite nuevo acceso al responsable |
+| No deja entrar | Confirme que hoy está entre los días configurados y que la cuenta sigue activa |
+| Falta una casilla | Vuelva a abrir el arma y tome solo esa foto |
 
 ---
 
-### 6.3 Cerrar sesión colaborador
+### 6.3 Salir
 
-| | |
-|---|---|
-| **Objetivo** | Salir en dispositivo compartido |
+1. Use **Salir** en la barra de Revista.
 
-#### Qué hacer
-
-1. Use **Salir** en barra del módulo Revista.
-
-#### Resultado esperado
-
-Sesión invitado cerrada.
-
-#### Figura 6.3 — Salir
-
-**[Insertar imagen: fig-06-04-logout.png]**
+La sesión de campo queda cerrada.
 
 ---
 
@@ -564,6 +403,7 @@ Sesión invitado cerrada.
 |---------|--------|---------|--------|----------|
 | 3.0 | [fecha] | [nombre] | [nombre] | Procedimientos paso a paso en todas las funciones |
 | 3.1 | 2026-10-24 | [nombre] | [nombre] | Ajustes, matriz de módulos, instalaciones, puestos y Mi empresa con mapa |
+| 3.2 | 2026-11-06 | [nombre] | [nombre] | Usuario de campo con ventana de días, cinco fotos y revisión sin cámara para el staff |
 
 ---
 

@@ -2,75 +2,71 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TemporaryPhotoAccessGrant;
+use App\Models\User;
 use App\Models\Weapon;
-use App\Services\TemporaryPhotoAccessService;
 use App\Services\WeaponPhotoStagingService;
+use App\Support\RevistaWeaponPhotoSlots;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class RevistaGuestWeaponController extends Controller
 {
     public function __construct(
         private readonly WeaponPhotoStagingService $stagingService,
-        private readonly TemporaryPhotoAccessService $accessService,
     ) {
         $this->middleware('revista.guest');
     }
 
     public function index(Request $request): View
     {
-        /** @var TemporaryPhotoAccessGrant $grant */
-        $grant = $request->attributes->get('revista_grant');
-        $temporaryUser = $grant->temporaryPhotoUser;
+        /** @var User $fieldUser */
+        $fieldUser = $request->attributes->get('revista_field_user');
 
-        $weaponIds = $this->accessService->grantWeaponIds($grant);
-
-        $weapons = Weapon::query()
-            ->with('activeClientAssignment.client')
-            ->whereIn('id', $weaponIds)
+        $weapons = $fieldUser->fieldWeapons()
+            ->with([
+                'activeClientAssignment.client',
+                'activePostAssignment.post',
+                'activeWorkerAssignment.worker',
+            ])
             ->orderBy('serial_number')
             ->get();
 
         $rows = $weapons->map(fn (Weapon $weapon) => [
             'weapon' => $weapon,
-            'is_complete' => $this->stagingService->isStagingComplete($temporaryUser, $weapon),
+            'is_complete' => $this->stagingService->isStagingComplete($fieldUser, $weapon),
         ]);
 
         return view('revista-armas.guest.weapons', [
             'rows' => $rows,
-            'temporaryUser' => $temporaryUser,
-            'expiresAt' => $grant->expires_at,
+            'fieldUser' => $fieldUser,
         ]);
     }
 
     public function stagingState(Request $request, Weapon $weapon)
     {
-        /** @var TemporaryPhotoAccessGrant $grant */
-        $grant = $request->attributes->get('revista_grant');
-        $temporaryUser = $grant->temporaryPhotoUser;
+        /** @var User $fieldUser */
+        $fieldUser = $request->attributes->get('revista_field_user');
 
-        $allowedWeaponIds = $this->accessService->grantWeaponIds($grant);
-        if (! $allowedWeaponIds->contains($weapon->id)) {
+        if (! $fieldUser->fieldWeapons()->where('weapons.id', $weapon->id)->exists()) {
             abort(403);
         }
 
-        $staging = $this->stagingService->stagingByDescription($temporaryUser, $weapon);
+        $staging = $this->stagingService->stagingByDescription($fieldUser, $weapon);
 
         return response()->json([
-            'slots' => collect(\App\Support\RevistaWeaponPhotoSlots::DESCRIPTIONS)->map(function ($label, $description) use ($staging) {
+            'slots' => collect(RevistaWeaponPhotoSlots::descriptions())->map(function ($label, $description) use ($staging) {
                 $row = $staging[$description] ?? null;
-                $url = $row?->file
-                    ? \Illuminate\Support\Facades\Storage::disk($row->file->disk)->url($row->file->path)
-                    : null;
 
                 return [
                     'description' => $description,
                     'label' => $label,
-                    'url' => $url,
+                    'url' => $row?->file
+                        ? Storage::disk($row->file->disk)->url($row->file->path)
+                        : null,
                 ];
             })->values(),
-            'is_complete' => $this->stagingService->isStagingComplete($temporaryUser, $weapon),
+            'is_complete' => $this->stagingService->isStagingComplete($fieldUser, $weapon),
         ]);
     }
 }

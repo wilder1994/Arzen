@@ -7,6 +7,8 @@
                         'vinculacion' => [__('Tipos de vinculación'), __('Cómo se vincula el personal. Cada empresa conserva, quita o agrega los tipos que usa.')],
                         'contratos' => [__('Tipos de contrato'), __('Contratos de su empresa. Cada empresa conserva, quita o agrega los que usa.')],
                         'estructuras' => [__('Tipos de estructura'), __('Tipos de sede del cliente. Cada empresa conserva, quita o agrega los que usa.')],
+                        'marcas' => [__('Marcas'), __('Marcas que se ofrecen al registrar un arma.')],
+                        'calibres' => [__('Calibres'), __('Calibres que se ofrecen al registrar un arma.')],
                         'novedades' => [__('Tipos de novedad'), __('Tipos y modalidades que salen al registrar una novedad. El adjunto es opcional y la nota de cierre es obligatoria.')],
                         default => [__('Cargos'), __('Cargos de su empresa para usuarios y trabajadores.')],
                     };
@@ -93,11 +95,13 @@
                         @endforelse
                     </div>
                 </section>
-            @elseif (in_array($tab, ['vinculacion', 'contratos', 'estructuras'], true))
+            @elseif (in_array($tab, ['vinculacion', 'contratos', 'estructuras', 'marcas', 'calibres'], true))
                 @php
                     [$catalogItems, $catalogLabel, $catalogPlaceholder, $catalogStore, $catalogUpdate, $catalogMove, $catalogDestroy, $catalogConfirm, $catalogPrefix, $catalogEmpty] = match ($tab) {
                         'contratos' => [$contractTypes, __('Tipo de contrato'), __('Nuevo tipo, por ejemplo: Término fijo'), 'catalogs.contract-types.store', 'catalogs.contract-types.update', 'catalogs.contract-types.move', 'catalogs.contract-types.destroy', __('¿Eliminar este tipo de contrato?'), 'contract', __('Aún no hay tipos de contrato.')],
                         'estructuras' => [$structureTypes, __('Tipo de estructura'), __('Nuevo tipo, por ejemplo: PH'), 'catalogs.structure-types.store', 'catalogs.structure-types.update', 'catalogs.structure-types.move', 'catalogs.structure-types.destroy', __('¿Eliminar este tipo de estructura?'), 'structure', __('Aún no hay tipos de estructura.')],
+                        'marcas' => [$brands, __('Marca'), __('Nueva marca, por ejemplo: Glock'), 'catalogs.weapon-brands.store', 'catalogs.weapon-brands.update', 'catalogs.weapon-brands.move', 'catalogs.weapon-brands.destroy', __('¿Eliminar esta marca?'), 'brand', __('Aún no hay marcas.')],
+                        'calibres' => [$calibers, __('Calibre'), __('Nuevo calibre, por ejemplo: 9 mm'), 'catalogs.weapon-calibers.store', 'catalogs.weapon-calibers.update', 'catalogs.weapon-calibers.move', 'catalogs.weapon-calibers.destroy', __('¿Eliminar este calibre?'), 'caliber', __('Aún no hay calibres.')],
                         default => [$engagementTypes, __('Tipo de vinculación'), __('Nuevo tipo, por ejemplo: Dependiente'), 'catalogs.engagement-types.store', 'catalogs.engagement-types.update', 'catalogs.engagement-types.move', 'catalogs.engagement-types.destroy', __('¿Eliminar este tipo de vinculación?'), 'engagement', __('Aún no hay tipos de vinculación.')],
                     };
                 @endphp

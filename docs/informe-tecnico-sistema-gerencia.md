@@ -47,7 +47,7 @@ La empresa contaba con el registro del armamento en **hojas de cálculo (Excel)*
 | **Cargas masivas** | Importación de armas por lotes (admin); plantillas de reverso autenticado de permiso (porte/tenencia) para PDF y ficha. |
 | **Reportes** | Armas por cliente, sin destino, historial por arma, auditoría, **novedades operativas** (hurtos, pérdidas, etc.). |
 | **Alertas** | Documentos vencidos, por vencer y armas sin alertas; filtro por **uno o varios meses** (panel con checkboxes y años distintos); modales con búsqueda, selección y exportación `.docx` / vista previa PDF (`Revalidacion_{mes}_{año}`). |
-| **Revista armas** | Colaboradores de campo (12 h) suben **4 fotos** por arma desde el celular; staff filtra por **usuario temporal** y ve solo armas del acceso vigente; revisa (✓/✕, **Ver**); modales de confirmación/aviso; al aprobar actualiza inventario y **Notas** en la ficha. |
+| **Revista armas** | El usuario de campo entra con correo y contraseña en los días del mes configurados y toma **cinco fotos**. El staff envía las armas y solo revisa: aprueba o rechaza el borrador. |
 | **Mapa** | Visualización de ubicación operativa según reglas de prioridad (puesto / cliente / trabajador). |
 | **Dashboard** | Indicadores y gráficos en tiempo casi real (actualización por eventos cuando broadcasting está activo). |
 | **Notificaciones** | Campana con no leídas en la barra superior; historial en el pie del sidebar. |
@@ -168,39 +168,33 @@ Módulo para digitalizar la **revista fotográfica** del armamento sin dar acces
 
 | Participante | Acceso |
 |--------------|--------|
-| **Colaborador de campo** | Enlace de ingreso + código (válido 12 h); solo ve las armas asignadas en ese acceso. |
-| **Responsable nivel 1** | Pantalla **Revista armas**: asigna acceso, revisa fotos de sus usuarios temporales (dueño). |
-| **Administrador** | Misma pantalla con alcance global; gestiona todos los usuarios temporales y responsables dueños. |
+| **Usuario de campo** | Correo y contraseña en `/revista-armas/ingreso`, solo en los días del mes configurados. Ve las armas que le enviaron. |
+| **Responsable nivel 1** | Crea o usa su usuario de campo, envía armas y revisa fotos. No toma fotos. |
+| **Administrador** | Mismo flujo con alcance global. El usuario de campo se crea en **Usuarios**. |
 
 **Flujo resumido**
 
-1. El staff crea un **usuario temporal** (nombre y correo del colaborador; el administrador indica el **responsable dueño** entre los responsables del sistema).
-2. Desde **Asignar acceso temporal** se eligen el usuario temporal y las armas visibles; el sistema genera código, envía correo (si el servidor de correo está configurado) y muestra datos copiables.
-3. El colaborador entra por **Revista armas → ingreso**, abre cada arma y sube las cuatro fotos (lado derecho, lado izquierdo, cañón/disparador/marca, serie) con recorte en pantalla; en móvil el sistema comprime la imagen, muestra **Guardando…** y un aviso verde **Imagen guardada** al terminar.
-4. El responsable o administrador, en **Revista armas**, elige el **usuario temporal**, opcionalmente busca por serie/marca en la tabla y pulsa **Filtrar**: la lista muestra las armas del **último acceso asignado** (aunque el código haya vencido); aparecen **Realizado** (✓/✕) y **Ver** para revisar las fotos en staging.
-5. En la revisión puede **Actualizar** (las fotos pasan al inventario oficial del arma) o **Rechazar** (se descartan las fotos en revisión).
-6. Tras **Actualizar** con las cuatro fotos completas, en la **ficha del arma** (tarjeta **Notas**) queda un registro del tipo **Fotografías** con fecha/hora, cantidad de fotos y nombre del colaborador temporal.
+1. En **Usuarios** se crea la cuenta de campo: correo, zona, responsable y días del mes (por defecto del 1 al 5).
+2. En **Revista armas**, **Enviar a campo** elige ese usuario y las armas en una tabla (cliente, puesto o trabajador, tipo, serie, marca).
+3. La persona entra con correo y contraseña y toma cinco fotos: lado derecho, lado izquierdo, cañón/disparador/marca, serie e impronta.
+4. El staff abre la revisión. Las casillas son solo lectura. **Actualizar** pasa las fotos al arma. **Rechazar** borra el borrador. **Cancelar** cierra.
+5. La ficha del arma deja una nota de fotografías con fecha, cantidad y usuario de campo.
 
 **Puntos importantes para gerencia**
 
-- Sin elegir **usuario temporal**, la tabla lista el alcance del responsable pero **Realizado** y **Ver** quedan vacíos: el avance es por colaborador, no por arma sola.
-- Con usuario temporal sin acceso vigente (código expirado), el sistema muestra un **aviso ámbar** pero sigue listando las armas del último acceso para **revisar y aprobar** fotos ya subidas; un **nuevo acceso** solo hace falta si el colaborador debe volver a entrar y capturar más fotos.
-- El buscador **Buscar armas** en la tabla staff filtra en pantalla (no recarga la página); el modal de asignación incluye el mismo tipo de búsqueda local sobre las armas seleccionables.
-- **Actualizar** solo procede con las **4 fotos** en revisión; si falta alguna, el sistema muestra un **aviso en pantalla** (modal centrado) indicando cuántas fotos faltan — no usa el cuadro de confirmación del navegador.
-- Las confirmaciones de **Actualizar** y **Rechazar** usan **modales propios** del sistema (centrados), alineados al resto de la interfaz.
-- Desactivar un usuario temporal o revocar un acceso **no borra** las fotos ya subidas en revisión (se conservan para auditoría y decisión del responsable).
-- El colaborador puede subir varias fotos seguidas sin que se cierre el formulario de captura; solo cierra cuando él lo decide; puede **reemplazar** una casilla tocándola de nuevo.
-- En **datos móviles**, conviene esperar a que termine **Guardando…** y no pulsar varias veces **Guardar** (el sistema ya bloquea clics repetidos).
-- El historial de **Notas** en la ficha también registra destino operativo, asignación interna, novedades, documentos, transferencias y ediciones de datos del arma (además de Revista armas).
+- Fuera de la ventana de días la cuenta de campo no entra, aunque la contraseña sea correcta.
+- El responsable y el administrador no capturan fotos en Revista.
+- Desactivar la cuenta no borra las fotos que ya están en revisión.
+- El historial de **Notas** en la ficha también registra destino operativo, asignación interna, novedades, documentos, transferencias y ediciones de datos del arma.
 
 > **Figura 19 — [Insertar imagen]**  
-> *Pantalla staff **Revista armas** con filtro de **usuario temporal** aplicado y columnas **Realizado** / **Ver** visibles.*
+> *Revisión de Revista, solo lectura, con las cinco casillas.*
 
 > **Figura 20 — [Insertar imagen]**  
-> *Modal de **asignar acceso temporal** (usuario temporal + armas seleccionadas).*
+> *Modal **Enviar a campo** con la tabla de armas.*
 
 > **Figura 21 — [Insertar imagen]**  
-> *Vista del colaborador (**mis armas**) o modal de captura de las cuatro fotos.*
+> *Ingreso de campo y captura de las cinco fotos.*
 
 > **Figura 22 — [Insertar imagen]**  
 > *Modal de **revisión** con las cuatro imágenes y acciones Actualizar / Rechazar (opcional).*
@@ -226,7 +220,7 @@ La tarjeta **Notas** del detalle del arma (`/weapons/{id}`) es un **historial cr
 | Novedad | Expedientes de novedades operativas |
 | Transferencia | Solicitud, aceptación o cancelación |
 | Documento | Carga manual de documentos |
-| Fotografías | Aprobación de las 4 fotos de **Revista armas** (fecha, cantidad, colaborador temporal) |
+| Fotografías | Aprobación de las fotos de **Revista armas** (fecha, cantidad, usuario de campo) |
 
 El listado tiene **desplazamiento vertical** dentro del recuadro de Notas. En pantallas anchas el bloque **Notas crece en altura** para que el pie de la columna izquierda (borde inferior de **Documentos**) quede alineado con el de **Asignación interna** en la columna derecha. Si existía texto antiguo en `weapons.notes` antes del historial, puede mostrarse como **nota heredada** hasta que haya registros nuevos.
 

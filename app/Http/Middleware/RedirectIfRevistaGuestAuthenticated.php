@@ -10,7 +10,7 @@ final class RedirectIfRevistaGuestAuthenticated
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->session()->has('revista_grant_id')) {
+        if ($request->session()->has('revista_field_user_id')) {
             return redirect()->route('revista-armas.guest.weapons.index');
         }
 

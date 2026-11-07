@@ -8,8 +8,6 @@ use App\Http\Controllers\RevistaGuestAuthController;
 use App\Http\Controllers\RevistaGuestWeaponController;
 use App\Http\Controllers\RevistaPhotoReviewController;
 use App\Http\Controllers\RevistaPhotoStagingController;
-use App\Http\Controllers\TemporaryPhotoAccessController;
-use App\Http\Controllers\TemporaryPhotoUserController;
 use App\Http\Controllers\AuthenticatedPermitImageController;
 use App\Http\Controllers\Auth\ForcedPasswordChangeController;
 use App\Http\Controllers\ClientController;
@@ -116,6 +114,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/installations/{installation}/datos', [InstallationController::class, 'editForm'])->name('installations.form');
         Route::put('/installations/{installation}', [InstallationController::class, 'update'])->name('installations.update');
         Route::post('/installations/{installation}/puestos', [InstallationController::class, 'storePost'])->name('installations.posts.store');
+        Route::post('/installations/{installation}/armerillos', [InstallationController::class, 'storeArmerillo'])->name('installations.armerillos.store');
         Route::patch('/installations/{installation}/puestos/{post}', [InstallationController::class, 'renamePost'])->name('installations.posts.update');
         Route::get('/installations/{installation}/trabajadores', [InstallationController::class, 'searchWorkers'])->name('installations.workers.search');
         Route::post('/installations/{installation}/puestos/{post}/trabajadores', [InstallationController::class, 'assignWorker'])->name('installations.posts.workers.store');
@@ -290,16 +289,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['revista.staff', 'module:revista'])->prefix('revista-armas')->name('revista-armas.')->group(function () {
         Route::get('/', [RevistaArmasController::class, 'index'])->name('index');
         Route::get('/armas/buscar', [RevistaArmasController::class, 'searchAssignableWeapons'])->name('weapons.search');
-        Route::get('/armas/{weapon}/revision/{temporary_photo_user}', [RevistaArmasController::class, 'review'])->name('review');
-        Route::post('/accesos', [TemporaryPhotoAccessController::class, 'store'])->name('access.store');
-        Route::post('/accesos/renovar', [TemporaryPhotoAccessController::class, 'renew'])->name('access.renew');
-        Route::get('/accesos/contexto/{temporary_photo_user}', [TemporaryPhotoAccessController::class, 'assignmentContext'])->name('access.context');
-        Route::post('/accesos/{grant}/revocar', [TemporaryPhotoAccessController::class, 'revoke'])->name('access.revoke');
-        Route::post('/armas/{weapon}/revision/{temporary_photo_user}/aprobar', [RevistaPhotoReviewController::class, 'approve'])->name('review.approve');
-        Route::post('/armas/{weapon}/revision/{temporary_photo_user}/rechazar', [RevistaPhotoReviewController::class, 'reject'])->name('review.reject');
-        Route::resource('usuarios-temporales', TemporaryPhotoUserController::class)
-            ->parameters(['usuarios-temporales' => 'temporary_photo_user'])
-            ->names('temporary-users');
+        Route::post('/enviar', [RevistaArmasController::class, 'assign'])->name('assign');
+        Route::get('/armas/{weapon}/fotos', [RevistaArmasController::class, 'photos'])->name('photos');
+        Route::post('/armas/{weapon}/revision/{fieldUser}/aprobar', [RevistaPhotoReviewController::class, 'approve'])->name('review.approve');
+        Route::post('/armas/{weapon}/revision/{fieldUser}/rechazar', [RevistaPhotoReviewController::class, 'reject'])->name('review.reject');
     });
 
     Route::middleware('module:company')->group(function () {
@@ -328,6 +321,14 @@ Route::middleware('auth')->group(function () {
         Route::put('/estructuras/{structureType}', [CatalogController::class, 'updateStructureType'])->name('structure-types.update');
         Route::delete('/estructuras/{structureType}', [CatalogController::class, 'destroyStructureType'])->name('structure-types.destroy');
         Route::post('/estructuras/{structureType}/orden', [CatalogController::class, 'moveStructureType'])->name('structure-types.move');
+        Route::post('/marcas', [CatalogController::class, 'storeWeaponBrand'])->name('weapon-brands.store');
+        Route::put('/marcas/{weaponBrand}', [CatalogController::class, 'updateWeaponBrand'])->name('weapon-brands.update');
+        Route::delete('/marcas/{weaponBrand}', [CatalogController::class, 'destroyWeaponBrand'])->name('weapon-brands.destroy');
+        Route::post('/marcas/{weaponBrand}/orden', [CatalogController::class, 'moveWeaponBrand'])->name('weapon-brands.move');
+        Route::post('/calibres', [CatalogController::class, 'storeWeaponCaliber'])->name('weapon-calibers.store');
+        Route::put('/calibres/{weaponCaliber}', [CatalogController::class, 'updateWeaponCaliber'])->name('weapon-calibers.update');
+        Route::delete('/calibres/{weaponCaliber}', [CatalogController::class, 'destroyWeaponCaliber'])->name('weapon-calibers.destroy');
+        Route::post('/calibres/{weaponCaliber}/orden', [CatalogController::class, 'moveWeaponCaliber'])->name('weapon-calibers.move');
         Route::post('/novedades', [CatalogController::class, 'storeIncident'])->name('incident-types.store');
         Route::put('/novedades/{incidentType}', [CatalogController::class, 'updateIncidentType'])->name('incident-types.update');
         Route::delete('/novedades/{incidentType}', [CatalogController::class, 'destroyIncidentType'])->name('incident-types.destroy');

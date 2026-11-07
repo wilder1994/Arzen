@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\ContractType;
 use App\Models\EngagementType;
 use App\Models\StructureType;
+use App\Models\Weapon;
+use App\Models\WeaponBrand;
+use App\Models\WeaponCaliber;
 use App\Models\IncidentModality;
 use App\Models\IncidentType;
 use App\Models\Position;
@@ -16,7 +19,7 @@ use Illuminate\Validation\Rule;
 
 class CatalogController extends Controller
 {
-    public const TABS = ['cargos', 'vinculacion', 'contratos', 'estructuras', 'novedades'];
+    public const TABS = ['cargos', 'vinculacion', 'contratos', 'estructuras', 'marcas', 'calibres', 'novedades'];
 
     public function index(Request $request)
     {
@@ -37,6 +40,12 @@ class CatalogController extends Controller
                 : collect(),
             'structureTypes' => $tab === 'estructuras'
                 ? StructureType::query()->withCount('clients')->ordered()->get()
+                : collect(),
+            'brands' => $tab === 'marcas'
+                ? WeaponBrand::query()->withCount('weapons')->ordered()->get()
+                : collect(),
+            'calibers' => $tab === 'calibres'
+                ? WeaponCaliber::query()->withCount('weapons')->ordered()->get()
                 : collect(),
             'incidentTypes' => $tab === 'novedades'
                 ? IncidentType::query()
@@ -169,6 +178,46 @@ class CatalogController extends Controller
     public function moveStructureType(Request $request, StructureType $structureType)
     {
         return $this->moveNamedCatalog($request, StructureType::class, $structureType, 'estructuras');
+    }
+
+    public function storeWeaponBrand(Request $request)
+    {
+        return $this->storeNamedCatalog($request, WeaponBrand::class, 'marcas', __('Marca creada.'));
+    }
+
+    public function updateWeaponBrand(Request $request, WeaponBrand $weaponBrand)
+    {
+        return $this->updateNamedCatalog($request, $weaponBrand, 'marcas', __('Marca actualizada.'));
+    }
+
+    public function destroyWeaponBrand(Request $request, WeaponBrand $weaponBrand)
+    {
+        return $this->destroyNamedCatalog($request, $weaponBrand, 'marcas', __('Marca eliminada.'), __('No se puede eliminar una marca en uso. Desactívela.'));
+    }
+
+    public function moveWeaponBrand(Request $request, WeaponBrand $weaponBrand)
+    {
+        return $this->moveNamedCatalog($request, WeaponBrand::class, $weaponBrand, 'marcas');
+    }
+
+    public function storeWeaponCaliber(Request $request)
+    {
+        return $this->storeNamedCatalog($request, WeaponCaliber::class, 'calibres', __('Calibre creado.'));
+    }
+
+    public function updateWeaponCaliber(Request $request, WeaponCaliber $weaponCaliber)
+    {
+        return $this->updateNamedCatalog($request, $weaponCaliber, 'calibres', __('Calibre actualizado.'));
+    }
+
+    public function destroyWeaponCaliber(Request $request, WeaponCaliber $weaponCaliber)
+    {
+        return $this->destroyNamedCatalog($request, $weaponCaliber, 'calibres', __('Calibre eliminado.'), __('No se puede eliminar un calibre en uso. Desactívelo.'));
+    }
+
+    public function moveWeaponCaliber(Request $request, WeaponCaliber $weaponCaliber)
+    {
+        return $this->moveNamedCatalog($request, WeaponCaliber::class, $weaponCaliber, 'calibres');
     }
 
     public function storeIncident(Request $request)
@@ -342,7 +391,7 @@ class CatalogController extends Controller
         return $this->back($tab, $message);
     }
 
-    private function updateNamedCatalog(Request $request, EngagementType|ContractType|StructureType $item, string $tab, string $message)
+    private function updateNamedCatalog(Request $request, EngagementType|ContractType|StructureType|WeaponBrand|WeaponCaliber $item, string $tab, string $message)
     {
         $this->authorizeAdmin($request);
 
@@ -351,16 +400,21 @@ class CatalogController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
         $data['is_active'] = $request->boolean('is_active');
+        $this->renameWeaponCatalogValues($item, $data['name']);
         $item->update($data);
 
         return $this->back($tab, $message);
     }
 
-    private function destroyNamedCatalog(Request $request, EngagementType|ContractType|StructureType $item, string $tab, string $deleted, string $inUse)
+    private function destroyNamedCatalog(Request $request, EngagementType|ContractType|StructureType|WeaponBrand|WeaponCaliber $item, string $tab, string $deleted, string $inUse)
     {
         $this->authorizeAdmin($request);
 
-        $used = $item instanceof StructureType ? $item->clients()->exists() : $item->workers()->exists();
+        $used = match (true) {
+            $item instanceof StructureType => $item->clients()->exists(),
+            $item instanceof WeaponBrand, $item instanceof WeaponCaliber => $item->weapons()->exists(),
+            default => $item->workers()->exists(),
+        };
         if ($used) {
             return $this->back($tab, null, $inUse);
         }
@@ -370,10 +424,21 @@ class CatalogController extends Controller
         return $this->back($tab, $deleted);
     }
 
+    private function renameWeaponCatalogValues(EngagementType|ContractType|StructureType|WeaponBrand|WeaponCaliber $item, string $name): void
+    {
+        if ($item instanceof WeaponBrand && $item->name !== $name) {
+            Weapon::query()->where('brand', $item->name)->update(['brand' => $name]);
+        }
+
+        if ($item instanceof WeaponCaliber && $item->name !== $name) {
+            Weapon::query()->where('caliber', $item->name)->update(['caliber' => $name]);
+        }
+    }
+
     /**
      * @param  class-string<EngagementType|ContractType>  $model
      */
-    private function moveNamedCatalog(Request $request, string $model, EngagementType|ContractType|StructureType $item, string $tab)
+    private function moveNamedCatalog(Request $request, string $model, EngagementType|ContractType|StructureType|WeaponBrand|WeaponCaliber $item, string $tab)
     {
         $this->authorizeAdmin($request);
 

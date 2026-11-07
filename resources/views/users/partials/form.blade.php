@@ -10,6 +10,12 @@
         'defaults' => $roleDefaults,
         'clients' => $clients->map(fn ($client) => ['id' => $client->id, 'name' => $client->name.($client->is_own_company ? ' · '.__('Mi empresa') : '')])->values(),
         'picked' => $pickedClients,
+        'accountKind' => old('account_kind', $user->account_kind ?: \App\Models\User::KIND_PLATFORM),
+        'fieldShared' => (bool) old('field_shared', $user->field_shared),
+        'responsibles' => $responsibles->map(fn ($responsible) => ['id' => $responsible->id, 'name' => $responsible->name])->values(),
+        'sharedIds' => collect(old('field_responsible_ids', $sharedResponsibleIds))->map(fn ($id) => (int) $id)->values(),
+        'dayStart' => (int) old('field_day_start', $user->field_day_start ?: 1),
+        'dayEnd' => (int) old('field_day_end', $user->field_day_end ?: 5),
     ];
 @endphp
 
@@ -19,9 +25,10 @@
     <div class="sj-user-identity">
         <div
             class="sj-user-portrait"
+            x-show="accountKind === 'platform'"
             x-data="userPortrait(@js($user->portraitUrl()))"
         >
-            <input x-ref="file" name="photo" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" @change="useFile($event)">
+            <input x-ref="file" name="photo" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" :disabled="accountKind === 'field'" @change="useFile($event)">
             <button type="button" class="sj-user-portrait__camera" @click="openCamera()">{{ __('Tomar foto') }}</button>
             <button type="button" class="sj-user-portrait__frame" @click="$refs.file.click()" :aria-label="@js(__('Elegir foto'))">
                 <img x-show="preview" :src="preview" alt="">
@@ -43,48 +50,48 @@
         </div>
 
         <div class="sj-user-fields">
-            <div class="sj-ui-field">
+            <div class="sj-ui-field" x-show="accountKind === 'platform'">
                 <label for="user-first-name" class="sj-ui-field__label">{{ __('Nombre') }}</label>
-                <input id="user-first-name" name="first_name" type="text" maxlength="120" value="{{ $firstName }}" class="sj-ui-field__control" required>
+                <input id="user-first-name" name="first_name" type="text" maxlength="120" value="{{ $firstName }}" class="sj-ui-field__control" :required="accountKind === 'platform'" :disabled="accountKind === 'field'">
                 <x-input-error :messages="$errors->get('first_name')" />
             </div>
-            <div class="sj-ui-field">
+            <div class="sj-ui-field" x-show="accountKind === 'platform'">
                 <label for="user-last-name" class="sj-ui-field__label">{{ __('Apellido') }}</label>
-                <input id="user-last-name" name="last_name" type="text" maxlength="120" value="{{ $lastName }}" class="sj-ui-field__control" required>
+                <input id="user-last-name" name="last_name" type="text" maxlength="120" value="{{ $lastName }}" class="sj-ui-field__control" :required="accountKind === 'platform'" :disabled="accountKind === 'field'">
                 <x-input-error :messages="$errors->get('last_name')" />
             </div>
-            <div class="sj-ui-field">
+            <div class="sj-ui-field" x-show="accountKind === 'platform'">
                 <label for="user-document-type" class="sj-ui-field__label">{{ __('Tipo de documento') }}</label>
-                <select id="user-document-type" name="document_type" class="sj-ui-field__control" required>
+                <select id="user-document-type" name="document_type" class="sj-ui-field__control" :required="accountKind === 'platform'" :disabled="accountKind === 'field'">
                     @foreach (\App\Models\User::documentTypeLabels() as $value => $label)
                         <option value="{{ $value }}" @selected(old('document_type', $user->document_type ?? 'CC') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
                 <x-input-error :messages="$errors->get('document_type')" />
             </div>
-            <div class="sj-ui-field">
+            <div class="sj-ui-field" x-show="accountKind === 'platform'">
                 <label for="user-document" class="sj-ui-field__label">{{ __('Número de documento') }}</label>
-                <input id="user-document" name="document" type="text" maxlength="50" value="{{ old('document', $user->document) }}" class="sj-ui-field__control" required>
+                <input id="user-document" name="document" type="text" maxlength="50" value="{{ old('document', $user->document) }}" class="sj-ui-field__control" :required="accountKind === 'platform'" :disabled="accountKind === 'field'">
                 <x-input-error :messages="$errors->get('document')" />
             </div>
-            <div class="sj-ui-field">
+            <div class="sj-ui-field" x-show="accountKind === 'platform'">
                 <label for="user-phone" class="sj-ui-field__label">{{ __('Teléfono de contacto') }}</label>
-                <input id="user-phone" name="phone" type="tel" maxlength="30" value="{{ old('phone', $user->phone) }}" class="sj-ui-field__control">
+                <input id="user-phone" name="phone" type="tel" maxlength="30" value="{{ old('phone', $user->phone) }}" class="sj-ui-field__control" :disabled="accountKind === 'field'">
                 <x-input-error :messages="$errors->get('phone')" />
             </div>
-            <div class="sj-ui-field">
+            <div class="sj-ui-field" x-show="accountKind === 'platform'">
                 <label for="user-email" class="sj-ui-field__label">{{ __('Correo corporativo') }}</label>
-                <input id="user-email" name="email" type="email" maxlength="255" value="{{ old('email', $user->email) }}" class="sj-ui-field__control" required>
+                <input id="user-email" name="email" type="email" maxlength="255" value="{{ old('email', $user->email) }}" class="sj-ui-field__control" :required="accountKind === 'platform'" :disabled="accountKind === 'field'">
                 <x-input-error :messages="$errors->get('email')" />
             </div>
         </div>
         <div class="sj-user-fields sj-user-fields--tail">
-            <div class="sj-ui-field">
+            <div class="sj-ui-field" x-show="accountKind === 'platform'">
                 <div class="sj-ui-field__label-row">
                     <label for="user-position" class="sj-ui-field__label">{{ __('Cargo') }}</label>
                     <x-help-tip :text="__('Se crean en Ajustes → Cargos. Es el mismo catálogo que usan los trabajadores.')" />
                 </div>
-                <select id="user-position" name="position_id" class="sj-ui-field__control">
+                <select id="user-position" name="position_id" class="sj-ui-field__control" :disabled="accountKind === 'field'">
                     <option value="">{{ __('Sin cargo') }}</option>
                     @foreach ($positions as $position)
                         <option value="{{ $position->id }}" @selected((int) old('position_id', $user->position_id) === $position->id)>{{ $position->name }}</option>
@@ -92,12 +99,28 @@
                 </select>
                 <x-input-error :messages="$errors->get('position_id')" />
             </div>
-            <div class="sj-ui-field">
+            <div class="sj-ui-field sm:col-span-2">
+                @if ($user->exists)
+                    <input type="hidden" name="account_kind" value="{{ $user->account_kind ?: \App\Models\User::KIND_PLATFORM }}">
+                @endif
+                <span class="sj-ui-field__label">{{ __('Tipo de usuario') }}</span>
+                <div class="mt-2 flex flex-wrap gap-4">
+                    <label class="sj-company__check">
+                        <input type="radio" name="account_kind" value="platform" class="sj-ui-check" x-model="accountKind" @disabled($user->exists)>
+                        <span>{{ __('Plataforma') }}</span>
+                    </label>
+                    <label class="sj-company__check">
+                        <input type="radio" name="account_kind" value="field" class="sj-ui-check" x-model="accountKind" @disabled($user->exists)>
+                        <span>{{ __('Campo') }}</span>
+                    </label>
+                </div>
+            </div>
+            <div class="sj-ui-field" x-show="accountKind === 'platform'">
                 <div class="sj-ui-field__label-row">
                     <label for="user-role" class="sj-ui-field__label">{{ __('Rol') }}</label>
                     <x-help-tip :text="__('El rol define qué datos ve el usuario (por ejemplo, el responsable solo ve los clientes de su cartera). Al cambiarlo se cargan sus permisos por defecto en la matriz.')" />
                 </div>
-                <select id="user-role" name="role" class="sj-ui-field__control" x-model="role" @change="applyDefaults()" required>
+                <select id="user-role" name="role" class="sj-ui-field__control" x-model="role" @change="applyDefaults()" :required="accountKind === 'platform'">
                     @foreach ($roles as $value => $label)
                         @continue($value === \App\Models\User::ROLE_ADMIN && ! $canAssignAdmin)
                         <option value="{{ $value }}">{{ $label }}</option>
@@ -105,9 +128,9 @@
                 </select>
                 <x-input-error :messages="$errors->get('role')" />
             </div>
-            <div class="sj-ui-field">
+            <div class="sj-ui-field" x-show="accountKind === 'platform'">
                 <label for="user-active" class="sj-ui-field__label">{{ __('Estado') }}</label>
-                <select id="user-active" name="is_active" class="sj-ui-field__control">
+                <select id="user-active" name="is_active" class="sj-ui-field__control" :disabled="accountKind === 'field'">
                     <option value="1" @selected((string) old('is_active', (int) $user->is_active) === '1')>{{ __('Activo') }}</option>
                     <option value="0" @selected((string) old('is_active', (int) $user->is_active) === '0')>{{ __('Inactivo') }}</option>
                 </select>
@@ -116,6 +139,62 @@
         </div>
     </div>
 
+    <div x-show="accountKind === 'field'" x-cloak class="mt-6 space-y-4">
+        <h3 class="sj-form-section__title">{{ __('Usuario de campo') }}</h3>
+        <input type="hidden" name="is_active" value="{{ (string) old('is_active', (int) $user->is_active) }}" :disabled="accountKind !== 'field'">
+        <div class="sj-user-identity">
+            <div class="sj-ui-field">
+                <label for="field-email" class="sj-ui-field__label">{{ __('Correo') }}</label>
+                <input id="field-email" name="email" type="email" maxlength="255" value="{{ old('email', $user->email) }}" class="sj-ui-field__control" :required="accountKind === 'field'" :disabled="accountKind !== 'field'">
+                <x-input-error :messages="$errors->get('email')" />
+            </div>
+            <div class="sj-ui-field">
+                <label for="field-zone" class="sj-ui-field__label">{{ __('Zona') }}</label>
+                <input id="field-zone" name="zone" type="text" class="sj-ui-field__control" value="{{ old('zone', $user->zone) }}">
+                <x-input-error :messages="$errors->get('zone')" />
+            </div>
+            <div class="sj-ui-field">
+                <label for="field-owner" class="sj-ui-field__label">{{ __('Responsable') }}</label>
+                <div data-assignment-combobox>
+                    <select id="field-owner" name="field_owner_id" class="sj-ui-field__control">
+                        <option value="">{{ __('Seleccione') }}</option>
+                        @foreach ($responsibles as $responsible)
+                            <option value="{{ $responsible->id }}" @selected((int) old('field_owner_id', $user->field_owner_id) === $responsible->id)>{{ $responsible->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <x-input-error :messages="$errors->get('field_owner_id')" />
+            </div>
+            <label class="sj-company__check">
+                <input type="checkbox" name="field_shared" value="1" class="sj-ui-check" x-model="fieldShared">
+                <span>{{ __('Compartido') }}</span>
+            </label>
+            <div class="sj-ui-field sm:col-span-2" x-show="fieldShared" x-cloak>
+                <span class="sj-ui-field__label">{{ __('Responsables con los que se comparte') }}</span>
+                <div class="mt-2 max-h-40 space-y-1 overflow-y-auto rounded border border-slate-200 p-2">
+                    <template x-for="responsible in responsibles" :key="responsible.id">
+                        <label class="sj-company__check">
+                            <input type="checkbox" class="sj-ui-check" name="field_responsible_ids[]" :value="responsible.id" :checked="sharedIds.includes(responsible.id)">
+                            <span x-text="responsible.name"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+            <div class="sj-ui-field">
+                <label class="sj-ui-field__label">{{ __('Días de cada mes') }}</label>
+                <div class="mt-1 flex items-center gap-2">
+                    <input name="field_day_start" type="number" min="1" max="31" class="sj-ui-field__control w-24" x-model.number="dayStart">
+                    <span>{{ __('al') }}</span>
+                    <input name="field_day_end" type="number" min="1" max="31" class="sj-ui-field__control w-24" x-model.number="dayEnd">
+                </div>
+                <p class="sj-company__hint" x-text="'Del día ' + dayStart + ' al día ' + dayEnd + ' de cada mes.'"></p>
+                <x-input-error :messages="$errors->get('field_day_start')" />
+                <x-input-error :messages="$errors->get('field_day_end')" />
+            </div>
+        </div>
+    </div>
+
+    <div x-show="accountKind === 'platform'">
     <hr class="sj-ui-divider">
 
     <div class="sj-form-section__title sj-ui-field__label-row">
@@ -188,6 +267,7 @@
         </div>
         <x-input-error :messages="$errors->get('grants')" />
     </div>
+    </div>
 </div>
 
 @once
@@ -258,6 +338,12 @@
 
                 return {
                     role: cfg.role,
+                    accountKind: cfg.accountKind || 'platform',
+                    fieldShared: !!cfg.fieldShared,
+                    responsibles: cfg.responsibles || [],
+                    sharedIds: cfg.sharedIds || [],
+                    dayStart: cfg.dayStart || 1,
+                    dayEnd: cfg.dayEnd || 5,
                     levels: { ...cfg.levels },
                     clients: cfg.clients,
                     picked: cfg.picked,

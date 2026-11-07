@@ -23,7 +23,7 @@ final class ModuleAccess
         return [
             'dashboard' => ['label' => __('Inicio (tablero)'), 'group' => __('Armamento'), 'hint' => __('Indicadores y gráficos del inventario.')],
             'weapons' => ['label' => __('Armas'), 'group' => __('Armamento'), 'hint' => __('Gestionar permite asignación interna, custodia, documentos y fotos de las armas de su cartera.')],
-            'revista' => ['label' => __('Revista de armas'), 'group' => __('Armamento'), 'hint' => __('Revisión fotográfica mensual con usuarios temporales.')],
+            'revista' => ['label' => __('Revista de armas'), 'group' => __('Armamento'), 'hint' => __('Revisión fotográfica mensual. El usuario de campo se administra en Usuarios.')],
             'map' => ['label' => __('Mapa'), 'group' => __('Armamento'), 'hint' => __('Ubicación de las armas en el mapa.')],
             'transfers' => ['label' => __('Transferencias'), 'group' => __('Armamento'), 'hint' => __('Enviar y recibir armas entre responsables.')],
             'portfolios' => ['label' => __('Asignaciones (carteras)'), 'group' => __('Armamento'), 'hint' => __('Carteras de clientes de los responsables.')],

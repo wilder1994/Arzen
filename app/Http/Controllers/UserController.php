@@ -45,6 +45,10 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->input('account_kind') === User::KIND_FIELD) {
+            return $this->storeFieldUser($request);
+        }
+
         $data = $request->validate($this->identityRules($request));
 
         $this->guardAdminRole($data['role']);
@@ -86,6 +90,10 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $this->guardAdminTarget($user);
+
+        if ($user->isField()) {
+            return $this->updateFieldUser($request, $user);
+        }
 
         $data = $request->validate($this->identityRules($request, $user));
 
@@ -248,6 +256,115 @@ class UserController extends Controller
     /**
      * @return array<string, mixed>
      */
+    private function storeFieldUser(Request $request)
+    {
+        $data = $request->validate($this->fieldRules($request));
+        $sharedIds = $request->boolean('field_shared') ? $this->pullFieldShared($data) : $this->discardFieldShared($data);
+        $data = $this->withFieldIdentity($data);
+        $data['account_kind'] = User::KIND_FIELD;
+        $data['role'] = User::ROLE_RESPONSABLE;
+        $data['field_shared'] = $request->boolean('field_shared');
+
+        $plainPassword = $this->temporaryPasswordGenerator->generate();
+        $data['password'] = $plainPassword;
+        $data['must_change_password'] = false;
+
+        $user = User::create($data);
+        $user->fieldSharedResponsibles()->sync($sharedIds);
+
+        return redirect()
+            ->route('users.index')
+            ->with('status', 'Usuario de campo creado. Entregue el usuario y la contraseña una sola vez.')
+            ->with('generated_temporary_password', $plainPassword);
+    }
+
+    private function updateFieldUser(Request $request, User $user)
+    {
+        $data = $request->validate($this->fieldRules($request, $user));
+        $sharedIds = $request->boolean('field_shared') ? $this->pullFieldShared($data) : $this->discardFieldShared($data);
+        $data = $this->withFieldIdentity($data);
+        $data['account_kind'] = User::KIND_FIELD;
+        $data['role'] = User::ROLE_RESPONSABLE;
+        $data['field_shared'] = $request->boolean('field_shared');
+
+        $generateTemporary = $request->boolean('generate_temporary_password');
+        $passwordInput = (string) ($data['password'] ?? '');
+        unset($data['password']);
+
+        $plainFlash = null;
+        if ($generateTemporary) {
+            $plainFlash = $this->temporaryPasswordGenerator->generate();
+            $data['password'] = $plainFlash;
+            $data['must_change_password'] = false;
+        } elseif ($passwordInput !== '') {
+            $data['password'] = $passwordInput;
+            $data['must_change_password'] = false;
+        }
+
+        $user->update($data);
+        $user->fieldSharedResponsibles()->sync($sharedIds);
+
+        $redirect = redirect()->route('users.index')->with('status', 'Usuario de campo actualizado.');
+        if ($plainFlash) {
+            $redirect->with('generated_temporary_password', $plainFlash);
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function fieldRules(Request $request, ?User $user = null): array
+    {
+        return [
+            'account_kind' => ['required', Rule::in([User::KIND_FIELD])],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
+            'zone' => ['nullable', 'string', 'max:120'],
+            'field_owner_id' => ['required', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', User::ROLE_RESPONSABLE)->where('account_kind', User::KIND_PLATFORM))],
+            'field_shared' => ['nullable', 'boolean'],
+            'field_responsible_ids' => ['nullable', 'array'],
+            'field_responsible_ids.*' => ['integer', Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', User::ROLE_RESPONSABLE)->where('account_kind', User::KIND_PLATFORM))],
+            'field_day_start' => ['required', 'integer', 'min:1', 'max:31'],
+            'field_day_end' => ['required', 'integer', 'min:1', 'max:31', 'gte:field_day_start'],
+            'is_active' => ['required', 'boolean'],
+            'generate_temporary_password' => ['sometimes', 'boolean'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return list<int>
+     */
+    private function discardFieldShared(array &$data): array
+    {
+        $this->pullFieldShared($data);
+
+        return [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return list<int>
+     */
+    private function pullFieldShared(array &$data): array
+    {
+        $ids = collect($data['field_responsible_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->reject(fn (int $id) => $id === (int) ($data['field_owner_id'] ?? 0))
+            ->unique()
+            ->values()
+            ->all();
+
+        unset($data['field_responsible_ids'], $data['account_kind'], $data['generate_temporary_password']);
+
+        return $ids;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     private function identityRules(Request $request, ?User $user = null): array
     {
         $documentUnique = Rule::unique('users', 'document')
@@ -275,6 +392,29 @@ class UserController extends Controller
             'generate_temporary_password' => ['sometimes', 'boolean'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function withFieldIdentity(array $data): array
+    {
+        $zone = trim((string) ($data['zone'] ?? ''));
+        $email = trim((string) $data['email']);
+        $local = strstr($email, '@', true);
+
+        $data['zone'] = $zone !== '' ? $zone : null;
+        $data['name'] = $zone !== '' ? $zone : ($local !== false && $local !== '' ? $local : $email);
+        $data['first_name'] = null;
+        $data['last_name'] = null;
+        $data['document_type'] = null;
+        $data['document'] = null;
+        $data['phone'] = null;
+        $data['position_id'] = null;
+        $data['photo_path'] = null;
+
+        return $data;
     }
 
     /**
@@ -330,6 +470,13 @@ class UserController extends Controller
                 ->mapWithKeys(fn (string $role) => [$role => ModuleAccess::defaultsForRole($role)])
                 ->all(),
             'canAssignAdmin' => request()->user()?->isAdmin() ?? false,
+            'responsibles' => User::query()
+                ->where('account_kind', User::KIND_PLATFORM)
+                ->where('role', User::ROLE_RESPONSABLE)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'sharedResponsibleIds' => $user->exists ? $user->fieldSharedResponsibles()->pluck('users.id')->map(fn ($id) => (int) $id)->all() : [],
         ];
     }
 

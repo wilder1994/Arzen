@@ -35,6 +35,8 @@ class ModuleNavBuilderTest extends TestCase
         $this->assertContains('vinculacion', $keys);
         $this->assertContains('contratos', $keys);
         $this->assertContains('estructuras', $keys);
+        $this->assertContains('marcas', $keys);
+        $this->assertContains('calibres', $keys);
         $this->assertContains('novedades', $keys);
         $this->assertContains('usuarios', $keys);
         $this->assertContains('asignaciones', $keys);

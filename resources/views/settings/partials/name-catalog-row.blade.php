@@ -1,6 +1,6 @@
 @php
     $formId = $formPrefix.'-'.$item->id;
-    $usageCount = (int) ($item->workers_count ?? $item->clients_count ?? 0);
+    $usageCount = (int) ($item->workers_count ?? $item->clients_count ?? $item->weapons_count ?? 0);
 @endphp
 <div class="sj-position-row">
     <form id="{{ $formId }}" method="POST" action="{{ route($updateRoute, $item) }}" class="contents">

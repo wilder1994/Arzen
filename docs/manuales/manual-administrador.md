@@ -687,6 +687,31 @@ El puesto queda en la sede y cada movimiento aparece en el historial de esa inst
 
 ---
 
+### 6.1.1 Crear un armerillo en la sede
+
+| | |
+|---|---|
+| **Menú** | **Instalaciones** → ficha de la sede |
+| **Objetivo** | Tener una caja del armerillo en esa instalación |
+
+#### Qué hacer
+
+1. En la ficha, pulse **Agregar armerillo** (junto a **Agregar puesto**).
+2. Escriba el nombre. La ubicación es la de la sede.
+3. En la tarjeta, la puerta inicia cerrada. Pulse la chapa o la manija para abrirla.
+4. Dentro hay tres compartimentos: **Listas para asignar**, **Para mantenimiento** y **Munición**. Al elegir uno, la tabla sale a la derecha, sin pasar la altura de la caja.
+5. Con la puerta abierta, **Cerrar** queda al lado de la manija. **Archivar** está en la misma tarjeta.
+
+#### Resultado esperado
+
+El armerillo no aparece como puesto de campo. El conteo de puestos de la sede no lo incluye.
+
+#### Notas
+
+- Enviar un arma desde su ficha con **Enviar a mi armerillo**, **Para mantenimiento** o **Enviar a armero** sigue usando la custodia del responsable. Esa custodia no elige todavía esta caja de la sede.
+
+---
+
 ### 6.2 Gestionar trabajadores
 
 | | |
@@ -755,7 +780,7 @@ Listado filtrado; enlace a detalle operativo.
 #### Qué hacer
 
 1. En listado, clic **Nueva arma**.
-2. Complete datos obligatorios (tipo, serie, marca, etc.).
+2. Complete tipo, serie, marca y calibre. Marca y calibre salen de **Ajustes**. El arma ya no pide tipo de propiedad.
 3. Pulse **Guardar**.
 4. El sistema redirige a la **ficha** del arma creada.
 
@@ -1223,7 +1248,7 @@ Plantillas usadas en PDF de permiso y ficha.
 
 ## 11. Revista armas (resumen ADMIN)
 
-Detalle completo en **manual-revista-armas.md**. Como ADMIN: usuarios temporales globales, asignar dueño, accesos 12 h, revisar staging, **Actualizar** o **Rechazar**.
+Detalle completo en **manual-revista-armas.md**. El administrador crea el **usuario de campo** en **Usuarios**, envía armas desde **Revista armas** y revisa las cinco fotos. No toma fotos ni genera un código de 12 horas.
 
 ### 11.1 Abrir Revista armas
 
@@ -1235,10 +1260,9 @@ Detalle completo en **manual-revista-armas.md**. Como ADMIN: usuarios temporales
 
 #### Qué hacer
 
-1. Clic **Revista armas**.
-2. Opcional: **Usuarios temporales** para crear colaborador.
-3. **Asignar acceso temporal** → usuario + armas → copiar **código** 12 h.
-4. Filtre por **Usuario temporal** → **Filtrar** → **Ver** → **Actualizar** si 4/4 fotos.
+1. En **Usuarios**, cree el **usuario de campo** (correo, zona, responsable y días del mes).
+2. En **Revista armas**, pulse **Enviar a campo**, elija ese usuario y marque las armas en la tabla.
+3. Cuando el campo haya tomado las fotos, ábralas. **Actualizar** las copia al arma. **Rechazar** borra el borrador. **Cancelar** cierra sin cambiar nada.
 
 #### Resultado esperado
 
@@ -1652,6 +1676,7 @@ El reporte de novedades ofrece los mismos tipos y modalidades activos.
 | 3.0 | [fecha] | [nombre] | [nombre] | Procedimientos paso a paso en todas las funciones |
 | 3.1 | 2026-10-24 | [nombre] | [nombre] | Ajustes, matriz de módulos, instalaciones, puestos y Mi empresa con mapa |
 | 3.2 | 2026-11-05 | [nombre] | [nombre] | Ficha de instalación, archivo visible de cliente y puesto, columna Instalaciones e historial de movimientos |
+| 3.3 | 2026-11-06 | [nombre] | [nombre] | Usuario de campo en Revista, armerillo en la sede, marcas y calibres de catálogo |
 
 ---
 

@@ -2,17 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\TemporaryPhotoAccessService;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class RevistaGuestAuthController extends Controller
 {
-    public function __construct(
-        private readonly TemporaryPhotoAccessService $accessService,
-    ) {
-    }
-
     public function showLogin(): View
     {
         return view('revista-armas.guest.login');
@@ -22,31 +18,37 @@ class RevistaGuestAuthController extends Controller
     {
         $data = $request->validate([
             'email' => ['required', 'email'],
-            'access_code' => ['required', 'string', 'max:32'],
+            'password' => ['required', 'string'],
         ]);
 
-        $grant = $this->accessService->validateGuestLogin(
-            $data['email'],
-            strtoupper(trim($data['access_code'])),
-        );
+        $fieldUser = User::query()
+            ->where('email', $data['email'])
+            ->where('account_kind', User::KIND_FIELD)
+            ->first();
 
-        if (! $grant) {
+        if (! $fieldUser || ! $fieldUser->is_active || ! Hash::check($data['password'], $fieldUser->password)) {
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors(['access_code' => __('Correo o código incorrectos, o el acceso ya no está vigente.')]);
+                ->withErrors(['email' => __('Correo o contraseña incorrectos.')]);
         }
 
-        $request->session()->put([
-            'revista_grant_id' => $grant->id,
-            'revista_temp_user_id' => $grant->temporary_photo_user_id,
-        ]);
+        if (! $fieldUser->fieldAccessOpen()) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => __('El ingreso de campo está cerrado. Se abre del día :start al día :end de cada mes.', [
+                    'start' => $fieldUser->field_day_start,
+                    'end' => $fieldUser->field_day_end,
+                ])]);
+        }
+
+        $request->session()->put('revista_field_user_id', $fieldUser->id);
 
         return redirect()->route('revista-armas.guest.weapons.index');
     }
 
     public function logout(Request $request)
     {
-        $request->session()->forget(['revista_grant_id', 'revista_temp_user_id']);
+        $request->session()->forget('revista_field_user_id');
 
         return redirect()->route('revista-armas.guest.login');
     }

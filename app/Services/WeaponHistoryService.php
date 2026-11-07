@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Client;
 use App\Models\Post;
 use App\Models\User;
-use App\Models\TemporaryPhotoUser;
 use App\Models\Weapon;
 use App\Models\WeaponHistory;
 use App\Models\Worker;
@@ -286,7 +285,7 @@ class WeaponHistoryService
     public function recordRevistaPhotosApproved(
         Weapon $weapon,
         User $reviewer,
-        TemporaryPhotoUser $temporaryUser,
+        User $fieldUser,
         int $photoCount,
     ): void {
         $now = now()->timezone(config('app.timezone'));
@@ -295,7 +294,7 @@ class WeaponHistoryService
             __('Imágenes oficiales del arma actualizadas desde Revista armas.'),
             __('Fecha: :date', ['date' => $now->format('d/m/Y H:i')]),
             __('Fotos actualizadas: :count', ['count' => $photoCount]),
-            __('Colaborador temporal: :name', ['name' => $temporaryUser->name]),
+            __('Usuario de campo: :name', ['name' => $fieldUser->name]),
         ];
 
         $this->record($weapon, $reviewer, WeaponHistory::KIND_PHOTOS, implode("\n", $lines));
@@ -313,7 +312,6 @@ class WeaponHistoryService
             'caliber' => __('Calibre'),
             'brand' => __('Marca'),
             'capacity' => __('Capacidad'),
-            'ownership_type' => __('Tipo de propiedad'),
             'ownership_entity' => __('Entidad propietaria'),
             'permit_type' => __('Tipo de permiso'),
             'permit_number' => __('Número de permiso'),
@@ -341,16 +339,6 @@ class WeaponHistoryService
             } catch (\Throwable) {
                 return (string) $value;
             }
-        }
-
-        if ($field === 'ownership_type') {
-            $labels = [
-                'company_owned' => __('Propiedad de la empresa'),
-                'leased' => __('Arrendada'),
-                'third_party' => __('Terceros'),
-            ];
-
-            return $labels[(string) $value] ?? (string) $value;
         }
 
         if ($field === 'permit_type') {

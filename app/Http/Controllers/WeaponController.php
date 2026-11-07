@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Events\WeaponChanged;
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\CompanySetting;
 use App\Models\File;
 use App\Models\IncidentType;
 use App\Models\PermitAuthenticatedTemplate;
 use App\Models\User;
 use App\Models\Weapon;
+use App\Models\WeaponBrand;
+use App\Models\WeaponCaliber;
 use App\Models\WeaponIncident;
 use App\Models\WeaponPhoto;
 use App\Services\WeaponDocumentService;
@@ -25,6 +28,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -111,9 +115,7 @@ class WeaponController extends Controller
 
     public function create()
     {
-        $ownershipTypes = $this->ownershipOptions();
-
-        return view('weapons.create', compact('ownershipTypes'));
+        return view('weapons.create', $this->weaponCatalogFormData());
     }
 
     public function export(Request $request): StreamedResponse
@@ -224,8 +226,6 @@ class WeaponController extends Controller
             'caliber' => ['required', 'string', 'max:100'],
             'brand' => ['required', 'string', 'max:100'],
             'capacity' => ['required', 'string', 'max:50'],
-            'ownership_type' => ['required', 'in:'.implode(',', array_keys($this->ownershipOptions()))],
-            'ownership_entity' => ['nullable', 'string', 'max:255'],
             'permit_type' => ['required', 'in:porte,tenencia'],
             'permit_number' => ['nullable', 'string', 'max:100'],
             'permit_expires_at' => ['nullable', 'date'],
@@ -234,6 +234,9 @@ class WeaponController extends Controller
             'photos.*' => ['nullable', 'file', 'image', 'max:5120'],
             'permit_photo' => ['required', 'file', 'image', 'max:5120'],
         ]);
+        $data['brand'] = $this->validatedCatalogName(WeaponBrand::class, 'brand', $data['brand'] ?? null);
+        $data['caliber'] = $this->validatedCatalogName(WeaponCaliber::class, 'caliber', $data['caliber'] ?? null);
+        $data = $this->withCompanyOwnership($data);
 
         if (empty($data['internal_code'])) {
             $data['internal_code'] = $this->generateInternalCode();
@@ -370,7 +373,6 @@ class WeaponController extends Controller
             },
             'histories.user',
         ]);
-        $ownershipTypes = $this->ownershipOptions();
         $responsibles = collect();
         $posts = collect();
         $workers = collect();
@@ -476,7 +478,6 @@ class WeaponController extends Controller
         return view('weapons.show', compact(
             'weapon',
             'weaponPermitAuthTemplate',
-            'ownershipTypes',
             'responsibles',
             'posts',
             'workers',
@@ -554,9 +555,11 @@ class WeaponController extends Controller
     public function edit(Weapon $weapon)
     {
         $weapon->loadMissing(['photos.file', 'permitFile']);
-        $ownershipTypes = $this->ownershipOptions();
 
-        return view('weapons.edit', compact('weapon', 'ownershipTypes'));
+        return view('weapons.edit', array_merge(
+            ['weapon' => $weapon],
+            $this->weaponCatalogFormData()
+        ));
     }
 
     public function update(Request $request, Weapon $weapon, WeaponDocumentService $documentService)
@@ -568,8 +571,6 @@ class WeaponController extends Controller
             'caliber' => ['required', 'string', 'max:100'],
             'brand' => ['required', 'string', 'max:100'],
             'capacity' => ['required', 'string', 'max:50'],
-            'ownership_type' => ['required', 'in:'.implode(',', array_keys($this->ownershipOptions()))],
-            'ownership_entity' => ['nullable', 'string', 'max:255'],
             'permit_type' => ['required', 'in:porte,tenencia'],
             'permit_number' => ['nullable', 'string', 'max:100'],
             'permit_expires_at' => ['nullable', 'date'],
@@ -578,6 +579,9 @@ class WeaponController extends Controller
             'photos.*' => ['nullable', 'file', 'image', 'max:5120'],
             'permit_photo' => ['nullable', 'file', 'image', 'max:5120'],
         ]);
+        $data['brand'] = $this->validatedCatalogName(WeaponBrand::class, 'brand', $data['brand'] ?? null, $weapon->brand);
+        $data['caliber'] = $this->validatedCatalogName(WeaponCaliber::class, 'caliber', $data['caliber'] ?? null, $weapon->caliber);
+        $data = $this->withCompanyOwnership($data);
 
         $beforeSnapshot = $this->weaponHistory->weaponSnapshot($weapon);
 
@@ -733,13 +737,50 @@ class WeaponController extends Controller
             ->with('status', 'La eliminación física de armas esta deshabilitada. Usa historial y novedades para mantener la trazabilidad.');
     }
 
-    private function ownershipOptions(): array
+    /**
+     * @return array{brands: \Illuminate\Database\Eloquent\Collection<int, WeaponBrand>, calibers: \Illuminate\Database\Eloquent\Collection<int, WeaponCaliber>, companyName: string}
+     */
+    private function weaponCatalogFormData(): array
     {
         return [
-            'company_owned' => 'Propiedad de la empresa',
-            'leased' => 'Arrendada',
-            'third_party' => 'Terceros',
+            'brands' => WeaponBrand::query()->active()->ordered()->get(),
+            'calibers' => WeaponCaliber::query()->active()->ordered()->get(),
+            'companyName' => trim((string) CompanySetting::current()->legal_name),
         ];
+    }
+
+    /**
+     * @param  class-string<WeaponBrand|WeaponCaliber>  $modelClass
+     */
+    private function validatedCatalogName(string $modelClass, string $attribute, mixed $value, ?string $current = null): string
+    {
+        $value = trim((string) $value);
+        if ($current !== null && $value === $current) {
+            return $value;
+        }
+
+        $item = $modelClass::query()->active()->where('name', $value)->first();
+        if (! $item) {
+            throw ValidationException::withMessages([
+                $attribute => __('Seleccione un valor del catálogo.'),
+            ]);
+        }
+
+        return $item->name;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function withCompanyOwnership(array $data): array
+    {
+        $legalName = trim((string) CompanySetting::current()->legal_name);
+        if ($legalName !== '') {
+            $data['ownership_entity'] = $legalName;
+        }
+
+        return $data;
     }
 
     private function weaponTypeOptions(): array

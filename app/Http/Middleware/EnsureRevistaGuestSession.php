@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\TemporaryPhotoAccessGrant;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,25 +11,20 @@ final class EnsureRevistaGuestSession
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $grantId = $request->session()->get('revista_grant_id');
+        $fieldUserId = $request->session()->get('revista_field_user_id');
+        $fieldUser = $fieldUserId
+            ? User::query()->whereKey($fieldUserId)->where('account_kind', User::KIND_FIELD)->first()
+            : null;
 
-        if (! $grantId) {
-            return redirect()->route('revista-armas.guest.login');
-        }
-
-        $grant = TemporaryPhotoAccessGrant::query()
-            ->with('temporaryPhotoUser')
-            ->find($grantId);
-
-        if (! $grant || ! $grant->isCurrentlyValid() || ! $grant->temporaryPhotoUser?->is_active) {
-            $request->session()->forget(['revista_grant_id', 'revista_temp_user_id']);
+        if (! $fieldUser || ! $fieldUser->is_active || ! $fieldUser->fieldAccessOpen()) {
+            $request->session()->forget('revista_field_user_id');
 
             return redirect()
                 ->route('revista-armas.guest.login')
-                ->withErrors(['access' => __('Su acceso temporal expiró o fue revocado.')]);
+                ->withErrors(['email' => __('El ingreso de campo no está vigente.')]);
         }
 
-        $request->attributes->set('revista_grant', $grant);
+        $request->attributes->set('revista_field_user', $fieldUser);
 
         return $next($request);
     }

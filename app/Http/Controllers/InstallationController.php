@@ -18,6 +18,7 @@ use App\Models\Worker;
 use App\Models\WorkerHistory;
 use App\Services\WeaponHistoryService;
 use App\Support\Installations\InstallationAudit;
+use App\Support\PostCustodyRole;
 use App\Support\MapCoordinates;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -37,7 +38,7 @@ class InstallationController extends Controller
 
         $query = Installation::query()
             ->with('client:id,name')
-            ->withCount(['posts as active_posts_count' => fn ($posts) => $posts->active()]);
+            ->withCount(['posts as active_posts_count' => fn ($posts) => $posts->active()->whereNull('custody_role')]);
 
         if ($user?->isResponsible() && ! $user->isAdmin()) {
             $query->whereIn('client_id', $user->clients()->select('clients.id'));
@@ -132,7 +133,7 @@ class InstallationController extends Controller
                 ->with([
                 'workers' => fn ($workers) => $workers->active()->orderBy('name')->with('position:id,name'),
                 'assignments' => fn ($assignments) => $assignments->where('is_active', true)->with([
-                    'weapon:id,serial_number,weapon_type,caliber,permit_number',
+                    'weapon:id,serial_number,weapon_type,brand,caliber,permit_number',
                     'weapon.activeWorkerAssignment.worker:id,name',
                 ]),
             ]),
@@ -217,6 +218,45 @@ class InstallationController extends Controller
 
         return redirect()->to(route('installations.edit', $installation).'#puesto-'.$post->id)
             ->with('status', __('Puesto creado.'));
+    }
+
+    public function storeArmerillo(Request $request, Installation $installation): RedirectResponse
+    {
+        $this->authorize('update', $installation->client);
+        $this->authorize('create', Post::class);
+
+        $data = $request->validate([
+            'post_name' => ['required', 'string', 'max:255', $this->postNameRule($installation)],
+            'armerillo' => ['required', 'in:1'],
+        ]);
+
+        $post = Post::query()->create([
+            'installation_id' => $installation->id,
+            'name' => $data['post_name'],
+            'custody_role' => PostCustodyRole::ARMERILLO,
+            'owner_responsible_user_id' => $request->user()?->id,
+        ]);
+
+        PostHistory::query()->create([
+            'post_id' => $post->id,
+            'user_id' => $request->user()?->id,
+            'body' => __('Registro inicial.'),
+        ]);
+
+        AuditLog::create([
+            'user_id' => $request->user()?->id,
+            'action' => 'post_created',
+            'auditable_type' => Post::class,
+            'auditable_id' => $post->id,
+            'before' => null,
+            'after' => $post->only(['client_id', 'installation_id', 'name', 'custody_role']),
+        ]);
+
+        event(new PostChanged('created', $post->id, ['client_id' => $post->client_id]));
+        $this->noteMovement($request, $installation, __('Armerillo creado: :name.', ['name' => $post->name]));
+
+        return redirect()->to(route('installations.edit', $installation).'#armerillo-'.$post->id)
+            ->with('status', __('Armerillo creado.'));
     }
 
     public function renamePost(Request $request, Installation $installation, Post $post): RedirectResponse

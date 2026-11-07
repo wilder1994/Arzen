@@ -3,8 +3,11 @@
 namespace App\Services\Imports;
 
 use App\Models\AuditLog;
+use App\Models\CompanySetting;
 use App\Models\User;
 use App\Models\Weapon;
+use App\Models\WeaponBrand;
+use App\Models\WeaponCaliber;
 use App\Models\WeaponImportBatch;
 use App\Models\WeaponImportRow;
 use App\Services\Imports\Contracts\ImportBatchProcessor;
@@ -259,11 +262,10 @@ class WeaponImportProcessor implements ImportBatchProcessor
                 return;
             }
 
-            $payload = $row->normalized_payload ?? [];
+            $payload = $this->applyCatalogAndCompany($row->normalized_payload ?? []);
 
             if ($row->action === WeaponImportRow::ACTION_CREATE) {
                 $payload['internal_code'] = WeaponInternalCode::next(lockForUpdate: true);
-                $payload['ownership_type'] = 'company_owned';
 
                 $weapon = Weapon::create($payload);
 
@@ -520,6 +522,30 @@ class WeaponImportProcessor implements ImportBatchProcessor
             'permit_number' => $this->sanitizeText($weapon->permit_number),
             'permit_expires_at' => $weapon->permit_expires_at?->format('Y-m-d'),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function applyCatalogAndCompany(array $payload): array
+    {
+        unset($payload['ownership_type']);
+
+        if (isset($payload['brand'])) {
+            $payload['brand'] = WeaponBrand::resolveByName((string) $payload['brand'])?->name ?? $payload['brand'];
+        }
+
+        if (isset($payload['caliber'])) {
+            $payload['caliber'] = WeaponCaliber::resolveByName((string) $payload['caliber'])?->name ?? $payload['caliber'];
+        }
+
+        $legalName = trim((string) CompanySetting::current()->legal_name);
+        if ($legalName !== '') {
+            $payload['ownership_entity'] = $legalName;
+        }
+
+        return $payload;
     }
 
     private function sanitizeText(?string $value): ?string

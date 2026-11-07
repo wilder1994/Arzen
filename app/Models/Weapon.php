@@ -21,7 +21,6 @@ class Weapon extends Model
         'caliber',
         'brand',
         'capacity',
-        'ownership_type',
         'ownership_entity',
         'permit_type',
         'permit_number',

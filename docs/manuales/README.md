@@ -7,7 +7,7 @@ Manuales **paso a paso** (administrador v3.2; el resto v3.0): cada función incl
 | Administrador | [manual-administrador.md](manual-administrador.md) | **ADMIN** |
 | Auditoría | [manual-auditoria.md](manual-auditoria.md) | **AUDITOR** |
 | Responsable | [manual-responsable.md](manual-responsable.md) | **RESPONSABLE** niv. 1 y 2 |
-| Revista armas | [manual-revista-armas.md](manual-revista-armas.md) | Staff + colaborador temporal |
+| Revista armas | [manual-revista-armas.md](manual-revista-armas.md) | Staff + usuario de campo |
 
 Cada manual trae **§1 Acceso al sistema** integrado al inicio (bienvenida, login, cambio de contraseña, menú).
 

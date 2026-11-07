@@ -209,6 +209,20 @@ class ModuleNavBuilder
                 $catalogTab === 'estructuras',
             ),
             $this->link(
+                'marcas',
+                __('Marcas'),
+                route('catalogs.index', ['tab' => 'marcas']),
+                $user->canViewModule('settings'),
+                $catalogTab === 'marcas',
+            ),
+            $this->link(
+                'calibres',
+                __('Calibres'),
+                route('catalogs.index', ['tab' => 'calibres']),
+                $user->canViewModule('settings'),
+                $catalogTab === 'calibres',
+            ),
+            $this->link(
                 'novedades',
                 __('Tipos de novedad'),
                 route('catalogs.index', ['tab' => 'novedades']),

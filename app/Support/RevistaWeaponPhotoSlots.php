@@ -2,25 +2,28 @@
 
 namespace App\Support;
 
+use App\Models\WeaponPhoto;
+
 class RevistaWeaponPhotoSlots
 {
-    public const DESCRIPTIONS = [
-        'lado_derecho' => 'Lado derecho',
-        'lado_izquierdo' => 'Lado izquierdo',
-        'canon_disparador_marca' => 'Cañón, disparador, marca',
-        'serie' => 'Serie',
-    ];
+    /**
+     * @return array<string, string>
+     */
+    public static function descriptions(): array
+    {
+        return WeaponPhoto::DESCRIPTIONS;
+    }
 
     /**
      * @return list<string>
      */
     public static function keys(): array
     {
-        return array_keys(self::DESCRIPTIONS);
+        return array_keys(WeaponPhoto::DESCRIPTIONS);
     }
 
     public static function requiredCount(): int
     {
-        return count(self::DESCRIPTIONS);
+        return count(WeaponPhoto::DESCRIPTIONS);
     }
 }

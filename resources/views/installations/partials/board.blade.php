@@ -1,8 +1,14 @@
 @php
     $hasPin = \App\Support\MapCoordinates::isFilled($installation->latitude, $installation->longitude);
     $activePosts = $installation->posts->reject(fn ($post) => $post->isArchived());
-    $postCount = $activePosts->count();
-    $workerCount = $activePosts->sum(fn ($post) => $post->workers->count());
+    $armerillos = $activePosts->filter(fn ($post) => $post->custody_role === \App\Support\PostCustodyRole::ARMERILLO);
+    $maintenanceByOwner = $activePosts
+        ->filter(fn ($post) => $post->custody_role === \App\Support\PostCustodyRole::ARMERILLO_PARA_MANTENIMIENTO)
+        ->groupBy(fn ($post) => (string) ($post->owner_responsible_user_id ?? ''));
+    $fieldPosts = $installation->posts->filter(fn ($post) => ! filled($post->custody_role));
+    $activeFieldPosts = $fieldPosts->reject(fn ($post) => $post->isArchived());
+    $postCount = $activeFieldPosts->count();
+    $workerCount = $activeFieldPosts->sum(fn ($post) => $post->workers->count());
     $weaponCount = $activePosts->sum(fn ($post) => $post->assignments->count());
     $blank = '—';
 @endphp
@@ -12,13 +18,20 @@
     x-data="{
         historyOpen: false,
         open: {{ $errors->has('post_name') || ($errors->has('name') && old('editing_post')) ? 'true' : 'false' }},
-        mode: '{{ old('editing_post') ? 'edit' : 'create' }}',
-        action: '{{ old('editing_post') ? route('installations.posts.update', [$installation, old('editing_post')]) : route('installations.posts.store', $installation) }}',
+        mode: '{{ old('editing_post') ? 'edit' : (old('armerillo') ? 'armerillo' : 'create') }}',
+        action: '{{ old('editing_post') ? route('installations.posts.update', [$installation, old('editing_post')]) : (old('armerillo') ? route('installations.armerillos.store', $installation) : route('installations.posts.store', $installation)) }}',
         postId: '{{ old('editing_post') }}',
         postName: '{{ old('editing_post') ? old('name') : old('post_name') }}',
         openCreate() {
             this.mode = 'create';
             this.action = @js(route('installations.posts.store', $installation));
+            this.postId = '';
+            this.postName = '';
+            this.open = true;
+        },
+        openArmerillo() {
+            this.mode = 'armerillo';
+            this.action = @js(route('installations.armerillos.store', $installation));
             this.postId = '';
             this.postName = '';
             this.open = true;
@@ -88,14 +101,23 @@
                 >{{ __('Editar instalación') }}</a>
                 @can('create', App\Models\Post::class)
                     <button type="button" class="sj-ui-btn sj-ui-btn--primary sj-ui-btn--sm" @click="openCreate()">{{ __('Agregar puesto') }}</button>
+                    <button type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm" @click="openArmerillo()">{{ __('Agregar armerillo') }}</button>
                 @endcan
                 <button type="button" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm" @click="historyOpen = true">{{ __('Historial') }}</button>
             </div>
         </div>
     </section>
 
+    @foreach ($armerillos as $armerillo)
+        @include('installations.partials.armerillo-safe', [
+            'post' => $armerillo,
+            'maintenanceAssignments' => ($maintenanceByOwner[(string) ($armerillo->owner_responsible_user_id ?? '')] ?? collect())
+                ->flatMap(fn ($maintenancePost) => $maintenancePost->assignments),
+        ])
+    @endforeach
+
     <div class="sj-site-posts">
-        @forelse ($installation->posts as $post)
+        @forelse ($fieldPosts as $post)
             <article id="puesto-{{ $post->id }}" @class(['sj-site-post', 'is-archived' => $post->isArchived()])>
                 <header class="sj-site-post__head">
                     <h3 class="sj-site-post__title">
@@ -193,7 +215,9 @@
                 @endif
             </article>
         @empty
-            <p class="sj-company__hint">{{ __('Esta instalación aún no tiene puestos.') }}</p>
+            @if ($armerillos->isEmpty())
+                <p class="sj-company__hint">{{ __('Esta instalación aún no tiene puestos.') }}</p>
+            @endif
         @endforelse
     </div>
 
@@ -228,10 +252,11 @@
             @csrf
             <input type="hidden" name="_method" value="PATCH" :disabled="mode !== 'edit'">
             <input type="hidden" name="editing_post" :value="postId" :disabled="mode !== 'edit'">
-            <h3 class="sj-form-section__title" x-text="mode === 'edit' ? @js(__('Editar puesto')) : @js(__('Agregar puesto'))"></h3>
+            <h3 class="sj-form-section__title" x-text="mode === 'edit' ? @js(__('Editar puesto')) : (mode === 'armerillo' ? @js(__('Agregar armerillo')) : @js(__('Agregar puesto')))"></h3>
             <div class="sj-ui-field">
-                <label class="sj-ui-field__label">{{ __('Nombre del puesto') }}</label>
-                <input name="post_name" type="text" maxlength="255" class="sj-ui-field__control" x-show="mode === 'create'" x-model="postName" :disabled="mode !== 'create'" :required="mode === 'create'">
+                <label class="sj-ui-field__label" x-text="mode === 'armerillo' ? @js(__('Nombre del armerillo')) : @js(__('Nombre del puesto'))">{{ __('Nombre del puesto') }}</label>
+                <input type="hidden" name="armerillo" value="1" :disabled="mode !== 'armerillo'">
+                <input name="post_name" type="text" maxlength="255" class="sj-ui-field__control" x-show="mode !== 'edit'" x-model="postName" :disabled="mode === 'edit'" :required="mode !== 'edit'">
                 <input name="name" type="text" maxlength="255" class="sj-ui-field__control" x-show="mode === 'edit'" x-model="postName" :disabled="mode !== 'edit'" :required="mode === 'edit'">
                 <x-input-error :messages="$errors->get('post_name')" />
                 <x-input-error :messages="$errors->get('name')" />

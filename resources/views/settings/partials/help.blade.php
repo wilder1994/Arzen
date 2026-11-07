@@ -1,5 +1,5 @@
 <h3>{{ __('¿Qué hay en Ajustes?') }}</h3>
-<p>{{ __('Las listas y la configuración propias de su empresa: usuarios con sus permisos, cargos, tipos de vinculación, tipos de contrato y tipos de novedad.') }}</p>
+<p>{{ __('Las listas y la configuración propias de su empresa: usuarios con sus permisos, cargos, tipos de vinculación, tipos de contrato, marcas, calibres y tipos de novedad.') }}</p>
 
 <h3>{{ __('Cargos') }}</h3>
 <ul>
@@ -16,6 +16,13 @@
 <ul>
     <li>{{ __('Cada empresa arma sus propias listas. El sistema trae unas semillas para que el formulario no quede vacío: puede dejarlas, borrarlas o agregar las suyas.') }}</li>
     <li>{{ __('Un tipo en uso no se puede eliminar; desactívelo. En la carga desde Zentra, si llega un tipo que no existe, se crea y la fila sigue.') }}</li>
+</ul>
+
+<h3>{{ __('Marcas y calibres') }}</h3>
+<ul>
+    <li>{{ __('El alta de un arma ofrece estas listas en un buscador. El usuario escribe y elige un valor.') }}</li>
+    <li>{{ __('Puede agregar, editar, ordenar o eliminar. Un valor en uso no se elimina; se desactiva y deja de ofrecerse.') }}</li>
+    <li>{{ __('En la carga de armas, si llega una marca o un calibre que no existe, se crea y la fila sigue.') }}</li>
 </ul>
 
 <h3>{{ __('Tipos de novedad') }}</h3>

@@ -21,6 +21,10 @@ class User extends Authenticatable
 
     public const ROLE_ALMACEN = 'ALMACEN';
 
+    public const KIND_PLATFORM = 'platform';
+
+    public const KIND_FIELD = 'field';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -38,6 +42,12 @@ class User extends Authenticatable
         'password',
         'must_change_password',
         'role',
+        'account_kind',
+        'zone',
+        'field_owner_id',
+        'field_shared',
+        'field_day_start',
+        'field_day_end',
         'position_id',
         'is_active',
     ];
@@ -66,6 +76,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'must_change_password' => 'boolean',
+        'field_shared' => 'boolean',
         'is_active' => 'boolean',
     ];
 
@@ -188,9 +199,60 @@ class User extends Authenticatable
         return $this->role === self::ROLE_ADMIN;
     }
 
+    public function isField(): bool
+    {
+        return $this->account_kind === self::KIND_FIELD;
+    }
+
+    public function fieldAccessOpen(): bool
+    {
+        $day = (int) now()->day;
+
+        return $day >= (int) $this->field_day_start && $day <= (int) $this->field_day_end;
+    }
+
+    public function fieldOwner()
+    {
+        return $this->belongsTo(self::class, 'field_owner_id');
+    }
+
+    public function fieldSharedResponsibles()
+    {
+        return $this->belongsToMany(self::class, 'field_user_responsibles', 'field_user_id', 'responsible_user_id')->withTimestamps();
+    }
+
+    public function fieldWeapons()
+    {
+        return $this->belongsToMany(Weapon::class, 'field_user_weapons', 'field_user_id', 'weapon_id')
+            ->withPivot('assigned_by_user_id')
+            ->withTimestamps();
+    }
+
+    public function canAssignFieldUser(self $actor): bool
+    {
+        if (! $this->isField() || ! $this->is_active) {
+            return false;
+        }
+
+        if ($actor->isAdmin()) {
+            return true;
+        }
+
+        if (! $actor->isResponsibleLevelOne()) {
+            return false;
+        }
+
+        if ((int) $this->field_owner_id === (int) $actor->id) {
+            return true;
+        }
+
+        return $this->field_shared
+            && $this->fieldSharedResponsibles()->where('users.id', $actor->id)->exists();
+    }
+
     public function isResponsible(): bool
     {
-        return $this->role === self::ROLE_RESPONSABLE;
+        return $this->role === self::ROLE_RESPONSABLE && ! $this->isField();
     }
 
     public function isAuditor(): bool

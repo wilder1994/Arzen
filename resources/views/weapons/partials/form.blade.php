@@ -69,17 +69,23 @@
         <x-input-error :messages="$errors->get('serial_number')" class="mt-2" />
     </div>
 
-    <div>
-        <x-input-label for="brand" :value="__('Marca')" />
-        <x-text-input id="brand" name="brand" type="text" class="mt-1 block w-full" value="{{ old('brand', $weapon?->brand) }}" required />
-        <x-input-error :messages="$errors->get('brand')" class="mt-2" />
-    </div>
+    @include('weapons.partials.catalog-combobox', [
+        'field' => 'brand',
+        'label' => __('Marca'),
+        'placeholder' => __('Buscar marca...'),
+        'empty' => __('No hay marcas con ese texto.'),
+        'options' => $brands ?? collect(),
+        'selected' => $weapon?->brand,
+    ])
 
-    <div>
-        <x-input-label for="caliber" :value="__('Calibre')" />
-        <x-text-input id="caliber" name="caliber" type="text" class="mt-1 block w-full" value="{{ old('caliber', $weapon?->caliber) }}" required />
-        <x-input-error :messages="$errors->get('caliber')" class="mt-2" />
-    </div>
+    @include('weapons.partials.catalog-combobox', [
+        'field' => 'caliber',
+        'label' => __('Calibre'),
+        'placeholder' => __('Buscar calibre...'),
+        'empty' => __('No hay calibres con ese texto.'),
+        'options' => $calibers ?? collect(),
+        'selected' => $weapon?->caliber,
+    ])
 
     <div>
         <x-input-label for="capacity" :value="__('Capacidad')" />
@@ -87,20 +93,12 @@
         <x-input-error :messages="$errors->get('capacity')" class="mt-2" />
     </div>
 
-    <div>
-        <x-input-label for="ownership_type" :value="__('Tipo de propiedad')" />
-        <select id="ownership_type" name="ownership_type" class="sj-ui-field__control mt-1 block w-full">
-            @foreach ($ownershipTypes as $value => $label)
-                <option value="{{ $value }}" @selected(old('ownership_type', $weapon?->ownership_type) === $value)>{{ $label }}</option>
-            @endforeach
-        </select>
-        <x-input-error :messages="$errors->get('ownership_type')" class="mt-2" />
-    </div>
-
     <div class="md:col-span-2">
-        <x-input-label for="ownership_entity" :value="__('Entidad propietaria (si aplica)')" />
-        <x-text-input id="ownership_entity" name="ownership_entity" type="text" class="mt-1 block w-full" value="{{ old('ownership_entity', $weapon?->ownership_entity) }}" />
-        <x-input-error :messages="$errors->get('ownership_entity')" class="mt-2" />
+        <x-input-label for="ownership_entity" :value="__('Entidad propietaria')" />
+        <x-text-input id="ownership_entity" type="text" class="mt-1 block w-full" value="{{ ($companyName ?? '') !== '' ? $companyName : '—' }}" readonly disabled />
+        @if (($companyName ?? '') === '')
+            <p class="mt-1 text-xs text-gray-500">{{ __('Defina la razón social en Mi empresa.') }}</p>
+        @endif
     </div>
 </div>
 
@@ -174,17 +172,17 @@
         <x-input-error :messages="$errors->get('permit_expires_at')" class="mt-2" />
     </div>
 
-    <div class="md:col-start-2 md:row-start-1 md:row-span-3 flex flex-col">
+    <div class="md:col-start-2 md:row-start-1 md:row-span-3">
         <x-input-label for="permit_photo" :value="__('Imagen del permiso')" />
-        <div class="mt-1 block h-full cursor-pointer" data-photo-picker-zone data-drop-zone tabindex="0" title="{{ __('Tomar foto, elegir de galería, arrastrar o pegar') }}">
+        <div class="mt-1 cursor-pointer" data-photo-picker-zone data-drop-zone tabindex="0" title="{{ __('Tomar foto, elegir de galería, arrastrar o pegar') }}">
             <input id="permit_photo" name="permit_photo" type="file" accept="image/*" class="hidden" @if (!empty($requirePermitPhoto)) required @endif
                 data-preview-target="permit_preview" data-placeholder-target="permit_placeholder" />
-            <div class="relative flex h-full min-h-[12rem] w-full items-center justify-center rounded border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-500 transition"
+            <div class="sj-permit-frame flex w-full items-center justify-center rounded border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-500 transition"
                 data-drop-surface>
                 <div class="sj-paste-proxy" data-paste-proxy contenteditable="true" spellcheck="false"></div>
                 <span id="permit_placeholder" @class(['hidden' => $permitPhotoUrl])>{{ __('Arrastra, selecciona o pega una foto') }}</span>
                 <img id="permit_preview" alt="Previsualización"
-                    class="{{ $permitPhotoUrl ? '' : 'hidden' }} h-full w-full rounded bg-gray-50 object-fill"
+                    class="{{ $permitPhotoUrl ? '' : 'hidden' }} rounded bg-gray-50"
                     @if ($permitPhotoUrl) src="{{ $permitPhotoUrl }}" @endif />
             </div>
         </div>

@@ -12,6 +12,7 @@ use App\Models\WeaponClientAssignment;
 use App\Models\WeaponPostAssignment;
 use App\Models\WeaponWorkerAssignment;
 use App\Models\Worker;
+use App\Support\PostCustodyRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -368,5 +369,32 @@ class InstallationBoardTest extends TestCase
             ->assertSee('Bodega')
             ->assertSee('sj-archived-row', false)
             ->assertSee('Reactivar');
+    }
+
+    public function test_an_armerillo_is_a_safe_on_the_installation_and_not_a_field_post(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $client = Client::query()->create(['name' => 'Palmas', 'nit' => '900111222-3']);
+        $installation = $client->mainInstallation()->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('installations.armerillos.store', $installation), [
+                'post_name' => 'Caja norte',
+                'armerillo' => '1',
+            ])
+            ->assertRedirect();
+
+        $post = Post::query()->where('name', 'Caja norte')->firstOrFail();
+        $this->assertSame(PostCustodyRole::ARMERILLO, $post->custody_role);
+        $this->assertSame($installation->id, $post->installation_id);
+
+        $this->actingAs($admin)
+            ->get(route('installations.edit', $installation))
+            ->assertOk()
+            ->assertSee('Caja norte')
+            ->assertSee('Clic para abrir')
+            ->assertDontSee('Armerillo: Caja norte')
+            ->assertSee('Listas para asignar')
+            ->assertDontSee('Puesto: Caja norte');
     }
 }

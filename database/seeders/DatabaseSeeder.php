@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             IncidentTypeSeeder::class,
             IncidentModalitySeeder::class,
+            WeaponCatalogSeeder::class,
             AdminUserSeeder::class,
         ]);
 

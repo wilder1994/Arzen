@@ -1,54 +1,45 @@
 <x-revista-guest-layout :title="__('Mis armas')">
     <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p class="text-sm text-slate-700">{{ __('Hola :name', ['name' => $temporaryUser->name]) }}</p>
-        <p class="mt-1 text-xs text-slate-500">{{ __('Acceso vigente hasta :date', ['date' => $expiresAt->timezone(config('app.timezone'))->format('d/m/Y H:i')]) }}</p>
+        <p class="text-sm text-slate-700">{{ __('Hola :name', ['name' => $fieldUser->name]) }}</p>
+        <p class="mt-1 text-xs text-slate-500">{{ __('Ingreso del día :start al día :end de cada mes.', ['start' => $fieldUser->field_day_start, 'end' => $fieldUser->field_day_end]) }}</p>
     </div>
 
-    <div class="overflow-hidden rounded-xl shadow-sm">
-        <div class="overflow-x-auto sj-table-wrap">
-            <table class="sj-table min-w-full text-sm">
-                <thead>
-                    <tr>
-                        <th>{{ __('Tipo') }}</th>
-                        <th>{{ __('Marca') }}</th>
-                        <th>{{ __('Serie') }}</th>
-                        <th>{{ __('Calibre') }}</th>
-                        <th>{{ __('Permiso') }}</th>
-                        <th>{{ __('Realizado') }}</th>
-                        <th>{{ __('Acciones') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($rows as $row)
-                        @php($weapon = $row['weapon'])
-                        <tr data-revista-weapon-id="{{ $weapon->id }}">
-                            <td class="px-3 py-2">{{ $weapon->weapon_type ?? '—' }}</td>
-                            <td class="px-3 py-2">{{ $weapon->brand ?? '—' }}</td>
-                            <td class="px-3 py-2 font-medium">{{ $weapon->serial_number ?? '—' }}</td>
-                            <td class="px-3 py-2">{{ $weapon->caliber ?? '—' }}</td>
-                            <td class="px-3 py-2">{{ $weapon->permit_type ?? '—' }} {{ $weapon->permit_number }}</td>
-                            <td class="px-3 py-2 text-center" data-revista-guest-status>
-                                @if ($row['is_complete'])
-                                    <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.55)]">✓</span>
-                                @else
-                                    <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-500/15 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.45)]">✕</span>
-                                @endif
-                            </td>
-                            <td class="px-3 py-2 text-right">
-                                <button
-                                    type="button"
-                                    class="revista-guest-upload rounded-lg bg-[#0b6fb6] px-2.5 py-1 text-xs font-bold text-white"
-                                    data-weapon-id="{{ $weapon->id }}"
-                                    data-state-url="{{ route('revista-armas.guest.weapons.staging-state', $weapon) }}"
-                                    data-store-url="{{ route('revista-armas.guest.weapons.photos.store', $weapon) }}"
-                                    data-serial="{{ $weapon->serial_number }}"
-                                >{{ __('Ver') }}</button>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+    <div class="space-y-3">
+        @forelse ($rows as $row)
+            @php($weapon = $row['weapon'])
+            <article data-revista-weapon-id="{{ $weapon->id }}" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-base font-semibold text-slate-900">{{ $weapon->serial_number ?? '—' }}</p>
+                        <p class="mt-1 text-sm text-slate-700">{{ __('Cliente') }}: {{ $weapon->activeClientAssignment?->client?->name ?? '—' }}</p>
+                        @if ($weapon->activePostAssignment?->post)
+                            <p class="text-sm text-slate-600">{{ __('Puesto') }}: {{ $weapon->activePostAssignment->post->name }}</p>
+                        @endif
+                        @if ($weapon->activeWorkerAssignment?->worker)
+                            <p class="text-sm text-slate-600">{{ __('Trabajador') }}: {{ $weapon->activeWorkerAssignment->worker->name }}</p>
+                        @endif
+                        <p class="mt-1 text-sm text-slate-600">{{ $weapon->weapon_type ?? '—' }} · {{ $weapon->brand ?? '—' }} · {{ $weapon->caliber ?? '—' }}</p>
+                    </div>
+                    <span data-revista-guest-status>
+                        @if ($row['is_complete'])
+                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-500">✓</span>
+                        @else
+                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-500/15 text-red-500">✕</span>
+                        @endif
+                    </span>
+                </div>
+                <button
+                    type="button"
+                    class="revista-guest-upload mt-3 min-h-11 w-full rounded-lg bg-[#0b6fb6] text-sm font-bold text-white"
+                    data-weapon-id="{{ $weapon->id }}"
+                    data-state-url="{{ route('revista-armas.guest.weapons.staging-state', $weapon) }}"
+                    data-store-url="{{ route('revista-armas.guest.weapons.photos.store', $weapon) }}"
+                    data-serial="{{ $weapon->serial_number }}"
+                >{{ __('Fotos') }}</button>
+            </article>
+        @empty
+            <p class="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">{{ __('No hay armas asignadas.') }}</p>
+        @endforelse
     </div>
 
     <div id="revista-guest-upload-modal" class="fixed inset-0 z-[1050] hidden items-center justify-center bg-black/40 p-4">
@@ -74,7 +65,7 @@
             let activeWeaponId = '';
 
             const updateRowStatus = (weaponId, isComplete) => {
-                const row = document.querySelector(`tr[data-revista-weapon-id="${weaponId}"]`);
+                const row = document.querySelector(`[data-revista-weapon-id="${weaponId}"]`);
                 const cell = row?.querySelector('[data-revista-guest-status]');
                 if (!cell) return;
                 cell.innerHTML = isComplete
@@ -142,9 +133,8 @@
                     const thumbUrl = slot.url
                         ? `${slot.url}${slot.url.includes('?') ? '&' : '?'}t=${Date.now()}`
                         : '';
-                    cell.innerHTML = slot.url
-                        ? `<img src="${thumbUrl}" alt="" loading="lazy" class="h-32 w-full rounded object-contain bg-slate-50"><div class="mt-1 text-xs font-semibold">${label}</div>`
-                        : `<div class="flex h-32 items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-500">${label}<br>{{ __('Tocar para capturar') }}</div>`;
+                    const camera = '<span class="revista-slot-camera" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.2"/></svg></span>';
+                    cell.innerHTML = `<div class="revista-slot-frame">${slot.url ? `<img src="${thumbUrl}" alt="">` : ''}${camera}</div><div class="mt-1 text-xs font-semibold">${label}</div>`;
                     cell.addEventListener('click', () => {
                         if (capture.isUploading?.()) return;
                         capture.openSlot(activeStoreUrl, slot.description);

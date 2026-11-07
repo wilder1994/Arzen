@@ -10,15 +10,15 @@ class WeaponPhotoStaging extends Model
     protected $table = 'weapon_photo_staging';
 
     protected $fillable = [
-        'temporary_photo_user_id',
+        'user_id',
         'weapon_id',
         'description',
         'file_id',
     ];
 
-    public function temporaryPhotoUser(): BelongsTo
+    public function fieldUser(): BelongsTo
     {
-        return $this->belongsTo(TemporaryPhotoUser::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function weapon(): BelongsTo

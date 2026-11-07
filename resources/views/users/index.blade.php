@@ -83,7 +83,7 @@
                                     <tr>
                                         <td>{{ $user->name }}</td>
                                         <td>{{ $user->email }}</td>
-                                        <td>{{ $roles[$user->role] ?? $user->role }}</td>
+                                        <td>{{ $user->isField() ? __('Campo') : ($roles[$user->role] ?? $user->role) }}</td>
                                         <td>{{ $user->position?->name ?? '—' }}</td>
                                         <td class="sj-user-list__clients">
                                             <button

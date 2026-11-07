@@ -18,7 +18,7 @@ Sistema web para **gestión de armamento**, **dotación (chalecos)**, **asignaci
 - ✅ **Chalecos** (`/vests`): módulo paralelo al inventario de armas (tablas y rutas propias); listado con **KPIs clicables** (barra de acento superior + hint contextual por categoría) y **filas de tabla coloreadas** con la misma semaforización (verde / ámbar / naranja / rojo); ficha compacta (datos + asignación en dos columnas, misma altura); formularios **create/edit pro** con comboboxes buscables (cliente, trabajador, puesto), **responsable dispositivo** derivado del cliente (o auto para responsable N1); **4 fotos** con editor pro en ficha/editar (clic, arrastrar, pegar, Cropper, JSON sin recarga) y pickers embebidos al **crear**; **import masivo** en `/subir-chalecos` con modal de subida (drag & drop, pegar, XHR), **descarga de plantilla** (`resources/templates/Chalecos.xlsx` + hoja `Instructivo`) y **validación en preview** de cliente, puesto y trabajador (cédula); columna **Cargo** alineada a los roles de `Worker`; rol **ALMACEN** (administrador exclusivo del módulo, inventario global, login directo a `/vests`).
 - ✅ **Dashboard**: fila de **6 KPIs** (Total, No operativas, En inventario, Incautadas en trámite, Vencidos, Por vencer), gráficos y estado “as of”.
 - ✅ **Alertas documentales** (`/alerts/documents`): tarjetas vencidos / por vencer / sin alertas; filtro **multi-mes** con panel de checkboxes (varios meses y años); modales con **filtros por columna** tipo Excel (multi-selección en encabezado); exportación `.docx` y vista previa PDF con nombre `Revalidacion_{mes}_{año}`.
-- ✅ **Revista armas** (`/revista-armas`): acceso temporal (12 h) para colaboradores de campo; usuarios temporales reutilizables; **usuarios compartidos** (solo **ADMIN** autoriza supervisores multi-zona con acceso unificado y mismo código); listado staff **requiere filtrar por usuario temporal** (paginado; armas del último acceso); columna **Realizado** (✓/✕) con consulta batch de staging; modal **Asignar acceso** con búsqueda AJAX, armas con fotos **bloqueadas**, **Renovar último acceso** (mismas armas + código nuevo) y validación: no se puede omitir ni reasignar a otro temporal un arma con staging pendiente (hay que **Actualizar** o **Rechazar** antes); subida de **4 fotos técnicas** a staging; confirmaciones en **modales**; historial en la ficha del arma; **ADMIN** con gestión global.
+- ✅ **Revista armas** (`/revista-armas`): **usuario de campo** (`users.account_kind = field`) con correo, zona, responsable y ventana de días del mes (por defecto 1–5); el staff **envía armas a campo** en una tabla (cliente, puesto o trabajador, tipo, serie, marca) y solo **revisa** las fotos (no captura); el campo toma **cinco** fotos (incluye impronta) en su sesión; **Actualizar** promueve el staging y **Rechazar** lo borra.
 - ✅ **Mapa**: geocodificación y visualización operativa de **armas**; pestaña del módulo **Armamento**; solo inventario operativo (sin novedad bloqueante ni custodia en taller / para mantenimiento).
 - ✅ **Auditoría**: registro de cambios y acciones críticas; etiquetas legibles en español vía `resources/lang/es/audit.php`.
 - ✅ **Realtime (Broadcasting)**: Laravel Reverb + Echo (WebSockets) para sincronización en tiempo real.
@@ -397,11 +397,7 @@ Tipos de arma permitidos en validacion actual:
 - `Revolver`
 - `Subametralladora`
 
-Tipos de propiedad:
-
-- `company_owned`
-- `leased`
-- `third_party`
+Marca y calibre salen de los catálogos `weapon_brands` y `weapon_calibers` (Ajustes). El arma ya no tiene `ownership_type`; el titular queda en `ownership_entity`.
 
 ### 5.1.1 Centro de cargas masivas
 
@@ -925,7 +921,7 @@ La tarjeta **Notas** en `weapons/show` (`resources/views/weapons/partials/histor
 - **Novedades** operativas (alta, seguimiento, cierre, reapertura).
 - Carga de **documentos** manuales.
 - **Transferencias** (solicitud, aceptación, cancelación).
-- Aprobación de fotos en **Revista armas** (`recordRevistaPhotosApproved`: fecha, cantidad de fotos, colaborador temporal).
+- Aprobación de fotos en **Revista armas** (`recordRevistaPhotosApproved`: fecha, cantidad de fotos, usuario de campo).
 
 Si no hay filas en `weapon_histories` pero sí texto en `weapons.notes` heredado, el panel muestra una **nota heredada**; si no hay nada, el estado vacío con mensaje explicativo.
 
@@ -1024,78 +1020,24 @@ Alertas:
 
 ### 5.14 Revista armas (fotos en campo)
 
-Módulo para que colaboradores de campo suban **4 fotos técnicas** por arma (staging) y el staff las revise antes de pasarlas a las fotos oficiales del inventario.
+El campo usa una cuenta `users.account_kind = field`. El staff solo revisa.
 
-#### Acceso
+| Actor | Requisito | Rutas |
+|--------|-----------|--------|
+| **Staff** | `ADMIN` o `RESPONSABLE` nivel 1 con Revista | `/revista-armas` |
+| **Campo** | Cuenta activa y día del mes entre `field_day_start` y `field_day_end` (por defecto 1–5) | `/revista-armas/ingreso`, `/revista-armas/mis-armas` |
 
-| Actor | Requisito | Rutas principales |
-|--------|-----------|-------------------|
-| **Staff** | `ADMIN` o `RESPONSABLE` **nivel 1** (`EnsureRevistaStaff`) | `/revista-armas`, `/revista-armas/usuarios-temporales` |
-| **Invitado** | Código de acceso 12 h (sin fila en `users`) | `/revista-armas/ingreso`, `/revista-armas/mis-armas` |
+- Alta en **Usuarios**: correo, zona, `field_owner_id`, uso compartido (`field_user_responsibles`) y ventana de días. Sesión de campo: `revista_field_user_id`.
+- **Enviar a campo** asigna armas en `field_user_weapons`. La búsqueda lista cliente, puesto o trabajador, tipo, serie y marca.
+- El staff no incluye el kit de cámara. **Actualizar** promueve el staging a `weapon_photos`. **Rechazar** borra el staging de ese usuario y arma.
+- El campo toma cinco fotos: `lado_derecho`, `lado_izquierdo`, `canon_disparador_marca`, `serie`, `impronta` (`WeaponPhoto::DESCRIPTIONS`). La cámara vive solo en la vista de campo.
+- Migración: `2026_11_06_120000_field_users_for_revista.php`. Tests: `tests/Feature/RevistaArmasTest.php`.
 
-Sesión invitado: `revista_grant_id` (grant activo en `temporary_photo_access_grants`).
+### 5.14.1 Armerillo en la instalación
 
-Nombres de ruta staff relevantes: prefijo `revista-armas.*`; CRUD de temporales con nombres `revista-armas.temporary-users.*` (URL `/revista-armas/usuarios-temporales`).
+En la ficha de la sede, **Agregar armerillo** crea un puesto `custody_role = armerillo` de esa instalación. Se dibuja como caja fuerte: la puerta abre con la chapa o la manija y los compartimentos son listas para asignar, para mantenimiento y munición. No cuenta como puesto de campo.
 
-#### Usuarios temporales (`temporary_photo_users`)
-
-- CRUD reutilizable en `/revista-armas/usuarios-temporales`.
-- Campo **Responsable dueño** (`owner_responsible_user_id`): solo usuarios del sistema con rol `RESPONSABLE` (el **ADMIN** elige en el formulario; el responsable nivel 1 queda asignado a sí mismo).
-- **Uso compartido** (`is_shared`, solo **ADMIN**): el administrador marca **Permitir uso por varios responsables** y elige **responsables autorizados** en `temporary_photo_user_responsibles`. El dueño siempre conserva acceso; los autorizados pueden asignar armas de su cartera al mismo supervisor.
-- Con acceso compartido vigente, un segundo responsable **agrega armas al mismo grant** (mismo código 12 h, sin revocar el acceso del otro). Modal de éxito distingue acceso nuevo vs. armas agregadas.
-- Al desactivar compartido: se limpia la pivot; **solo el responsable dueño** vuelve a ver y gestionar ese temporal.
-- Desactivar usuario temporal o revocar acceso **no borra** filas en `weapon_photo_staging`.
-- **ADMIN**: ve y gestiona todos los temporales activos. **RESPONSABLE nivel 1**: los propios como dueño y los compartidos donde esté autorizado; al crear/editar el `owner_responsible_user_id` se asigna automáticamente a su usuario (formulario con campo oculto + merge en `TemporaryPhotoUserController::validated`).
-
-#### Asignación de acceso
-
-- Tablas: `temporary_photo_access_grants` + `temporary_photo_access_weapons`.
-- Modal **Asignar acceso temporal** (`resources/views/revista-armas/index.blade.php`):
-  - Usuario temporal + **Buscar armas** (AJAX `GET revista-armas/armas/buscar`, tope por página ~60; no carga todo el inventario en el HTML).
-  - Tabla (**Cliente**, **Serie**, **Tipo**, **Estado**): armas con staging del usuario quedan **bloqueadas** (“Con fotos”); armas con staging de **otro** temporal aparecen **Bloqueada**.
-  - Contexto `GET revista-armas/accesos/contexto/{temporary_photo_user}`: preselecciona armas del último grant + locks de staging.
-  - **Enviar** → `POST revista-armas/accesos` (`TemporaryPhotoAccessService::createGrant`).
-  - **Renovar último acceso** → `POST revista-armas/accesos/renovar` (`renewLatestGrant`): mismas armas del último grant, **código nuevo** 12 h; staging **intacta**.
-- **Regla de integridad (staging pendiente):**
-  - No se puede crear un acceso que **omit** armas con al menos una foto en staging de ese usuario (hay que **Actualizar** o **Rechazar** antes).
-  - No se puede asignar un arma a otro usuario temporal si **otro** temporal aún tiene staging en esa arma.
-  - Renovar (mismo set) no entra en conflicto con esa regla.
-- Código válido **12 h**, correo `RevistaTemporaryAccessMail`; modal de éxito distingue acceso nuevo / renovado / armas agregadas (compartido).
-- Revocar acceso no elimina staging ya subido.
-
-> 🧩 **Despliegue Blade + CSS tipografía:** si solo cambia Revista Blade, no hace falta rebuild; si se tocó `app.css` (tokens tipográficos), ejecutar `npm run build`.
-
-#### Vista staff (`/revista-armas`)
-
-- Alcance: `RevistaArmasScopeService` (global **ADMIN**, cartera activa **RESPONSABLE** nivel 1).
-- **Rendimiento:** sin `temporary_photo_user_id` **no** se carga el inventario (mensaje para filtrar). Con filtro: solo armas del **último grant**, **paginadas (50)**, columna Realizado con **una** consulta batch (`completedWeaponIdsForTemporaryUser`), no N+1.
-- Columnas: **Cliente** (`operationalDisplayClient()`), Tipo, Marca, Serie, Calibre, Tipo permiso, Nº permiso, Vencimiento, Realizado, Acciones.
-- Barra: **Usuario temporal** | **Buscar armas** (filtro local sobre la página cargada) | **Filtrar** (`?temporary_photo_user_id=`).
-  - Sin usuario temporal: tabla vacía + instrucción de filtrar.
-  - Con usuario temporal: armas del **último acceso** (`latestGrantFor`), aunque el código haya vencido; aviso ámbar si no hay acceso vigente (`activeGrantFor`).
-  - **Realizado** = ✓ si 4/4 staging de **ese** colaborador; ✕ si falta; **Ver** abre revisión.
-- Modal **Ver**: API `revista-armas.review` → `slots`, `uploaded_count`, `pending_count`, `is_complete`.
-- **Actualizar** / **Rechazar**: modales de confirmación/aviso; approve copia a `weapon_photos` + historial; reject elimina solo el staging de ese temporal+arma.
-- UI: `#revista-confirm-modal`, `#revista-alert-modal`, `#revista-assign-modal`.
-
-#### Vista invitado (`/revista-armas/mis-armas`)
-
-- Tabla de armas asignadas al grant vigente; **Realizado** ✓/✕ según 4/4 en staging.
-- **Ver** abre modal de captura (Cropper: cámara o galería) vía `revista-armas.partials.photo-capture-kit`.
-- Tras cada foto guardada: el modal de fotos **permanece abierto**; toast verde **«Imagen guardada»** (~4,5 s); se refrescan las miniaturas y la columna **Realizado** sin recargar la página.
-- Captura móvil (`photo-capture-kit`): exporta JPEG redimensionado (máx. 1920 px), botón **Guardar** con estado **Guardando…** (evita clics repetidos), Cropper tras `onload`, errores en modal propio (no `alert` del navegador).
-- Layout invitado: `layouts/revista-guest.blade.php` incluye `@stack('styles')` y `@stack('scripts')` (requerido para el JS del modal).
-
-#### Staging y slots
-
-- Tabla `weapon_photo_staging`; descripciones fijas en `App\Support\RevistaWeaponPhotoSlots`: `lado_derecho`, `lado_izquierdo`, `canon_disparador_marca`, `serie`.
-- Staging es por **(usuario temporal, arma, descripción)**; dos temporales pueden tener borradores de la misma arma, pero la asignación **bloquea** cruzado mientras exista staging ajeno.
-- Servicios: `WeaponPhotoStagingService` (batch de completitud, conflictos, counts), `TemporaryPhotoAccessService` (`createGrant`, `renewLatestGrant`, `assignmentContext`, append en compartidos), `RevistaArmasScopeService`.
-- Reasignar/vencer/revocar **no borra** staging; solo **Rechazar** o **Actualizar** (promote) lo quita del borrador.
-- Controladores: `RevistaArmasController` (index, search, review), `TemporaryPhotoAccessController` (store, renew, context, revoke), `RevistaPhotoReviewController` (approve / reject).
-- Rutas clave: `revista-armas.weapons.search`, `revista-armas.access.store`, `revista-armas.access.renew`, `revista-armas.access.context`.
-- Migraciones: `2026_05_19_140000_create_revista_armas_tables.php`; `2026_05_19_180000_create_weapon_histories_table.php`.
-- Tests: `tests/Feature/RevistaArmasTest.php` (filtro por grant, omitir staging, staging ajeno, renovar, búsqueda AJAX), `tests/Feature/WeaponHistoryTest.php`, `tests/Feature/WeaponPhotoTest.php`.
+**Enviar a mi armerillo**, **Para mantenimiento** y **Enviar a armero** en la ficha del arma siguen creando o reutilizando el puesto de custodia del responsable. Esa acción todavía no elige la caja de la sede.
 
 ### 5.15 Dashboard operativo
 

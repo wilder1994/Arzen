@@ -36,4 +36,4 @@
 </ul>
 
 <h3>{{ __('Contraseña') }}</h3>
-<p>{{ __('Al crear el usuario el sistema genera una contraseña temporal y la muestra una sola vez. En el primer ingreso el usuario debe cambiarla. Desde Editar puede enviarle las credenciales por correo: eso crea una contraseña temporal nueva y deja inválida la anterior.') }}</p>
+<p>{{ __('Al crear el usuario el sistema genera una contraseña y la muestra una sola vez. En plataforma, el primer ingreso obliga a cambiarla. Un usuario de campo no entra a la plataforma: usa esa contraseña en Revista armas, dentro de los días del mes indicados en su ficha.') }}</p>

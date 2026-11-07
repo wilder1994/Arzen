@@ -49,6 +49,15 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+        if ($user && $user->isField()) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => __('Este usuario ingresa por Revista armas.'),
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

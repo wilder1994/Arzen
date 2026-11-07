@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TemporaryPhotoUser;
+use App\Models\User;
 use App\Models\Weapon;
-use App\Support\RevistaWeaponPhotoSlots;
+use App\Models\WeaponPhotoStaging;
+use App\Services\FieldRevistaAssignmentService;
 use App\Services\RevistaArmasScopeService;
-use App\Services\TemporaryPhotoAccessService;
-use App\Services\WeaponPhotoStagingService;
+use App\Support\RevistaWeaponPhotoSlots;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class RevistaArmasController extends Controller
@@ -21,8 +22,7 @@ class RevistaArmasController extends Controller
 
     public function __construct(
         private readonly RevistaArmasScopeService $scopeService,
-        private readonly WeaponPhotoStagingService $stagingService,
-        private readonly TemporaryPhotoAccessService $accessService,
+        private readonly FieldRevistaAssignmentService $assignmentService,
     ) {
         $this->middleware(['auth', 'revista.staff']);
     }
@@ -30,84 +30,66 @@ class RevistaArmasController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $temporaryPhotoUserId = $request->integer('temporary_photo_user_id') ?: null;
+        $weapons = $this->scopeService
+            ->weaponsQueryForStaff($user, [
+                'activeClientAssignment.client',
+                'activePostAssignment.post',
+                'activeWorkerAssignment.worker',
+                'photos',
+            ])
+            ->paginate(self::INDEX_PER_PAGE)
+            ->withQueryString();
 
-        $temporaryUsers = $this->scopeService->temporaryUsersQueryForStaff($user)
-            ->active()
-            ->orderBy('name')
-            ->get();
+        $weaponIds = $weapons->getCollection()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $inReview = array_fill_keys(
+            WeaponPhotoStaging::query()
+                ->whereIn('weapon_id', $weaponIds)
+                ->whereIn('description', RevistaWeaponPhotoSlots::keys())
+                ->distinct()
+                ->pluck('weapon_id')
+                ->map(fn ($id) => (int) $id)
+                ->all(),
+            true
+        );
 
-        $activeGrantMissing = false;
-        $noGrantHistory = false;
-        $needsTemporaryUserSelection = $temporaryPhotoUserId === null;
-        $weapons = null;
-        $rows = collect();
+        $rows = $weapons->getCollection()->map(function (Weapon $weapon) use ($inReview) {
+            $official = $weapon->photos
+                ->whereIn('description', RevistaWeaponPhotoSlots::keys())
+                ->pluck('description')
+                ->unique()
+                ->count();
 
-        if ($temporaryPhotoUserId !== null) {
-            $temporaryUser = $temporaryUsers->firstWhere('id', $temporaryPhotoUserId);
-
-            if ($temporaryUser) {
-                $activeGrantMissing = $this->accessService->activeGrantFor($temporaryUser) === null;
-                $grantForList = $this->accessService->latestGrantFor($temporaryUser);
-
-                $weaponsQuery = $this->scopeService->weaponsQueryForStaff($user);
-
-                if ($grantForList) {
-                    $weaponIds = $this->accessService->grantWeaponIds($grantForList);
-                    $weaponsQuery->whereIn('weapons.id', $weaponIds);
-                } else {
-                    $noGrantHistory = true;
-                    $weaponsQuery->whereRaw('0 = 1');
-                }
-
-                $weapons = $weaponsQuery
-                    ->paginate(self::INDEX_PER_PAGE)
-                    ->withQueryString();
-
-                $pageWeaponIds = $weapons->getCollection()->pluck('id')->map(fn ($id) => (int) $id)->all();
-                $completedIds = array_fill_keys(
-                    $this->stagingService->completedWeaponIdsForTemporaryUser($temporaryPhotoUserId, $pageWeaponIds),
-                    true
-                );
-
-                $rows = $weapons->getCollection()->map(function (Weapon $weapon) use ($temporaryPhotoUserId, $completedIds) {
-                    return [
-                        'weapon' => $weapon,
-                        'completions' => [
-                            $temporaryPhotoUserId => isset($completedIds[$weapon->id]),
-                        ],
-                    ];
-                });
+            if (isset($inReview[$weapon->id])) {
+                $status = __('en revisión');
+            } elseif ($official >= RevistaWeaponPhotoSlots::requiredCount()) {
+                $status = __('al día');
             } else {
-                $needsTemporaryUserSelection = true;
+                $status = __(':done de :total', [
+                    'done' => $official,
+                    'total' => RevistaWeaponPhotoSlots::requiredCount(),
+                ]);
             }
-        }
+
+            return ['weapon' => $weapon, 'status' => $status];
+        });
 
         return view('revista-armas.index', [
-            'rows' => $rows,
             'weapons' => $weapons,
-            'temporaryUsers' => $temporaryUsers,
-            'selectedTemporaryUserId' => $temporaryPhotoUserId,
-            'activeGrantMissing' => $activeGrantMissing,
-            'noGrantHistory' => $noGrantHistory,
-            'needsTemporaryUserSelection' => $needsTemporaryUserSelection,
-            'isAdmin' => $user->isAdmin(),
-            'assignWeaponsSearchUrl' => route('revista-armas.weapons.search'),
-            'assignmentContextUrlTemplate' => route('revista-armas.access.context', ['temporary_photo_user' => '__ID__']),
-            'accessRenewUrl' => route('revista-armas.access.renew'),
+            'rows' => $rows,
+            'fieldUsers' => $this->scopeService->fieldUsersQueryForStaff($user)->get(),
+            'assignmentNotice' => session('revista_assignment_notice'),
         ]);
     }
 
     public function searchAssignableWeapons(Request $request): JsonResponse
     {
-        $user = $request->user();
         $term = trim($request->string('q')->toString());
         $limit = min(100, max(1, $request->integer('limit') ?: self::ASSIGN_SEARCH_LIMIT));
-        $temporaryPhotoUserId = $request->integer('temporary_photo_user_id') ?: null;
 
-        $query = $this->scopeService->weaponsQueryForStaff($user, [
+        $query = $this->scopeService->weaponsQueryForStaff($request->user(), [
             'activeClientAssignment.client',
-            'activePendingTransfer.fromClient',
+            'activePostAssignment.post',
+            'activeWorkerAssignment.worker',
         ]);
 
         if ($term !== '') {
@@ -119,98 +101,118 @@ class RevistaArmasController extends Controller
                     ->orWhere('brand', 'like', $like)
                     ->orWhere('caliber', 'like', $like)
                     ->orWhere('weapon_type', 'like', $like)
-                    ->orWhere('permit_number', 'like', $like)
                     ->orWhereHas('activeClientAssignment.client', function ($clientQuery) use ($like) {
                         $clientQuery->where('name', 'like', $like);
                     })
-                    ->orWhereHas('activePendingTransfer.fromClient', function ($clientQuery) use ($like) {
-                        $clientQuery->where('name', 'like', $like);
+                    ->orWhereHas('activePostAssignment.post', function ($postQuery) use ($like) {
+                        $postQuery->where('name', 'like', $like);
+                    })
+                    ->orWhereHas('activeWorkerAssignment.worker', function ($workerQuery) use ($like) {
+                        $workerQuery->where('name', 'like', $like);
                     });
             });
         }
 
         /** @var Collection<int, Weapon> $weapons */
         $weapons = $query->limit($limit)->get();
-        $weaponIds = $weapons->pluck('id')->map(fn ($id) => (int) $id)->all();
-
-        $lockedIds = [];
-        $foreignBlockedIds = [];
-        if ($temporaryPhotoUserId) {
-            $lockedIds = array_fill_keys(
-                $this->stagingService->weaponIdsWithAnyStagingForTemporaryUser($temporaryPhotoUserId),
-                true
-            );
-            foreach ($this->stagingService->foreignStagingConflicts($weaponIds, $temporaryPhotoUserId) as $conflict) {
-                $foreignBlockedIds[(int) $conflict['weapon_id']] = $conflict['temporary_user_name'];
-            }
-        }
 
         return response()->json([
-            'items' => $weapons->map(function (Weapon $weapon) use ($lockedIds, $foreignBlockedIds) {
-                $clientName = $weapon->operationalDisplayClient()?->name;
-                $hasOwnStaging = isset($lockedIds[$weapon->id]);
-                $blockedBy = $foreignBlockedIds[$weapon->id] ?? null;
+            'items' => $weapons->map(function (Weapon $weapon) {
+                $clientName = $weapon->activeClientAssignment?->client?->name;
+
+                $assignment = [];
+                if ($weapon->activePostAssignment?->post) {
+                    $assignment[] = __('Puesto').': '.$weapon->activePostAssignment->post->name;
+                }
+                if ($weapon->activeWorkerAssignment?->worker) {
+                    $assignment[] = __('Trabajador').': '.$weapon->activeWorkerAssignment->worker->name;
+                }
 
                 return [
                     'id' => $weapon->id,
                     'serial_number' => $weapon->serial_number,
                     'weapon_type' => $weapon->weapon_type,
+                    'brand' => $weapon->brand,
                     'client_name' => $clientName ?: '—',
-                    'has_staging' => $hasOwnStaging,
-                    'locked' => $hasOwnStaging,
-                    'blocked_by_other' => $blockedBy,
-                    'search' => mb_strtolower(implode(' ', array_filter([
-                        $weapon->internal_code,
-                        $weapon->serial_number,
-                        $weapon->weapon_type,
-                        $weapon->brand,
-                        $weapon->caliber,
-                        $clientName,
-                    ], fn ($value) => filled($value))), 'UTF-8'),
+                    'assignment' => $assignment,
                 ];
             })->values()->all(),
         ]);
     }
 
-    public function review(Request $request, Weapon $weapon, TemporaryPhotoUser $temporaryPhotoUser)
+    public function assign(Request $request)
     {
-        $user = $request->user();
-        $this->authorize('view', $temporaryPhotoUser);
+        $data = $request->validate([
+            'field_user_id' => ['required', 'integer', 'exists:users,id'],
+            'weapon_ids' => ['required', 'array', 'min:1'],
+            'weapon_ids.*' => ['integer'],
+        ]);
 
-        if (! $this->scopeService->canStaffManageWeapon($user, $weapon)) {
+        $fieldUser = User::query()->findOrFail($data['field_user_id']);
+        $result = $this->assignmentService->assign($request->user(), $fieldUser, $data['weapon_ids']);
+
+        $redirect = back()->with('status', __('Armas enviadas a campo.'));
+
+        if ($result['notice']) {
+            $redirect->with('revista_assignment_notice', [
+                'field_name' => $result['field_name'],
+                'owner_name' => $result['owner_name'],
+            ]);
+        }
+
+        return $redirect;
+    }
+
+    public function photos(Request $request, Weapon $weapon): JsonResponse
+    {
+        if (! $this->scopeService->canStaffManageWeapon($request->user(), $weapon)) {
             abort(403);
         }
 
-        $staging = $this->stagingService->stagingByDescription($temporaryPhotoUser, $weapon);
-        $requiredCount = RevistaWeaponPhotoSlots::requiredCount();
-        $uploadedCount = collect($staging)->filter(fn ($row) => $row->file !== null)->count();
-        $pendingCount = max(0, $requiredCount - $uploadedCount);
+        $weapon->load('photos.file');
+        $official = $weapon->photos->keyBy('description');
+
+        $staging = WeaponPhotoStaging::query()
+            ->with(['file', 'fieldUser:id,name'])
+            ->where('weapon_id', $weapon->id)
+            ->whereIn('description', RevistaWeaponPhotoSlots::keys())
+            ->get()
+            ->groupBy('user_id');
 
         return response()->json([
             'weapon' => [
                 'id' => $weapon->id,
                 'serial_number' => $weapon->serial_number,
             ],
-            'temporary_user' => [
-                'id' => $temporaryPhotoUser->id,
-                'name' => $temporaryPhotoUser->name,
-            ],
-            'slots' => collect(RevistaWeaponPhotoSlots::DESCRIPTIONS)->map(function ($label, $description) use ($staging) {
-                $row = $staging[$description] ?? null;
-                $url = $row?->file
-                    ? \Illuminate\Support\Facades\Storage::disk($row->file->disk)->url($row->file->path)
-                    : null;
+            'slots' => collect(RevistaWeaponPhotoSlots::descriptions())->map(function (string $label, string $description) use ($official) {
+                $photo = $official->get($description);
 
                 return [
                     'description' => $description,
                     'label' => $label,
-                    'url' => $url,
+                    'url' => $photo?->file ? Storage::disk($photo->file->disk)->url($photo->file->path) : null,
                 ];
             })->values(),
-            'required_count' => $requiredCount,
-            'uploaded_count' => $uploadedCount,
-            'pending_count' => $pendingCount,
-            'is_complete' => $pendingCount === 0,
+            'reviews' => $staging->map(function ($rows, $userId) {
+                $fieldUser = $rows->first()?->fieldUser;
+                $byDescription = $rows->keyBy('description');
+
+                return [
+                    'field_user_id' => (int) $userId,
+                    'name' => $fieldUser?->name ?? '—',
+                    'complete' => $rows->pluck('description')->unique()->count() >= RevistaWeaponPhotoSlots::requiredCount(),
+                    'slots' => collect(RevistaWeaponPhotoSlots::descriptions())->map(function (string $label, string $description) use ($byDescription) {
+                        $row = $byDescription->get($description);
+
+                        return [
+                            'description' => $description,
+                            'label' => $label,
+                            'url' => $row?->file ? Storage::disk($row->file->disk)->url($row->file->path) : null,
+                        ];
+                    })->values(),
+                ];
+            })->values(),
+            'upload_url' => route('weapons.photos.store', $weapon),
         ]);
     }
 }

@@ -19,7 +19,9 @@
                     @method('PUT')
                     @include('weapons.partials.form', [
                         'weapon' => $weapon,
-                        'ownershipTypes' => $ownershipTypes,
+                        'brands' => $brands,
+                        'calibers' => $calibers,
+                        'companyName' => $companyName,
                         'showInternalCode' => true,
                         'requirePermitPhoto' => false,
                         'cancelUrl' => route('weapons.show', $weapon),

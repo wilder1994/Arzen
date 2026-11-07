@@ -514,9 +514,9 @@ Procedimiento detallado en **manual-revista-armas.md** (Parte A).
 
 #### Qué hacer
 
-1. Cree **usuario temporal** (dueño automático usted).
-2. **Asignar acceso temporal** → armas → código 12 h al colaborador.
-3. Filtre por usuario → **Ver** → **Actualizar** si 4/4.
+1. En **Usuarios**, cree un **usuario de campo** con su zona, su responsable y los días del mes en que puede entrar.
+2. En **Revista armas**, **Enviar a campo**: elija ese usuario y marque las armas en la tabla.
+3. Cuando haya fotos, ábralas en revisión. **Actualizar** las pasa al arma. **Rechazar** borra el borrador. El responsable no toma fotos.
 
 #### Resultado esperado
 
@@ -605,6 +605,7 @@ Listo.
 |---------|--------|---------|--------|----------|
 | 3.0 | [fecha] | [nombre] | [nombre] | Procedimientos paso a paso en todas las funciones |
 | 3.1 | 2026-10-24 | [nombre] | [nombre] | Ajustes, matriz de módulos, instalaciones, puestos y Mi empresa con mapa |
+| 3.2 | 2026-11-06 | [nombre] | [nombre] | Revista con usuario de campo, sin código de 12 horas |
 
 ---
 

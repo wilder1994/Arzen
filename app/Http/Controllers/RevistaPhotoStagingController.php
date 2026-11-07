@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TemporaryPhotoAccessGrant;
+use App\Models\User;
 use App\Models\Weapon;
 use App\Services\WeaponPhotoStagingService;
 use App\Support\RevistaWeaponPhotoSlots;
@@ -19,8 +19,8 @@ class RevistaPhotoStagingController extends Controller
 
     public function storeGuest(Request $request, Weapon $weapon)
     {
-        /** @var TemporaryPhotoAccessGrant $grant */
-        $grant = $request->attributes->get('revista_grant');
+        /** @var User $fieldUser */
+        $fieldUser = $request->attributes->get('revista_field_user');
 
         $data = $request->validate([
             'photo' => ['required', 'image', 'max:5120'],
@@ -28,7 +28,7 @@ class RevistaPhotoStagingController extends Controller
         ]);
 
         $this->stagingService->storeForGuest(
-            $grant,
+            $fieldUser,
             $weapon,
             $data['photo'],
             $data['description'],

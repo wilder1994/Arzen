@@ -14,11 +14,11 @@
         <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
             <div>
                 <div class="text-sm font-bold text-slate-900">{{ __('Revista armas') }}</div>
-                <div class="text-xs text-slate-500">{{ __('Acceso temporal para fotografías') }}</div>
+                <div class="text-xs text-slate-500">{{ __('Ingreso de campo') }}</div>
             </div>
             <div class="flex items-center gap-2">
                 @include('partials.theme-toggle', ['themeToggleClass' => 'sj-theme-toggle sj-theme-toggle--surface'])
-            @if (session('revista_grant_id'))
+            @if (session('revista_field_user_id'))
                 <form method="POST" action="{{ route('revista-armas.guest.logout') }}">
                     @csrf
                     <button type="submit" class="sj-ui-btn sj-ui-btn--ghost sj-ui-btn--sm">

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TemporaryPhotoUser;
+use App\Models\User;
 use App\Models\Weapon;
 use App\Services\RevistaArmasScopeService;
 use App\Services\WeaponPhotoStagingService;
@@ -17,16 +17,10 @@ class RevistaPhotoReviewController extends Controller
         $this->middleware(['auth', 'revista.staff']);
     }
 
-    public function approve(Request $request, Weapon $weapon, TemporaryPhotoUser $temporaryPhotoUser)
+    public function approve(Request $request, Weapon $weapon, User $fieldUser)
     {
-        $user = $request->user();
-        $this->authorize('view', $temporaryPhotoUser);
-
-        if (! $this->scopeService->canStaffManageWeapon($user, $weapon)) {
-            abort(403);
-        }
-
-        $this->stagingService->approve($user, $temporaryPhotoUser, $weapon);
+        $this->assertReview($request->user(), $weapon, $fieldUser);
+        $this->stagingService->approve($request->user(), $fieldUser, $weapon);
 
         if ($request->expectsJson()) {
             return response()->json(['ok' => true, 'message' => __('Imágenes oficiales actualizadas.')]);
@@ -35,21 +29,26 @@ class RevistaPhotoReviewController extends Controller
         return back()->with('status', __('Imágenes oficiales actualizadas.'));
     }
 
-    public function reject(Request $request, Weapon $weapon, TemporaryPhotoUser $temporaryPhotoUser)
+    public function reject(Request $request, Weapon $weapon, User $fieldUser)
     {
-        $user = $request->user();
-        $this->authorize('view', $temporaryPhotoUser);
-
-        if (! $this->scopeService->canStaffManageWeapon($user, $weapon)) {
-            abort(403);
-        }
-
-        $this->stagingService->reject($user, $temporaryPhotoUser, $weapon);
+        $this->assertReview($request->user(), $weapon, $fieldUser);
+        $this->stagingService->reject($request->user(), $fieldUser, $weapon);
 
         if ($request->expectsJson()) {
             return response()->json(['ok' => true, 'message' => __('Fotos en revisión eliminadas.')]);
         }
 
         return back()->with('status', __('Fotos en revisión eliminadas.'));
+    }
+
+    private function assertReview(User $actor, Weapon $weapon, User $fieldUser): void
+    {
+        abort_unless($fieldUser->isField(), 404);
+
+        if (! $this->scopeService->canStaffManageWeapon($actor, $weapon)) {
+            abort(403);
+        }
+
+        abort_unless($fieldUser->fieldWeapons()->where('weapons.id', $weapon->id)->exists(), 404);
     }
 }

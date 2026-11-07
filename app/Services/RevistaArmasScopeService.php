@@ -51,10 +51,12 @@ class RevistaArmasScopeService
         return $weapon->activeClientAssignment?->responsible_user_id === $user->id;
     }
 
-    public function temporaryUsersQueryForStaff(User $user): Builder
+    public function fieldUsersQueryForStaff(User $user): Builder
     {
-        $query = \App\Models\TemporaryPhotoUser::query()
-            ->with(['ownerResponsible:id,name,email', 'authorizedResponsibles:id,name'])
+        $query = User::query()
+            ->where('account_kind', User::KIND_FIELD)
+            ->where('is_active', true)
+            ->with('fieldOwner:id,name')
             ->orderBy('name');
 
         if ($user->isAdmin()) {
@@ -67,11 +69,11 @@ class RevistaArmasScopeService
 
         return $query->where(function (Builder $outer) use ($user) {
             $outer
-                ->where('owner_responsible_user_id', $user->id)
+                ->where('field_owner_id', $user->id)
                 ->orWhere(function (Builder $inner) use ($user) {
                     $inner
-                        ->where('is_shared', true)
-                        ->whereHas('authorizedResponsibles', function (Builder $responsibleQuery) use ($user) {
+                        ->where('field_shared', true)
+                        ->whereHas('fieldSharedResponsibles', function (Builder $responsibleQuery) use ($user) {
                             $responsibleQuery->where('users.id', $user->id);
                         });
                 });

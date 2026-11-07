@@ -18,7 +18,7 @@
 
     <div class="py-4">
         <div class="sj-page-shell sj-page-shell--wide space-y-3">
-            <x-ui-alert type="warning">{{ __('Al guardar se genera una contraseña temporal segura. Podrá copiarla en la siguiente pantalla; el usuario deberá cambiarla en su primer ingreso.') }}</x-ui-alert>
+            <x-ui-alert type="warning">{{ __('Al guardar se genera una contraseña y se muestra una sola vez. El usuario de plataforma debe cambiarla en su primer ingreso. El de campo usa esa misma contraseña en Revista armas.') }}</x-ui-alert>
 
             <form method="POST" action="{{ route('users.store') }}" enctype="multipart/form-data">
                 @csrf

@@ -8,7 +8,7 @@
                         @include('users.partials.help')
                     </x-help-drawer>
                 </div>
-                <p class="sj-section-header__subtitle">{{ $user->name }} · {{ $user->roleLabel() }}</p>
+                <p class="sj-section-header__subtitle">{{ $user->name }} · {{ $user->isField() ? __('Campo') : $user->roleLabel() }}</p>
             </div>
             <div class="sj-section-header__actions">
                 <a href="{{ route('users.index') }}" class="sj-ui-btn sj-ui-btn--ghost">{{ __('Volver al listado') }}</a>

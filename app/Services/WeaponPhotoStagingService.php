@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Models\AuditLog;
 use App\Models\File;
-use App\Models\TemporaryPhotoAccessGrant;
-use App\Models\TemporaryPhotoUser;
 use App\Models\User;
 use App\Models\Weapon;
 use App\Models\WeaponPhoto;
@@ -26,10 +24,10 @@ class WeaponPhotoStagingService
         private readonly WeaponHistoryService $weaponHistory,
     ) {}
 
-    public function stagingCount(TemporaryPhotoUser $temporaryUser, Weapon $weapon): int
+    public function stagingCount(User $fieldUser, Weapon $weapon): int
     {
         return WeaponPhotoStaging::query()
-            ->where('temporary_photo_user_id', $temporaryUser->id)
+            ->where('user_id', $fieldUser->id)
             ->where('weapon_id', $weapon->id)
             ->whereIn('description', RevistaWeaponPhotoSlots::keys())
             ->count();
@@ -52,7 +50,7 @@ class WeaponPhotoStagingService
 
         return WeaponPhotoStaging::query()
             ->select('weapon_id')
-            ->where('temporary_photo_user_id', $temporaryPhotoUserId)
+            ->where('user_id', $temporaryPhotoUserId)
             ->whereIn('weapon_id', $weaponIds)
             ->whereIn('description', $keys)
             ->groupBy('weapon_id')
@@ -70,7 +68,7 @@ class WeaponPhotoStagingService
     public function weaponIdsWithAnyStagingForTemporaryUser(int $temporaryPhotoUserId): array
     {
         return WeaponPhotoStaging::query()
-            ->where('temporary_photo_user_id', $temporaryPhotoUserId)
+            ->where('user_id', $temporaryPhotoUserId)
             ->whereIn('description', RevistaWeaponPhotoSlots::keys())
             ->distinct()
             ->pluck('weapon_id')
@@ -83,7 +81,7 @@ class WeaponPhotoStagingService
      * Staging held by other temporary users on the given weapons.
      *
      * @param  list<int>  $weaponIds
-     * @return list<array{weapon_id: int, serial_number: string|null, temporary_photo_user_id: int, temporary_user_name: string}>
+     * @return list<array{weapon_id: int, serial_number: string|null, user_id: int, temporary_user_name: string}>
      */
     public function foreignStagingConflicts(array $weaponIds, int $excludingTemporaryUserId): array
     {
@@ -93,19 +91,19 @@ class WeaponPhotoStagingService
 
         return WeaponPhotoStaging::query()
             ->with([
-                'temporaryPhotoUser:id,name',
+                'fieldUser:id,name',
                 'weapon:id,serial_number',
             ])
             ->whereIn('weapon_id', $weaponIds)
-            ->where('temporary_photo_user_id', '!=', $excludingTemporaryUserId)
+            ->where('user_id', '!=', $excludingTemporaryUserId)
             ->whereIn('description', RevistaWeaponPhotoSlots::keys())
             ->get()
-            ->unique(fn (WeaponPhotoStaging $row) => $row->weapon_id.'-'.$row->temporary_photo_user_id)
+            ->unique(fn (WeaponPhotoStaging $row) => $row->weapon_id.'-'.$row->user_id)
             ->map(fn (WeaponPhotoStaging $row) => [
                 'weapon_id' => (int) $row->weapon_id,
                 'serial_number' => $row->weapon?->serial_number,
-                'temporary_photo_user_id' => (int) $row->temporary_photo_user_id,
-                'temporary_user_name' => $row->temporaryPhotoUser?->name ?? '—',
+                'user_id' => (int) $row->user_id,
+                'temporary_user_name' => $row->fieldUser?->name ?? '—',
             ])
             ->values()
             ->all();
@@ -119,7 +117,7 @@ class WeaponPhotoStagingService
     {
         $query = WeaponPhotoStaging::query()
             ->selectRaw('weapon_id, COUNT(*) as staging_count')
-            ->where('temporary_photo_user_id', $temporaryPhotoUserId)
+            ->where('user_id', $temporaryPhotoUserId)
             ->whereIn('description', RevistaWeaponPhotoSlots::keys())
             ->groupBy('weapon_id');
 
@@ -133,19 +131,19 @@ class WeaponPhotoStagingService
             ->all();
     }
 
-    public function isStagingComplete(TemporaryPhotoUser $temporaryUser, Weapon $weapon): bool
+    public function isStagingComplete(User $fieldUser, Weapon $weapon): bool
     {
-        return $this->stagingCount($temporaryUser, $weapon) >= RevistaWeaponPhotoSlots::requiredCount();
+        return $this->stagingCount($fieldUser, $weapon) >= RevistaWeaponPhotoSlots::requiredCount();
     }
 
     /**
      * @return array<string, WeaponPhotoStaging>
      */
-    public function stagingByDescription(TemporaryPhotoUser $temporaryUser, Weapon $weapon): array
+    public function stagingByDescription(User $fieldUser, Weapon $weapon): array
     {
         return WeaponPhotoStaging::query()
             ->with('file')
-            ->where('temporary_photo_user_id', $temporaryUser->id)
+            ->where('user_id', $fieldUser->id)
             ->where('weapon_id', $weapon->id)
             ->whereIn('description', RevistaWeaponPhotoSlots::keys())
             ->get()
@@ -154,19 +152,16 @@ class WeaponPhotoStagingService
     }
 
     public function storeForGuest(
-        TemporaryPhotoAccessGrant $grant,
+        User $fieldUser,
         Weapon $weapon,
         UploadedFile $file,
         string $description,
     ): WeaponPhotoStaging {
-        if (! $grant->isCurrentlyValid()) {
+        if (! $fieldUser->isField() || ! $fieldUser->is_active || ! $fieldUser->fieldAccessOpen()) {
             throw ValidationException::withMessages([
-                'photo' => __('El acceso temporal ha expirado o fue revocado.'),
+                'photo' => __('El acceso de campo no está vigente.'),
             ]);
         }
-
-        $grant->loadMissing('temporaryPhotoUser');
-        $temporaryUser = $grant->temporaryPhotoUser;
 
         if (! in_array($description, RevistaWeaponPhotoSlots::keys(), true)) {
             throw ValidationException::withMessages([
@@ -174,20 +169,19 @@ class WeaponPhotoStagingService
             ]);
         }
 
-        $allowedWeaponIds = $grant->weapons()->pluck('weapon_id')->all();
-        if (! in_array($weapon->id, $allowedWeaponIds, true)) {
+        if (! $fieldUser->fieldWeapons()->where('weapons.id', $weapon->id)->exists()) {
             abort(403);
         }
 
         $path = $file->store(
-            'weapons/'.$weapon->id.'/staging/'.$temporaryUser->id,
+            'weapons/'.$weapon->id.'/staging/'.$fieldUser->id,
             'public'
         );
 
         try {
-            return DB::transaction(function () use ($temporaryUser, $weapon, $file, $path, $description) {
+            return DB::transaction(function () use ($fieldUser, $weapon, $file, $path, $description) {
                 $existing = WeaponPhotoStaging::query()
-                    ->where('temporary_photo_user_id', $temporaryUser->id)
+                    ->where('user_id', $fieldUser->id)
                     ->where('weapon_id', $weapon->id)
                     ->where('description', $description)
                     ->first();
@@ -209,7 +203,7 @@ class WeaponPhotoStagingService
                 ]);
 
                 return WeaponPhotoStaging::create([
-                    'temporary_photo_user_id' => $temporaryUser->id,
+                    'user_id' => $fieldUser->id,
                     'weapon_id' => $weapon->id,
                     'description' => $description,
                     'file_id' => $storedFile->id,
@@ -221,11 +215,11 @@ class WeaponPhotoStagingService
         }
     }
 
-    public function approve(User $reviewer, TemporaryPhotoUser $temporaryUser, Weapon $weapon): void
+    public function approve(User $reviewer, User $fieldUser, Weapon $weapon): void
     {
         $stagingRows = WeaponPhotoStaging::query()
             ->with('file')
-            ->where('temporary_photo_user_id', $temporaryUser->id)
+            ->where('user_id', $fieldUser->id)
             ->where('weapon_id', $weapon->id)
             ->whereIn('description', RevistaWeaponPhotoSlots::keys())
             ->get();
@@ -236,13 +230,13 @@ class WeaponPhotoStagingService
             ]);
         }
 
-        DB::transaction(function () use ($reviewer, $weapon, $stagingRows, $temporaryUser) {
+        DB::transaction(function () use ($reviewer, $weapon, $stagingRows, $fieldUser) {
             foreach ($stagingRows as $staging) {
                 $this->promoteStagingRowToOfficial($reviewer, $weapon, $staging);
             }
 
             WeaponPhotoStaging::query()
-                ->where('temporary_photo_user_id', $temporaryUser->id)
+                ->where('user_id', $fieldUser->id)
                 ->where('weapon_id', $weapon->id)
                 ->whereIn('description', RevistaWeaponPhotoSlots::keys())
                 ->delete();
@@ -254,7 +248,7 @@ class WeaponPhotoStagingService
                 'auditable_id' => $weapon->id,
                 'before' => null,
                 'after' => [
-                    'temporary_photo_user_id' => $temporaryUser->id,
+                    'user_id' => $fieldUser->id,
                     'count' => $stagingRows->count(),
                 ],
             ]);
@@ -262,7 +256,7 @@ class WeaponPhotoStagingService
             $this->weaponHistory->recordRevistaPhotosApproved(
                 $weapon,
                 $reviewer,
-                $temporaryUser,
+                $fieldUser,
                 $stagingRows->count(),
             );
         });
@@ -270,16 +264,16 @@ class WeaponPhotoStagingService
         $this->documentService->syncRenewalDocument($weapon);
     }
 
-    public function reject(User $reviewer, TemporaryPhotoUser $temporaryUser, Weapon $weapon): void
+    public function reject(User $reviewer, User $fieldUser, Weapon $weapon): void
     {
         $stagingRows = WeaponPhotoStaging::query()
             ->with('file')
-            ->where('temporary_photo_user_id', $temporaryUser->id)
+            ->where('user_id', $fieldUser->id)
             ->where('weapon_id', $weapon->id)
             ->whereIn('description', RevistaWeaponPhotoSlots::keys())
             ->get();
 
-        DB::transaction(function () use ($reviewer, $weapon, $stagingRows, $temporaryUser) {
+        DB::transaction(function () use ($reviewer, $weapon, $stagingRows, $fieldUser) {
             foreach ($stagingRows as $staging) {
                 if ($staging->file) {
                     Storage::disk($staging->file->disk)->delete($staging->file->path);
@@ -295,7 +289,7 @@ class WeaponPhotoStagingService
                 'auditable_id' => $weapon->id,
                 'before' => null,
                 'after' => [
-                    'temporary_photo_user_id' => $temporaryUser->id,
+                    'user_id' => $fieldUser->id,
                 ],
             ]);
         });

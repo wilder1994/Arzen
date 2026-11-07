@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
+use App\Models\CompanySetting;
 use App\Models\User;
 use App\Models\Weapon;
+use App\Models\WeaponBrand;
+use App\Models\WeaponCaliber;
 use App\Models\WeaponHistory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -49,6 +52,7 @@ class WeaponHistoryTest extends TestCase
 
     public function test_weapon_update_records_field_diff_and_textarea_notes(): void
     {
+        $this->seedWeaponCatalog();
         $admin = User::factory()->create(['role' => 'ADMIN']);
         $weapon = Weapon::query()->create([
             'internal_code' => 'ARM-HIST-2',
@@ -70,8 +74,6 @@ class WeaponHistoryTest extends TestCase
                 'caliber' => '9MM',
                 'brand' => 'Marca Nueva',
                 'capacity' => '15',
-                'ownership_type' => 'company_owned',
-                'ownership_entity' => null,
                 'permit_type' => 'porte',
                 'permit_number' => null,
                 'permit_expires_at' => null,
@@ -120,6 +122,7 @@ class WeaponHistoryTest extends TestCase
 
     public function test_weapon_create_records_initial_history(): void
     {
+        $this->seedWeaponCatalog();
         $admin = User::factory()->create(['role' => 'ADMIN']);
 
         $this->actingAs($admin)
@@ -129,13 +132,14 @@ class WeaponHistoryTest extends TestCase
                 'caliber' => '9MM',
                 'brand' => 'Nueva',
                 'capacity' => '15',
-                'ownership_type' => 'company_owned',
                 'permit_type' => 'porte',
                 'notes' => 'Alta con observación inicial',
                 'permit_photo' => \Illuminate\Http\UploadedFile::fake()->image('permiso.jpg'),
             ]);
 
         $weapon = Weapon::query()->where('serial_number', 'SER-HIST-NEW')->firstOrFail();
+        $this->assertSame('Seguridad Demo SAS', $weapon->ownership_entity);
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('weapons', 'ownership_type'));
 
         $this->assertDatabaseHas('weapon_histories', [
             'weapon_id' => $weapon->id,
@@ -144,5 +148,18 @@ class WeaponHistoryTest extends TestCase
 
         $entry = WeaponHistory::query()->where('weapon_id', $weapon->id)->first();
         $this->assertStringContainsString('Alta con observación inicial', $entry->body);
+    }
+
+    private function seedWeaponCatalog(): void
+    {
+        foreach (['Marca Vieja', 'Marca Nueva', 'Nueva', 'Test'] as $index => $name) {
+            WeaponBrand::query()->create(['name' => $name, 'sort_order' => ($index + 1) * 10]);
+        }
+
+        WeaponCaliber::query()->create(['name' => '9MM', 'sort_order' => 10]);
+        CompanySetting::query()->create([
+            'legal_name' => 'Seguridad Demo SAS',
+            'internal_code_prefix' => 'ARM-',
+        ]);
     }
 }

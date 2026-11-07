@@ -17,7 +17,9 @@
                     @csrf
                     @include('weapons.partials.form', [
                         'weapon' => null,
-                        'ownershipTypes' => $ownershipTypes,
+                        'brands' => $brands,
+                        'calibers' => $calibers,
+                        'companyName' => $companyName,
                         'showInternalCode' => false,
                         'requirePermitPhoto' => true,
                         'cancelUrl' => route('weapons.index'),
